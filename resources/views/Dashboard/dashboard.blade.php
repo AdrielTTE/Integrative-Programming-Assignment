@@ -1,10 +1,6 @@
-<!DOCTYPE html>
+@extends('layouts.app')
 
-<html>
-<head>
-    <title>Home Page</title>
-</head>
-<body>
-    <h1>Welcome to the Home Page! Test</h1>
-</body>
-</html>
+@section('content')
+    <h1 class="text-2xl font-semibold">Dashboard</h1>
+    <p>Welcome to the dashboard!</p>
+@endsection
