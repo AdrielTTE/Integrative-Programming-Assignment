@@ -18,9 +18,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'user_id',
+        'username',
         'email',
-        'password',
+        'password_hash',
+        'phone_number',
+        'created_at'
     ];
 
     /**
@@ -32,6 +35,10 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    protected $casts = [
+        'created_at'=> 'datetime',
+        ];
 
     /**
      * Get the attributes that should be cast.

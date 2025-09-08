@@ -1,11 +1,16 @@
 <?php
-
+use App\Http\Controllers\AdminControllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+// Admin Routes
+Route::prefix('admin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('adminDashboard');
 });
 
-Route::get('/dashboard', function () {
-    return view('Dashboard.dashboard');
-})->name('dashboard');
+// Customer Routes
+/*Route::prefix('customer')->group(function () {
+    Route::get('/dashboard', [CustomerDashboardController::class, 'index']);
+});*/
+
+
+

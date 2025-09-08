@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\AdminServices;
 
-class AdminService{
+class DashboardService{
 
     public function getTotalPackages(): int
     {
         $count = 0;
-        return (int) DB::table("");
+        return 0;
 }
 }
