@@ -6,10 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    protected $table = 'customer'; // Table name is not plural
-
+    protected $table = 'customer';
     protected $primaryKey = 'customer_id';
-    public $incrementing = false; // Since it's a varchar ID
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
