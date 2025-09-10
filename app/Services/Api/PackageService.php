@@ -3,8 +3,12 @@
 namespace App\Services\Api;
 
 use App\Models\Package;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
+
+
 
 class PackageService
 {
@@ -76,4 +80,20 @@ class PackageService
         $pkg = Package::findOrFail($id);
         $pkg->delete();
     }
+
+    public function getCountPackage(): int{
+        return Package::count();
+    }
+
+
+
+
+    public function getRecentPackages(int $noOfRecords):Collection
+{
+    return Package::with('customer')
+                  ->orderBy('created_at', 'desc')
+                  ->limit($noOfRecords)
+                  ->get();
+}
+
 }

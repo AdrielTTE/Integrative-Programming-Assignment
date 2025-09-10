@@ -48,4 +48,12 @@ class PackageController extends Controller
         $this->packageService->delete($package_id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function getCountPackage(){
+        return response()->json($this->packageService->getCountPackage());
+    }
+
+    public function getRecentPackages(int $noOfRecords){
+        return response()->json($this->packageService->getRecentPackages($noOfRecords));
+    }
 }

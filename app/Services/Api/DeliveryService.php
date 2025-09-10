@@ -74,4 +74,13 @@ class DeliveryService
         $delivery = Delivery::findOrFail($id);
         $delivery->delete();
     }
+
+    public function getCountDeliveries(): int
+    {
+        return Delivery::count();
+    }
+
+    public function getCountByStatus(string $status): int{
+        return Delivery::where('delivery_status', $status)->count();
+    }
 }

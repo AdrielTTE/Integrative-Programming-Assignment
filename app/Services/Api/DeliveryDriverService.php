@@ -66,4 +66,10 @@ class DeliveryDriverService
         $driver = DeliveryDriver::findOrFail($id);
         $driver->delete();
     }
+
+    public function getCountByStatus(string $status): int
+{
+    return DeliveryDriver::where('driver_status', $status)->count();
+}
+
 }

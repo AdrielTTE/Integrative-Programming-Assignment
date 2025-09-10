@@ -2,14 +2,44 @@
 
 namespace App\Services\AdminServices;
 
+use App\Models\Package;
+use App\Services\Api\PackageService;
+use App\Services\Api\DeliveryDriverService;
+use App\Services\Api\DeliveryService;
+use Illuminate\Support\Collection;
 class DashboardService{
 
-    public function __construct(){
-        
+    protected PackageService $packageService;
+    protected DeliveryDriverService $deliveryDriverService;
+    protected DeliveryService $deliveryService;
+
+
+    public function __construct(PackageService $packageService, DeliveryDriverService $deliveryDriverService, DeliveryService $deliveryService){
+        $this->packageService = $packageService;
+        $this->deliveryDriverService = $deliveryDriverService;
+        $this->deliveryService = $deliveryService;
     }
     public function getTotalPackages(): int
     {
-        $count = 0;
-        return 0;
-}
+        return $this->packageService->getCountPackage();
+
+    }
+
+    public function getDriverCountByStatus(string $status): int{
+        return $this->deliveryDriverService->getCountByStatus($status);
+
+    }
+
+    public function getTotalDeliveries(): int{
+        return $this->deliveryService->getCountDeliveries();
+
+    }
+
+    public function getDeliveryCountByStatus(string $status): int{
+        return $this->deliveryService->getCountByStatus($status);
+    }
+
+    public function recentPackages(int $noOfRecords): Collection{
+        return $this->packageService->getRecentPackages($noOfRecords);
+    }
 }

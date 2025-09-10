@@ -49,5 +49,13 @@ class DeliveryController extends Controller
         $this->deliveryService->delete($delivery_id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function getCountDeliveries(){
+        return response()->json($this->deliveryService->getCountDeliveries());
+    }
+
+    public function getCountByStatus($status){
+        return response()->json($this->deliveryService->getCountByStatus($status));
+    }
 }
 

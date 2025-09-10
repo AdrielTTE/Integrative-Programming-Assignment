@@ -21,23 +21,23 @@
             <!-- KPIs -->
             <div class="cards">
                 <div class="card">
-                    <h2>143</h2>
+                    <h2>{{ $totalPackages }}</h2>
                     <p>Total Packages</p>
                 </div>
                 <div class="card">
-                    <h2>42</h2>
+                    <h2>{{ $totalInTransitDeliveries }}</h2>
                     <p>In Transit</p>
                 </div>
                 <div class="card">
-                    <h2>73</h2>
+                    <h2>{{ $totalCompletedDeliveries }}</h2>
                     <p>Completed Deliveries</p>
                 </div>
                 <div class="card">
-                    <h2>12</h2>
+                    <h2>{{ $totalFailedDeliveries }}</h2>
                     <p>Failed Deliveries</p>
                 </div>
                 <div class="card">
-                    <h2>9</h2>
+                    <h2>{{ $totalAvailableDrivers }}</h2>
                     <p>Available Drivers</p>
                 </div>
             </div>
@@ -55,24 +55,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>#PKG00128</td>
-                            <td>Delivering</td>
-                            <td>Maria Lopez</td>
-                            <td>Today, 10:32 AM</td>
-                        </tr>
-                        <tr>
-                            <td>#PKG00126</td>
-                            <td>Completed</td>
-                            <td>John Carter</td>
-                            <td>Today, 09:58 AM</td>
-                        </tr>
-                        <tr>
-                            <td>#PKG00122</td>
-                            <td>Failed</td>
-                            <td>James Kim</td>
-                            <td>Yesterday, 5:12 PM</td>
-                        </tr>
+                        @foreach ($recentPackages as $package)
+                            <td>{{ $package->package_id }}</td>
+                            <td>{{ $package->package_status }}</td>
+                            <td>{{ $package->customer->first_name . ' ' . $package->customer->last_name }}</td>
+                            <td>{{ $package->created_at }}</td>
+                            </tr>
+                        @endforeach
+
                     </tbody>
                 </table>
             </div>

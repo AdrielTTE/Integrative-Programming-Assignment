@@ -25,7 +25,8 @@ use App\Http\Controllers\Api\VehicleController;
         Route::get('/{delivery_id}', [DeliveryController::class, 'get']);
         Route::put('/{delivery_id}', [DeliveryController::class, 'update']);
         Route::delete('/{delivery_id}', [DeliveryController::class, 'delete']);
-
+        Route::get('getCountDeliveries', [DeliveryController::class,'getCountDeliveries']);
+        Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
 
     });
 
@@ -72,6 +73,7 @@ use App\Http\Controllers\Api\VehicleController;
         Route::get('/{driver_id}', [DeliveryDriverController::class, 'get']);
         Route::put('/{driver_id}', [DeliveryDriverController::class, 'update']);
         Route::delete('/{driver_id}', [DeliveryDriverController::class, 'delete']);
+        Route::get('/getByStatus/{status}', [DeliveryDriverController::class,'getCountByStatus']);
     });
 
     Route::prefix('logisticHub')->group(function () {
@@ -87,9 +89,11 @@ use App\Http\Controllers\Api\VehicleController;
         Route::get('/', [PackageController::class, 'getAll']);
         Route::post('/', [PackageController::class, 'add']);
         Route::get('/getBatch/{pageNo}', [PackageController::class, 'getBatch']);
-        Route::get('/{package_id}', [PackageController::class, 'get']);
+        Route::get('/getByPackageID/{package_id}', [PackageController::class, 'get']);
         Route::put('/{package_id}', [PackageController::class, 'update']);
         Route::delete('/{package_id}', [PackageController::class, 'delete']);
+        Route::get('/getCountPackage', [PackageController::class,'getCountPackage']);
+        Route::get('/getRecentPackages/{noOfRecords}', [PackageController::class,'getRecentPackages']);
     });
 
     Route::prefix('proofOfDelivery')->group(function () {
