@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+
+    public function up() {
+        Schema::create('customers', function (Blueprint $table) {
+            $table->string('customer_id', 20)->primary();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('phone', 20)->nullable();
+            $table->text('address')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('email');
+            $table->index('status');
+        });
+    }
+
+    public function down() {
+        Schema::dropIfExists('customers');
+    }
+};
