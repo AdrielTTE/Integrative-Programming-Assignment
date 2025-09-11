@@ -2,54 +2,121 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Delivery extends Model
 {
-    protected $table = 'delivery'; // Table name is not plural
+    use HasFactory, SoftDeletes;
 
-    protected $primaryKey = 'delivery_id'; // Custom primary key
-    public $incrementing = false;          // Because it's varchar, not auto-incrementing
-    protected $keyType = 'string';         // Primary key is varchar
+    protected $table = 'delivery';
+    protected $primaryKey = 'delivery_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'delivery_id',
         'package_id',
         'driver_id',
-        'vehicle_id',
-        'route_id',
-        'pickup_time',
-        'estimated_delivery_time',
-        'actual_delivery_time',
         'delivery_status',
-        'delivery_cost',
+        'pickup_time',
+        'delivery_time',
+        'notes'
     ];
 
     protected $casts = [
         'pickup_time' => 'datetime',
-        'estimated_delivery_time' => 'datetime',
-        'actual_delivery_time' => 'datetime',
-        'delivery_cost' => 'decimal:2',
+        'delivery_time' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    // Example relationships
-    public function driver()
-    {
-        return $this->belongsTo(DeliveryDriver::class, 'driver_id', 'driver_id');
-    }
-
+    // Relationships
     public function package()
     {
         return $this->belongsTo(Package::class, 'package_id', 'package_id');
     }
 
-    public function vehicle()
+    public function driver()
     {
-        return $this->belongsTo(Vehicle::class, 'vehicle_id', 'vehicle_id');
+        return $this->belongsTo(User::class, 'driver_id');
+    }
+}
+
+class DeliveryAssignment extends Model
+{
+    use HasFactory;
+
+    protected $table = 'delivery_assignment';
+    protected $primaryKey = 'assignment_id';
+
+    protected $fillable = [
+        'package_id',
+        'driver_id',
+        'assigned_at',
+        'status'
+    ];
+
+    protected $casts = [
+        'assigned_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    // Constants
+    const STATUS_ASSIGNED = 'assigned';
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
+
+    // Relationships
+    public function package()
+    {
+        return $this->belongsTo(Package::class, 'package_id', 'package_id');
     }
 
-    public function route()
+    public function driver()
     {
-        return $this->belongsTo(Route::class, 'route_id', 'route_id');
+        return $this->belongsTo(User::class, 'driver_id');
+    }
+}
+
+class User extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'status'
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    // Constants
+    const ROLE_ADMIN = 'admin';
+    const ROLE_DRIVER = 'driver';
+    const ROLE_CUSTOMER = 'customer';
+
+    // Relationships
+    public function deliveryAssignments()
+    {
+        return $this->hasMany(DeliveryAssignment::class, 'driver_id');
+    }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class, 'driver_id');
     }
 }
