@@ -34,6 +34,14 @@
                     <p>Completed Deliveries</p>
                 </div>
                 <div class="card">
+                    <h2>{{ $totalPickedUpDeliveries }}</h2>
+                    <p>Picked Up Deliveries</p>
+                </div>
+                <div class="card">
+                    <h2>{{ $totalScheduledDeliveries }}</h2>
+                    <p>Scheduled Deliveries</p>
+                </div>
+                <div class="card">
                     <h2>{{ $totalFailedDeliveries }}</h2>
                     <p>Failed Deliveries</p>
                 </div>

@@ -45,6 +45,8 @@ public function __construct(PackageService $packageService, DeliveryDriverServic
         $totalCompletedDeliveries = $this->dashboardService->getDeliveryCountByStatus("DELIVERED");
         $totalInTransitDeliveries = $this->dashboardService->getDeliveryCountByStatus("IN_TRANSIT");
         $totalFailedDeliveries = $this->dashboardService->getDeliveryCountByStatus("FAILED");
+        $totalPickedUpDeliveries = $this->dashboardService->getDeliveryCountByStatus("PICKED_UP");
+        $totalScheduledDeliveries = $this->dashboardService->getDeliveryCountByStatus("SCHEDULED");
         if($displayData === 'packages'){
             $packageByStatus = $this->dashboardService->getPackageCountByStatus("all");
         }
@@ -53,6 +55,6 @@ public function __construct(PackageService $packageService, DeliveryDriverServic
 
 
 
-        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'packageByStatus', 'displayData'));
+        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'packageByStatus', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries'));
     }
 }
