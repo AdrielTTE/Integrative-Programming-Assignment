@@ -131,9 +131,10 @@ class Package extends Model
      * Get the customer that owns the package.
      */
     public function customer()
-    {
-        return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
-    }
+{
+    return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
+}
+
 
     /**
      * Get the delivery associated with the package.

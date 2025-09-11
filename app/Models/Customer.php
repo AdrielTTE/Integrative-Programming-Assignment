@@ -13,7 +13,7 @@ class Customer extends Model
     /**
      * Table name
      */
-    protected $table = 'customers';
+    protected $table = 'customer';
 
     /**
      * Primary key details
