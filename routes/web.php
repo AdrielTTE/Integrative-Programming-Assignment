@@ -9,6 +9,10 @@ Route::prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('adminDashboard');
 });
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
 // Customer Routes (if needed later)
 // Route::prefix('customer')->group(function () {
 //     Route::get('/dashboard', [CustomerDashboardController::class, 'index']);
@@ -34,6 +38,6 @@ Route::group([], function () {
 });
 
 Route::get('/', function () {
-    return view('layouts.customerLayout'); 
+    return view('layouts.customerLayout');
 })->name('customer.home');
 
