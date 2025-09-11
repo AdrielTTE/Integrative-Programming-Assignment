@@ -32,9 +32,9 @@ class DeliveryDriverController extends Controller
         return response()->json($this->deliveryDriverService->getById($driver_id));
     }
 
-    public function getBatch(int $pageNo)
+    public function getBatch(int $pageNo, int $pageSize, string $status)
     {
-        return response()->json($this->deliveryDriverService->getPaginated($pageNo));
+        return response()->json($this->deliveryDriverService->getBatch($pageNo, $pageSize, $status));
     }
 
     public function update(Request $request, $driver_id)

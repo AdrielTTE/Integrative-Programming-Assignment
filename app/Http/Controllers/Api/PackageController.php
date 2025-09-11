@@ -56,4 +56,8 @@ class PackageController extends Controller
     public function getRecentPackages(int $noOfRecords){
         return response()->json($this->packageService->getRecentPackages($noOfRecords));
     }
+
+    public function getCountByStatus(string $status){
+        return response()->json($this->packageService->getCountByStatus($status));
+    }
 }

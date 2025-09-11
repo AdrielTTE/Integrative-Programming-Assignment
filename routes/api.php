@@ -94,6 +94,8 @@ use App\Http\Controllers\Api\VehicleController;
         Route::delete('/{package_id}', [PackageController::class, 'delete']);
         Route::get('/getCountPackage', [PackageController::class,'getCountPackage']);
         Route::get('/getRecentPackages/{noOfRecords}', [PackageController::class,'getRecentPackages']);
+        Route::get('/getCountByStatus/{status}', [PackageController::class,'getCountByStatus']);
+
     });
 
     Route::prefix('proofOfDelivery')->group(function () {

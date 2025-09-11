@@ -36,9 +36,15 @@ class DeliveryDriverService
         return DeliveryDriver::findOrFail($id);
     }
 
-    public function getPaginated(int $pageNo, int $perPage = 20)
+    public function getBatch(int $pageNo, int $perPage = 20, string $status)
     {
-        return DeliveryDriver::paginate($perPage, ['*'], 'page', $pageNo);
+        $query = DeliveryDriver::query();
+
+        if (strtolower($status) !== 'all') {
+            $query->where('driver_status', $status);
+        }
+        $records = $query->paginate($perPage, ['*'], 'page', $pageNo);
+        return $records->getCollection();
     }
 
     public function update(string $id, array $data)
@@ -71,5 +77,7 @@ class DeliveryDriverService
 {
     return DeliveryDriver::where('driver_status', $status)->count();
 }
+
+
 
 }

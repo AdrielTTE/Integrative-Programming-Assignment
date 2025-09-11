@@ -79,13 +79,17 @@ table td {
     border-radius: 4px;
 }
 
-.driver.online {
+.driver.available {
     border-color: #10b981;
 }
 .driver.busy {
     border-color: #f59e0b;
 }
-.driver.offline {
+
+.driver.neutral {
+    border-color: #5d5e5e;
+}
+.driver.unavailable {
     border-color: #ef4444;
 }
 

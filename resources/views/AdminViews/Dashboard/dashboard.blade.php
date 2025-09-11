@@ -8,6 +8,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         @vite('resources/css/adminDashboard.css')
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <title>Admin Dashboard</title>
 
     </head>
@@ -51,7 +52,7 @@
                             <th>Package ID</th>
                             <th>Status</th>
                             <th>Customer</th>
-                            <th>Updated At</th>
+                            <th>Created On</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -70,23 +71,37 @@
             <!-- Driver Panel -->
             <div class="section">
                 <h3>Driver Status</h3>
+                </br>
                 <div class="driver-status">
-                    <div class="driver online">
-                        🚚 Alex Johnson — Online
-                    </div>
-                    <div class="driver busy">
-                        🚚 Lisa Wong — Delivering
-                    </div>
-                    <div class="driver offline">
-                        🚚 Robert Blake — Offline
-                    </div>
+
+                    @foreach ($driverList as $driver)
+                        @if ($driver->driver_status == 'AVAILABLE')
+                            <div class="driver available">
+                                {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            </div>
+                        @elseif ($driver->driver_status == 'BUSY')
+                            <div class="driver busy">
+                                {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            </div>
+                        @elseif($driver->driver_status == 'BUSY')
+                            <div class="driver unavailable">
+                                {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            </div>
+                        @else
+                            <div class="driver neutral">
+                                {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            </div>
+                        @endif
+                    @endforeach
+
                 </div>
             </div>
 
             <!-- Package Status Chart Placeholder -->
             <div class="section">
                 <h3>Package Status Summary</h3>
-                <p>[Insert chart here — use Chart.js or similar if needed]</p>
+                <canvas id="packageChart" width="400" height="200"></canvas>
+
             </div>
 
         </div>
@@ -94,4 +109,41 @@
     </body>
 
     </html>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const packageByStatus = @json($packageByStatus);
+
+            const labels = Object.keys(packageByStatus);
+            const counts = Object.values(packageByStatus);
+
+            const ctx = document.getElementById('packageChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Packages by Status',
+                        data: counts,
+                        backgroundColor: [
+                            '#4CAF50', // Available
+                            '#FF9800', // In transit
+                            '#2196F3', // Delivered
+                            '#F44336', // Failed
+                            '#9C27B0' // Others
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            precision: 0
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 @endsection

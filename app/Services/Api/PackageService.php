@@ -3,10 +3,10 @@
 namespace App\Services\Api;
 
 use App\Models\Package;
-use App\Models\Customer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -95,5 +95,23 @@ class PackageService
                   ->limit($noOfRecords)
                   ->get();
 }
+
+public function getCountByStatus(string $status): Collection
+{
+    if (strtolower($status) === 'all') {
+        return Package::query()
+            ->select('package_status', DB::raw('count(*) as count'))
+            ->groupBy('package_status')
+            ->get()
+            ->collect();
+    }
+
+    $count = Package::where('package_status', $status)->count();
+
+    return collect([
+        ['package_status' => $status, 'count' => $count]
+    ]);
+}
+
 
 }

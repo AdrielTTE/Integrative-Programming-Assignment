@@ -42,4 +42,12 @@ class DashboardService{
     public function recentPackages(int $noOfRecords): Collection{
         return $this->packageService->getRecentPackages($noOfRecords);
     }
+
+    public function getDrivers(int $page, int $pageSize, string $status): Collection{
+        return $this->deliveryDriverService->getBatch($page, $pageSize, $status);
+    }
+
+    public function getPackageCountByStatus(string $status): Collection{
+        return $this->packageService->getCountByStatus($status);
+    }
 }
