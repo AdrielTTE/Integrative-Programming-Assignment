@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -110,10 +111,10 @@ class Package extends Model
             if ($package->isDirty('package_status')) {
                 $oldStatus = $package->getOriginal('package_status');
                 $newStatus = $package->package_status;
-                
+
                 // Create audit log (implement PackageStatusHistory model if needed)
                 \Log::info("Package {$package->package_id} status changed from {$oldStatus} to {$newStatus}");
-                
+
                 // Update delivery times based on status
                 if ($newStatus === self::STATUS_DELIVERED && empty($package->actual_delivery)) {
                     $package->actual_delivery = now();
@@ -125,7 +126,7 @@ class Package extends Model
     /**
      * Relationships
      */
-    
+
     /**
      * Get the customer that owns the package.
      */
@@ -168,7 +169,7 @@ class Package extends Model
     /**
      * Scopes for filtering
      */
-    
+
     /**
      * Scope a query to only include packages with a specific status.
      */
@@ -225,7 +226,7 @@ class Package extends Model
     /**
      * Business Logic Methods
      */
-    
+
     /**
      * Generate a unique package ID
      */
@@ -234,7 +235,7 @@ class Package extends Model
         do {
             $packageId = 'PKG' . date('Ymd') . strtoupper(substr(md5(uniqid()), 0, 6));
         } while (self::where('package_id', $packageId)->exists());
-        
+
         return $packageId;
     }
 
@@ -246,7 +247,7 @@ class Package extends Model
         do {
             $trackingNumber = 'TRK' . date('ymd') . rand(100000, 999999);
         } while (self::where('tracking_number', $trackingNumber)->exists());
-        
+
         return $trackingNumber;
     }
 
@@ -257,7 +258,7 @@ class Package extends Model
     {
         $baseCost = 10.00;
         $weightCost = ($this->package_weight ?? 0) * 2.5;
-        
+
         // Parse dimensions if in format "LxWxH"
         $dimensionCost = 0;
         if ($this->package_dimensions) {
@@ -270,7 +271,7 @@ class Package extends Model
                 }
             }
         }
-        
+
         $priorityMultiplier = 1;
         switch ($this->priority ?? self::PRIORITY_STANDARD) {
             case self::PRIORITY_EXPRESS:
@@ -280,7 +281,7 @@ class Package extends Model
                 $priorityMultiplier = 2;
                 break;
         }
-        
+
         return round(($baseCost + $weightCost + $dimensionCost) * $priorityMultiplier, 2);
     }
 
@@ -354,15 +355,15 @@ class Package extends Model
         ];
 
         $currentStatus = $this->package_status;
-        
+
         if (in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
             $this->package_status = $newStatus;
-            
+
             // Update delivery timestamps
             if ($newStatus === self::STATUS_DELIVERED) {
                 $this->actual_delivery = now();
             }
-            
+
             return $this->save();
         }
 
@@ -381,7 +382,7 @@ class Package extends Model
         ];
 
         $days = $daysToAdd[$this->priority ?? self::PRIORITY_STANDARD];
-        
+
         // Skip weekends
         $date = now();
         while ($days > 0) {
@@ -390,7 +391,7 @@ class Package extends Model
                 $days--;
             }
         }
-        
+
         return $date;
     }
 

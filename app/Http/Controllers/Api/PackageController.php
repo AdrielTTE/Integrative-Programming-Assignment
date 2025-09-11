@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\Api\PackageService as ApiPackageService;
 use App\Services\PackageService;
 use App\Http\Requests\CreatePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
@@ -15,10 +16,12 @@ use Illuminate\Http\Response;
 class PackageController extends Controller
 {
     protected $packageService;
+    protected $apiPackageService;
 
-    public function __construct(PackageService $packageService)
+    public function __construct(PackageService $packageService, ApiPackageService $apiPackageService)
     {
         $this->packageService = $packageService;
+        $this->apiPackageService = $apiPackageService;
     }
 
     // Your existing methods...
@@ -162,5 +165,13 @@ class PackageController extends Controller
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+     public function getCountPackage(){
+        return response()->json($this->apiPackageService->getCountPackage());
+    }
+
+    public function getRecentPackages(int $noOfRecords){
+        return response()->json($this->apiPackageService->getRecentPackages($noOfRecords));
     }
 }

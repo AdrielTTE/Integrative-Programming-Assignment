@@ -59,7 +59,9 @@
                         @foreach ($recentPackages as $package)
                             <td>{{ $package->package_id }}</td>
                             <td>{{ $package->package_status }}</td>
-                            <td>{{ $package->customer->first_name . ' ' . $package->customer->last_name }}</td>
+                            <td>{{ optional($package->customer)->first_name . ' ' . optional($package->customer)->last_name }}
+                            </td>
+
                             <td>{{ $package->created_at }}</td>
                             </tr>
                         @endforeach
