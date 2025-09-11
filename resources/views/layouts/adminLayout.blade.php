@@ -1,33 +1,91 @@
+{{-- resources/views/layouts/customerLayout.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Track Pack</title>
+    <title>Package Tracking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     @vite('resources/css/app.css')
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: height 0.3s ease;
+        }
+
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            height: 80%;
+        }
+    </style>
 </head>
 
-<body class="flex h-screen bg-gray-100">
+<body class="flex h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
     <!-- Sidebar -->
-    <aside class="w-64 bg-white shadow-md">
-        <div class="p-4 text-xl font-bold border-b">Track Pack</div>
-        <nav class="p-4 space-y-2">
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Dashboard</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Package
-                Mangement</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Delivery Proof</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Feedback and
-                Ratings</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Status Update</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Driver
-                Assignment</a>
-            <a href="{{ route('adminDashboard') }}" class="block px-4 py-2 rounded hover:bg-gray-200">Search &
-                Filter</a>
+    <aside class="w-72 bg-white shadow-2xl relative">
+        <div class="gradient-bg p-6 text-white relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-4 right-4 w-20 h-20 bg-white rounded-full opacity-10"></div>
+                <div class="absolute bottom-4 left-4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+            </div>
+            <div class="relative z-10">
+                <i class="fas fa-shipping-fast text-3xl mb-2"></i>
+                <h1 class="text-2xl font-bold">Track Pack</h1>
+                <p class="text-blue-100 text-sm">Professional Package Tracking</p>
+            </div>
+        </div>
+        <nav class="p-6 space-y-3">
+            <a href="{{ route('adminDashboard') }}"
+                class="nav-link {{ request()->routeIs('adminDashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-tachometer-alt w-5 mr-3"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="{{ route('packages.track') }}"
+                class="nav-link {{ request()->routeIs('packages.track') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-box w-5 mr-3"></i>
+                <span class="font-medium">Package Management</span>
+            </a>
+            <a href="{{ route('adminDashboard') }}"
+                class="nav-link {{ request()->routeIs('delivery.proof') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-truck w-5 mr-3"></i>
+                <span class="font-medium">Delivery & Proof</span>
+            </a>
+            <a href="{{ route('adminDashboard') }}"
+                class="nav-link {{ request()->routeIs('notifications') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-bell w-5 mr-3"></i>
+                <span class="font-medium">Notifications</span>
+            </a>
+            <a href="{{ route('adminDashboard') }}"
+                class="nav-link {{ request()->routeIs('packages.history') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-history w-5 mr-3"></i>
+                <span class="font-medium">Package History</span>
+            </a>
+            <a href="{{ route('adminDashboard') }}"
+                class="nav-link {{ request()->routeIs('feedback.rating') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-star w-5 mr-3"></i>
+                <span class="font-medium">Feedback & Rating</span>
+            </a>
         </nav>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 overflow-auto">
+    <main class="flex-1 p-8 overflow-auto">
         @yield('content')
     </main>
 </body>
