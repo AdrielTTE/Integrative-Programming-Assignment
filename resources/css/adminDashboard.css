@@ -98,3 +98,33 @@ table td {
         grid-template-columns: 1fr;
     }
 }
+
+.statusFilter {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 200px;
+    outline: none;
+}
+
+.statusFilter:focus {
+    border-color: #4f46e5; /* indigo-600 */
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+select {
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+}
+
+select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    outline: none;
+}

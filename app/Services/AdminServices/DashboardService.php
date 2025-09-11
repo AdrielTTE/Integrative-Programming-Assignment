@@ -47,7 +47,10 @@ class DashboardService{
         return $this->deliveryDriverService->getBatch($page, $pageSize, $status);
     }
 
-    public function getPackageCountByStatus(string $status): Collection{
-        return $this->packageService->getCountByStatus($status);
-    }
+    public function getPackageCountByStatus(string $status): Collection
+{
+    $rawData = $this->packageService->getCountByStatus($status);
+    return collect($rawData->pluck('count', 'package_status')->toArray());
+}
+
 }

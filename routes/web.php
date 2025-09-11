@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\PackageController;
 
 // Admin Routes
-Route::prefix('admin')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('adminDashboard');
-});
+Route::match(['get', 'post'], '/admin/dashboard', [DashboardController::class, 'dashboard'])
+    ->name('adminDashboard');
+
 
 Route::get('/', function () {
     return view('welcome');

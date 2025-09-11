@@ -102,6 +102,21 @@
             <!-- Package Status Chart Placeholder -->
             <div class="section">
                 <h3>Package Status Summary</h3>
+                </br>
+                <form method="GET" action="{{ route('adminDashboard') }}">
+                    <label for="statusFilter">Show:</label>
+                    <select name="displayData" id="statusFilter" onchange="this.form.submit()">
+                        <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>All</option>
+                        <option value="DELIVERED" {{ $displayData === 'DELIVERED' ? 'selected' : '' }}>Delivered</option>
+                        <option value="IN_TRANSIT" {{ $displayData === 'IN_TRANSIT' ? 'selected' : '' }}>In Transit
+                        </option>
+                        <option value="PENDING" {{ $displayData === 'PENDING' ? 'selected' : '' }}>Pending</option>
+                        <option value="PICKED_UP" {{ $displayData === 'PICKED_UP' ? 'selected' : '' }}>Picked Up</option>
+                    </select>
+                </form>
+
+
+                </br>
                 <canvas id="packageChart" width="400" height="200"></canvas>
 
             </div>
@@ -119,6 +134,9 @@
             const labels = Object.keys(packageByStatus);
             const counts = Object.values(packageByStatus);
 
+            const maxCount = Math.max(...counts);
+            const yMax = maxCount + 1;
+
             const ctx = document.getElementById('packageChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -130,7 +148,7 @@
                         backgroundColor: [
                             '#4CAF50', // Available
                             '#FF9800', // In transit
-                            '#2196F3', // Delivered
+                            '#fcdf00', // Delivered
                             '#F44336', // Failed
                             '#9C27B0' // Others
                         ]
@@ -141,6 +159,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            suggestedMax: yMax,
                             precision: 0
                         }
                     }
