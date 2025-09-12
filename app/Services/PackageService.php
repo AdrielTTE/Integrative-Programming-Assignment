@@ -20,6 +20,11 @@ class PackageService
         $this->packageRepository = $packageRepository;
     }
 
+    public function getPackageWithDetails($id)
+    {
+        return $this->packageRepository->findWithRelations($id);
+    }
+
     /**
      * Create a new package with business logic
      */
@@ -255,7 +260,6 @@ class PackageService
     protected function sendPackageCreatedNotification(Package $package)
     {
         // Implement notification logic here
-        // This could send email, SMS, or push notifications
         Log::info('Package created notification', [
             'package_id' => $package->package_id,
             'tracking_number' => $package->tracking_number
@@ -268,7 +272,6 @@ class PackageService
     public function calculateDeliveryRoute(Package $package)
     {
         // This would integrate with the Route module
-        // For now, return a simple response
         return [
             'origin' => $package->sender_address,
             'destination' => $package->recipient_address,
@@ -283,7 +286,6 @@ class PackageService
     public function getPackageHistory($packageId)
     {
         // This would retrieve from an audit log table
-        // For now, return mock data
         return [
             [
                 'timestamp' => now()->subDays(2),
@@ -314,10 +316,7 @@ class PackageService
         $packages = Package::whereBetween('created_at', [$startDate, $endDate])->get();
 
         $report = [
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate
-            ],
+            'period' => ['start' => $startDate, 'end' => $endDate],
             'summary' => [
                 'total_packages' => $packages->count(),
                 'total_revenue' => $packages->sum('shipping_cost'),
@@ -341,21 +340,6 @@ class PackageService
         }
     }
 
-    /**
-     * Export report to CSV
-     */
-    protected function exportToCsv($report)
-    {
-        // Implement CSV export logic
-        return $report; // Placeholder
-    }
-
-    /**
-     * Export report to PDF
-     */
-    protected function exportToPdf($report)
-    {
-        // Implement PDF export logic
-        return $report; // Placeholder
-    }
+    protected function exportToCsv($report) { return $report; }
+    protected function exportToPdf($report) { return $report; }
 }

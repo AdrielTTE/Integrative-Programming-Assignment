@@ -2,15 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory; // <-- This import is essential
 use Illuminate\Database\Eloquent\Model;
 
 class DeliveryAssignment extends Model
 {
-    protected $table = 'deliveryassignment'; // Table name is not plural
+    use HasFactory; // This trait allows for factory-based testing
+
+    protected $table = 'deliveryassignment'; 
 
     protected $primaryKey = 'assignment_id';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'assignment_id',
@@ -27,7 +32,6 @@ class DeliveryAssignment extends Model
     ];
 
     // Relationships
-
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'admin_id', 'admin_id');
