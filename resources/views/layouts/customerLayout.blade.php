@@ -50,7 +50,8 @@
                 <p class="text-blue-100 text-sm">Professional Package Tracking</p>
             </div>
         </div>
-        <nav class="p-6 space-y-3">
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-3">>
             <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
@@ -81,7 +82,26 @@
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
-        </nav>
+        </div>
+
+
+        <!-- Bottom: user info + logout -->
+        <div class="px-6 py-4 border-t">
+            @auth
+                <div class="mb-4 p-3 bg-indigo-50 rounded-xl text-center shadow text-indigo-700 text-sm font-medium">
+                    <div class="mb-1">Logged in as</div>
+                    <div class="text-base font-bold">{{ Auth::user()->user_id }}</div>
+                </div>
+            @endauth
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                    class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl shadow-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
+                    Logout
+                </button>
+            </form>
+        </div>
     </aside>
 
     <!-- Main Content -->

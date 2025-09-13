@@ -1,0 +1,27 @@
+.notification {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: #fafafa;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+}
+
+.notification:hover {
+    background-color: #f0f0f0;
+}
+
+.notification .icon {
+    font-size: 1.8rem;
+    margin-right: 1rem;
+}
+
+.notification .text p {
+    margin-bottom: 0.3rem;
+}
+
+.notification small {
+    color: #777;
+}

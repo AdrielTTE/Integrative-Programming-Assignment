@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
+use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 
 Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
 Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
@@ -25,6 +26,10 @@ Route::post('register', [CustomerAuthController::class, 'store'])->name('custome
 Route::middleware(['auth','customer'])->group(function () {
     Route::get('/dashboard', fn() => view('customer.dashboard'))->name('customer.dashboard');
 });
+
+Route::get('notification', [CustomerNotificationController::class, 'notification'])
+    ->name('customer.notification');
+
 });
 
 

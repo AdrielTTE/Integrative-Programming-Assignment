@@ -104,7 +104,6 @@
                 @csrf
                 <button type="submit"
                     class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl shadow-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
-                    <i class="fas fa-sign-out-alt w-5 mr-3"></i>
                     Logout
                 </button>
             </form>
