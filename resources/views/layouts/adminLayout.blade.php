@@ -51,8 +51,8 @@
             </div>
         </div>
         <nav class="p-6 space-y-3">
-            <a href="{{ route('adminDashboard') }}"
-                class="nav-link {{ request()->routeIs('adminDashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('admin.dashboard') }}"
+                class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
@@ -61,27 +61,39 @@
                 <i class="fas fa-box w-5 mr-3"></i>
                 <span class="font-medium">Package Management</span>
             </a>
-            <a href="{{ route('adminDashboard') }}"
+            <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('delivery.proof') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-truck w-5 mr-3"></i>
                 <span class="font-medium">Delivery & Proof</span>
             </a>
-            <a href="{{ route('adminDashboard') }}"
+            <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('notifications') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-bell w-5 mr-3"></i>
                 <span class="font-medium">Notifications</span>
             </a>
-            <a href="{{ route('adminDashboard') }}"
+            <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('packages.history') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-history w-5 mr-3"></i>
                 <span class="font-medium">Package History</span>
             </a>
-            <a href="{{ route('adminDashboard') }}"
+            <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('feedback.rating') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
         </nav>
+
+        <div class="absolute bottom-6 left-0 w-full px-6">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                    class="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl shadow-md hover:from-red-600 hover:to-red-700 transition-all duration-300">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+
     </aside>
 
     <!-- Main Content -->

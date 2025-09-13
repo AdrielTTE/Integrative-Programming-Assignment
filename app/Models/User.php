@@ -11,6 +11,14 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+    protected $rememberTokenName = null;
+    protected $table = 'user';
+    protected $primaryKey = 'user_id';
+    public $timestamps = false;
+
+    const ROLE_ADMIN = 'admin';
+    const ROLE_DRIVER = 'driver';
+    const ROLE_CUSTOMER = 'customer';
 
     /**
      * The attributes that are mass assignable.
@@ -21,7 +29,7 @@ class User extends Authenticatable
         'user_id',
         'username',
         'email',
-        'password_hash',
+        'password',
         'phone_number',
         'created_at'
     ];
@@ -33,11 +41,12 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'remember_token',
+
     ];
 
     protected $casts = [
         'created_at'=> 'datetime',
+        'email_verified_at' => 'datetime',
         ];
 
     /**
@@ -45,11 +54,6 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+
+
 }

@@ -1,43 +1,46 @@
 <?php
 
-use App\Http\Controllers\AdminControllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomerAuthController;
+use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\Web\PackageController;
 
-// Admin Routes
-Route::match(['get', 'post'], '/admin/dashboard', [DashboardController::class, 'dashboard'])
-    ->name('adminDashboard');
-
+Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
+Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
 
 Route::get('/', function () {
     return view('welcome');
 });
+Route::prefix('customer')->group(function () {
+Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('customer.login');
+Route::post('login', [CustomerAuthController::class, 'login']);
+Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('customer.register');
+Route::post('register', [CustomerAuthController::class, 'store'])->name('customer.register.submit');
 
-// Customer Routes (if needed later)
-// Route::prefix('customer')->group(function () {
-//     Route::get('/dashboard', [CustomerDashboardController::class, 'index']);
-// });
-
-// --- Public Routes (tracking) ---
-Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
-Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
-
-// --- Protected Routes (temporarily without auth middleware) ---
-Route::group([], function () {
-    Route::get('/dashboard', [PackageController::class, 'dashboard'])->name('packages.dashboard');
-    Route::resource('packages', PackageController::class);
-
-    Route::prefix('packages')->name('packages.')->group(function () {
-        Route::get('/search/advanced', [PackageController::class, 'search'])->name('search');
-        Route::post('/search/advanced', [PackageController::class, 'search'])->name('search.submit');
-        Route::post('/bulk-update', [PackageController::class, 'bulkUpdate'])->name('bulk.update');
-        Route::get('/reports/generate', [PackageController::class, 'generateReport'])->name('reports.generate');
-        Route::post('/reports/generate', [PackageController::class, 'generateReport'])->name('reports.generate.submit');
-        Route::patch('/{package}/status', [PackageController::class, 'updateStatus'])->name('status.update');
-    });
+Route::middleware('auth')->group(function () {
+    Route::get('/customer/dashboard', fn() => view('customer.dashboard'))->name('customer.dashboard');
+});
 });
 
-Route::get('/', function () {
-    return view('layouts.customerLayout');
-})->name('customer.home');
 
+Route::prefix('admin')->group(function () {
+    Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('login', [AdminAuthController::class, 'login']);
+    Route::get('register', [AdminAuthController::class, 'showRegisterForm'])->name('admin.register');
+    Route::post('register', [AdminAuthController::class, 'store'])->name('admin.register.submit');
+
+
+   Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('admin.dashboard');
+});
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';

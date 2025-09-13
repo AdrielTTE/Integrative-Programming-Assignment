@@ -111,7 +111,7 @@
             <div class="section">
                 <h3>Package Status Summary</h3>
                 </br>
-                <form method="GET" action="{{ route('adminDashboard') }}">
+                <form method="GET" action="{{ route('admin.dashboard') }}">
                     <label for="statusFilter">Show:</label>
                     <select name="displayData" id="statusFilter" onchange="this.form.submit()">
                         <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>All</option>

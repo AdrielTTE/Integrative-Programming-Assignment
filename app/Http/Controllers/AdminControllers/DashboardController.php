@@ -49,6 +49,8 @@ public function __construct(PackageService $packageService, DeliveryDriverServic
         $totalScheduledDeliveries = $this->dashboardService->getDeliveryCountByStatus("SCHEDULED");
         if($displayData === 'packages'){
             $packageByStatus = $this->dashboardService->getPackageCountByStatus("all");
+        }else{
+            $packageByStatus = $this->dashboardService->getPackageCountByStatus("all");
         }
         $recentPackages = $this->dashboardService->recentPackages(5);
         $driverList = $this->dashboardService->getDrivers($page, $pageSize, $driverStatus);
