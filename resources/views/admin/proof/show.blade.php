@@ -2,7 +2,10 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-4">Verify Proof of Delivery</h1>
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Verify Proof of Delivery</h1>
+        <a href="{{ route('admin.proof.history') }}" class="text-indigo-600 hover:text-indigo-900">&larr; Back</a>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="md:col-span-2 bg-white shadow-lg rounded-lg p-6">
