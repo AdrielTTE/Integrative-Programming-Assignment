@@ -101,6 +101,19 @@ class ProofService
         }
         return [];
     }
+
+    public function getProofsForCustomer()
+    {
+        $customerId = Auth::id() ?? 'C004'; // Hardcoded for testing
+
+        // This query finds proofs where the delivery's package belongs to the customer
+        return ProofOfDelivery::with(['delivery.package'])
+            ->whereHas('delivery.package', function ($query) use ($customerId) {
+                $query->where('customer_id', $customerId);
+            })
+            ->orderBy('timestamp_created', 'desc')
+            ->paginate(10);
+    }
     
     public function saveCustomerReport(string $proofId, string $reason): ProofOfDelivery
     {

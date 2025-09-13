@@ -66,6 +66,7 @@ Route::group([], function() {
     Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('customer.search');
     Route::get('/my-packages/{packageId}', [PackageController::class, 'show'])->name('customer.package.show');
     Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('customer.proof.report');
+    Route::get('/my-proofs', [WebProofController::class, 'history'])->name('customer.proof.history');
 });
 
 // General Package Routes

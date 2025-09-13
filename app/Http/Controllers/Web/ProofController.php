@@ -11,6 +11,11 @@ class ProofController extends Controller
     public function __construct(protected ProofService $proofService)
     {
     }
+    public function history()
+    {
+        $proofs = $this->proofService->getProofsForCustomer();
+        return view('proof.customer_history', compact('proofs'));
+    }
 
     public function report(Request $request, string $proofId)
     {
