@@ -10,7 +10,7 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * The path to the "home" route.
      */
-    public const HOME = '/dashboard';
+    public const HOME = '/';
 
     public function boot(): void
     {

@@ -13,6 +13,8 @@ class User extends Authenticatable
     protected $table = 'user';
     protected $primaryKey = 'user_id';
     public $timestamps = false;
+ public $incrementing = false;
+    protected $keyType = 'string';
 
     const ROLE_ADMIN = 'admin';
     const ROLE_DRIVER = 'driver';

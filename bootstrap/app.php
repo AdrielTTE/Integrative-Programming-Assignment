@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -18,10 +19,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'admin'    => \App\Http\Middleware\AdminCheckMiddleware::class,
+            'customer' => \App\Http\Middleware\CustomerCheckMiddleware::class,
         ]);
 
         //
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+    ->withExceptions(function ($exceptions) {
+    $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+        // Redirect all unauthenticated users to /
+        return redirect('/');
+    });
+})->create();
+
+

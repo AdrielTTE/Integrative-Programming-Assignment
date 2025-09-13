@@ -38,7 +38,8 @@
 
 <body class="flex h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
     <!-- Sidebar -->
-    <aside class="w-72 bg-white shadow-2xl relative">
+    <aside class="w-72 bg-white shadow-2xl flex flex-col h-full">
+        <!-- Header -->
         <div class="gradient-bg p-6 text-white relative overflow-hidden">
             <div class="absolute inset-0 opacity-20">
                 <div class="absolute top-4 right-4 w-20 h-20 bg-white rounded-full opacity-10"></div>
@@ -50,7 +51,9 @@
                 <p class="text-blue-100 text-sm">Professional Package Tracking</p>
             </div>
         </div>
-        <nav class="p-6 space-y-3">
+
+        <!-- Scrollable navigation -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-3">
             <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
@@ -81,14 +84,22 @@
                 <i class="fas fa-history w-5 mr-3"></i>
                 <span class="font-medium">Proof History</span>
             </a>
-            <a href="{{ route('adminDashboard') }}"
+            <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('feedback.rating') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
-        </nav>
+        </div>
 
-        <div class="absolute bottom-6 left-0 w-full px-6">
+        <!-- Bottom: user info + logout -->
+        <div class="px-6 py-4 border-t">
+            @auth
+                <div class="mb-4 p-3 bg-indigo-50 rounded-xl text-center shadow text-indigo-700 text-sm font-medium">
+                    <div class="mb-1">Logged in as</div>
+                    <div class="text-base font-bold">{{ Auth::user()->user_id }}</div>
+                </div>
+            @endauth
+
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit"
@@ -98,7 +109,6 @@
                 </button>
             </form>
         </div>
-
     </aside>
 
     <!-- Main Content -->
