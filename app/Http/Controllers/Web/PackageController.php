@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\PackageService;
+use App\Services\ProofService; 
 use App\Http\Requests\CreatePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Http\Requests\BulkUpdatePackageRequest;
@@ -12,60 +13,43 @@ use App\Models\Package;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth; 
 
 class PackageController extends Controller
 {
     protected $packageService;
+    protected ProofService $proofService;
 
-    public function __construct(PackageService $packageService)
+    public function __construct(PackageService $packageService, ProofService $proofService)
     {
         $this->packageService = $packageService;
+        $this->proofService = $proofService;
     }
 
-    /**
-     * Track package (public page + form submit in one method)
-     */
     public function track(Request $request)
     {
         $trackingNumber = $request->get('tracking_number');
-
-        // If first time opening /track, just show the form
         if (!$trackingNumber) {
             return view('packages.track', [
-                'trackingNumber' => null,
-                'package' => null,
-                'history' => [],
-                'error' => null,
+                'trackingNumber' => null, 'package' => null, 'history' => [], 'error' => null,
             ]);
         }
-
         try {
             $package = Package::where('tracking_number', $trackingNumber)->first();
-
             if (!$package) {
                 return view('packages.track', [
-                    'trackingNumber' => $trackingNumber,
-                    'package' => null,
-                    'history' => [],
+                    'trackingNumber' => $trackingNumber, 'package' => null, 'history' => [],
                     'error' => "Package not found with tracking number: {$trackingNumber}",
                 ]);
             }
-
             $history = $this->packageService->getPackageHistory($package->package_id);
-
             return view('packages.track', [
-                'trackingNumber' => $trackingNumber,
-                'package' => $package,
-                'history' => $history,
-                'error' => null,
+                'trackingNumber' => $trackingNumber, 'package' => $package, 'history' => $history, 'error' => null,
             ]);
         } catch (\Exception $e) {
             Log::error('Error tracking package: ' . $e->getMessage());
-
             return view('packages.track', [
-                'trackingNumber' => $trackingNumber,
-                'package' => null,
-                'history' => [],
+                'trackingNumber' => $trackingNumber, 'package' => null, 'history' => [],
                 'error' => 'Error tracking package. Please try again.',
             ]);
         }
@@ -127,28 +111,32 @@ class PackageController extends Controller
     }
 
     /**
-     * Display the specified package
+     * Display the specified package.
      */
-    public function show($packageId)
+     public function show($packageId)
     {
         try {
+            Auth::loginUsingId('C004');
             $package = $this->packageService->getPackageWithDetails($packageId);
-            
-            if (!$package) {
-                return redirect()
-                    ->route('packages.index')
-                    ->with('error', 'Package not found.');
+            if (!$package) { return redirect()->route('customer.home')->with('error', 'Package not found.'); }
+            if (Auth::id() !== $package->customer_id) {
+                return redirect()->route('customer.home')->with('error', 'You are not authorized to view this package.');
             }
-
             $history = $this->packageService->getPackageHistory($packageId);
-            $route = $this->packageService->calculateDeliveryRoute($package);
-            
-            return view('packages.show', compact('package', 'history', 'route'));
+            $proof = null;
+            $metadata = [];
+            $verificationDetails = [];
+            if ($package->package_status === 'DELIVERED') {
+                $proof = $this->proofService->getProofByPackageId($packageId);
+                if ($proof) {
+                    $metadata = $this->proofService->getProofMetadata($proof);
+                    $verificationDetails = $this->proofService->verifyProof($proof);
+                }
+            }
+            return view('packages.customer_show', compact('package', 'history', 'proof', 'metadata', 'verificationDetails'));
         } catch (\Exception $e) {
             Log::error('Error showing package: ' . $e->getMessage());
-            return redirect()
-                ->route('packages.index')
-                ->with('error', 'Error loading package details.');
+            return redirect()->route('customer.home')->with('error', 'Error loading package details.');
         }
     }
 
