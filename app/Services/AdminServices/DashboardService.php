@@ -2,55 +2,75 @@
 
 namespace App\Services\AdminServices;
 
-use App\Models\Package;
-use App\Services\Api\PackageService;
-use App\Services\Api\DeliveryDriverService;
-use App\Services\Api\DeliveryService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
-class DashboardService{
 
-    protected PackageService $packageService;
-    protected DeliveryDriverService $deliveryDriverService;
-    protected DeliveryService $deliveryService;
+class DashboardService
+{
+    protected string $baseUrl;
 
-
-    public function __construct(PackageService $packageService, DeliveryDriverService $deliveryDriverService, DeliveryService $deliveryService){
-        $this->packageService = $packageService;
-        $this->deliveryDriverService = $deliveryDriverService;
-        $this->deliveryService = $deliveryService;
+    public function __construct()
+    {
+        // You can make this configurable via .env
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
+
     public function getTotalPackages(): int
     {
-        return $this->packageService->getCountPackage();
-
+        $response = Http::get("{$this->baseUrl}/package/getCountPackage");
+        return $response->json(); // assuming the endpoint returns just an integer
     }
 
-    public function getDriverCountByStatus(string $status): int{
-        return $this->deliveryDriverService->getCountByStatus($status);
+    public function getDriverCountByStatus(string $status): int
+    {
+        $response = Http::get("{$this->baseUrl}/deliveryDriver/getByStatus/{$status}");
 
+    if ($response->failed()) {
+        return 0;
     }
 
-    public function getTotalDeliveries(): int{
-        return $this->deliveryService->getCountDeliveries();
+    $data = $response->json();
 
+    return isset($data['count']) ? (int) $data['count'] : 0;
+    }
+    public function getTotalDeliveries(): int
+    {
+        $response = Http::get("{$this->baseUrl}/delivery/getCountDeliveries");
+         if ($response->failed()) {
+        return 0;
     }
 
-    public function getDeliveryCountByStatus(string $status): int{
-        return $this->deliveryService->getCountByStatus($status);
+    $data = $response->json();
+
+    return isset($data['count']) ? (int) $data['count'] : 0;
     }
 
-    public function recentPackages(int $noOfRecords): Collection{
-        return $this->packageService->getRecentPackages($noOfRecords);
+    public function getDeliveryCountByStatus(string $status): int
+    {
+        $response = Http::get("{$this->baseUrl}/delivery/getCountByStatus/{$status}");
+        return $response->json();
     }
 
-    public function getDrivers(int $page, int $pageSize, string $status): Collection{
-        return $this->deliveryDriverService->getBatch($page, $pageSize, $status);
+    public function recentPackages(int $noOfRecords): Collection
+    {
+        $response = Http::get("{$this->baseUrl}/package/getRecentPackages/{$noOfRecords}");
+        return collect($response->json());
+    }
+
+    public function getDrivers(int $page, int $pageSize, string $status): Collection
+    {
+        $response = Http::get("{$this->baseUrl}/deliveryDriver/getBatch/$page/$pageSize/$status", [
+            'pageSize' => $pageSize,
+            'status'   => $status,
+        ]);
+        return collect($response->json());
     }
 
     public function getPackageCountByStatus(string $status): Collection
-{
-    $rawData = $this->packageService->getCountByStatus($status);
-    return collect($rawData->pluck('count', 'package_status')->toArray());
-}
+    {
+        $response = Http::get("{$this->baseUrl}/package/getCountByStatus/{$status}");
+        $rawData = collect($response->json());
 
+        return collect($rawData->pluck('count', 'package_status')->toArray());
+    }
 }

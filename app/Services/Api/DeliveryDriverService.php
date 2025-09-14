@@ -36,7 +36,7 @@ class DeliveryDriverService
         return DeliveryDriver::findOrFail($id);
     }
 
-    public function getBatch(int $pageNo, int $perPage = 20, string $status)
+    public function getBatch(int $pageNo, int $perPage, string $status)
     {
         $query = DeliveryDriver::query();
 

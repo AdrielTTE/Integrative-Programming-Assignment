@@ -48,4 +48,11 @@ class DeliveryDriverController extends Controller
         $this->deliveryDriverService->delete($driver_id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function getCountByStatus(string $status)
+{
+    $count = $this->deliveryDriverService->getCountByStatus($status);
+    return response()->json(['count' => $count]);
+}
+
 }

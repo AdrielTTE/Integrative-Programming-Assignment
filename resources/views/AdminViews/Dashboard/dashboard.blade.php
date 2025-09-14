@@ -98,12 +98,14 @@
                 </thead>
                 <tbody>
                     @foreach ($recentPackages as $package)
-                        <td>{{ $package->package_id }}</td>
-                        <td>{{ $package->package_status }}</td>
-                        <td>{{ optional($package->customer)->first_name . ' ' . optional($package->customer)->last_name }}
+                        <td>{{ $package['package_id'] }}</td>
+                        <td>{{ $package['package_status'] }}</td>
+                        <td>
+                            {{ ($package['customer']['first_name'] ?? '') . ' ' . ($package['customer']['last_name'] ?? '') }}
                         </td>
 
-                        <td>{{ $package->created_at }}</td>
+
+                        <td>{{ $package['created_at'] }}</td>
                         </tr>
                     @endforeach
 
@@ -118,24 +120,25 @@
             <div class="driver-status">
 
                 @foreach ($driverList as $driver)
-                    @if ($driver->driver_status == 'AVAILABLE')
+                    @if ($driver['driver_status'] === 'AVAILABLE')
                         <div class="driver available">
-                            {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            {{ $driver['first_name'] . ' ' . $driver['last_name'] }} — {{ $driver['driver_status'] }}
                         </div>
-                    @elseif ($driver->driver_status == 'BUSY')
+                    @elseif ($driver['driver_status'] === 'BUSY')
                         <div class="driver busy">
-                            {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            {{ $driver['first_name'] . ' ' . $driver['last_name'] }} — {{ $driver['driver_status'] }}
                         </div>
-                    @elseif($driver->driver_status == 'BUSY')
+                    @elseif ($driver['driver_status'] === 'UNAVAILABLE')
                         <div class="driver unavailable">
-                            {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            {{ $driver['first_name'] . ' ' . $driver['last_name'] }} — {{ $driver['driver_status'] }}
                         </div>
                     @else
                         <div class="driver neutral">
-                            {{ $driver->first_name . ' ' . $driver->last_name }} — {{ $driver->driver_status }}
+                            {{ $driver['first_name'] . ' ' . $driver['last_name'] }} — {{ $driver['driver_status'] }}
                         </div>
                     @endif
                 @endforeach
+
 
             </div>
         </div>

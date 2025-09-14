@@ -67,11 +67,12 @@ Route::prefix('deliveryDetails')->group(function () {
      Route::prefix('deliveryDriver')->group(function () {
         Route::get('/', [DeliveryDriverController::class, 'getAll']);
         Route::post('/', [DeliveryDriverController::class, 'add']);
-        Route::get('/getBatch/{pageNo}', [DeliveryDriverController::class, 'getBatch']);
+        Route::get('/getBatch/{pageNo}/{pageSize}/{status}', [DeliveryDriverController::class, 'getBatch']);
+        Route::get('/getByStatus/{status}', [DeliveryDriverController::class,'getCountByStatus']);
         Route::get('/{driver_id}', [DeliveryDriverController::class, 'get']);
         Route::put('/{driver_id}', [DeliveryDriverController::class, 'update']);
         Route::delete('/{driver_id}', [DeliveryDriverController::class, 'delete']);
-        Route::get('/getByStatus/{status}', [DeliveryDriverController::class,'getCountByStatus']);
+
     });
 
 Route::prefix('logisticHub')->group(function () {
