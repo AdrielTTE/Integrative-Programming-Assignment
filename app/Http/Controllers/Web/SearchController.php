@@ -12,7 +12,6 @@ class SearchController extends Controller
 {
     public function search(Request $request)
     {
-        Auth::loginUsingId('C004');
         $strategy = new CustomerSearchStrategy();
         $searchService = new SearchService($strategy);
         $results = $searchService->executeSearch($request);
