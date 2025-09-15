@@ -95,7 +95,7 @@ do {
 
         Auth::login($user);
 
-        return redirect()->route('driver.driverpage');
+        return redirect()->route('driver.dashboard');
 
     }
 
@@ -108,7 +108,7 @@ do {
 
 
         if (str_starts_with($user->user_id, 'D')) {
-            return redirect()->route('driver.driverpage');
+            return redirect()->route('driver.dashboard');
         }
 
 
