@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ProofOfDelivery;
 use App\Models\Delivery; 
-use App\Models\Package; // Make sure the Package model is imported
+use App\Models\Package; 
 use App\Services\Api\ProofOfDeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -103,7 +103,7 @@ class ProofOfDeliveryController extends Controller
                 $proof->notes = 'Proof approved on ' . now();
                 $delivery->delivery_status = 'DELIVERED';
                 $delivery->actual_delivery_time = now();
-                $package->package_status = 'delivered'; // Update package status
+                $package->package_status = 'delivered';
                 $message = 'Proof has been approved and delivery marked as complete.';
                 break;
 
@@ -111,7 +111,7 @@ class ProofOfDeliveryController extends Controller
                 $proof->verification_status = 'REJECTED';
                 $proof->notes = 'Proof REJECTED. Reason: ' . ($reason ?: 'Not specified.');
                 $delivery->delivery_status = 'FAILED';
-                $package->package_status = 'failed'; // Also update package status on rejection
+                $package->package_status = 'failed'; 
                 $message = 'Proof has been rejected and delivery marked as failed.';
                 break;
 
@@ -128,7 +128,6 @@ class ProofOfDeliveryController extends Controller
         $proof->verified_at = now();
         $proof->verified_by = $request->input('admin_id');
         
-        // Save all changes
         $proof->save();
         $delivery->save();
         $package->save();
