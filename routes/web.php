@@ -78,8 +78,9 @@ Route::prefix('driver')->name('driver.')->group(function () {
     Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('register', [DriverAuthController::class, 'store'])->name('register.submit');
 
-    Route::middleware(['auth','driver'])->group(function () {
-    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('driver.dashboard');
+//Update this
+   Route::middleware(['auth','driver'])->group(function () {
+    Route::get('/package/manage', [PackageStatusController::class, 'driverpage'])->name('driver.driverpage');
 });
 });
 
