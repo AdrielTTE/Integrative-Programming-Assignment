@@ -89,7 +89,7 @@ do {
 
          Auth::login($user);
 
-        return redirect()->route('customer.dashboard');
+        return redirect()->route('customer.search');
 
     }
 
@@ -122,7 +122,7 @@ do {
     // ✅ Safe login
     Auth::login($user);
 
-    return redirect()->route('customer.dashboard');
+    return redirect()->route('customer.search');
 }
 
 
