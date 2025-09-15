@@ -7,10 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const packageByStatus = @json($packageByStatus);
+            const dataForGraph = @json($dataForGraph);
 
-            const labels = Object.keys(packageByStatus);
-            const counts = Object.values(packageByStatus);
+            const labels = Object.keys(dataForGraph);
+            const counts = Object.values(dataForGraph);
 
             const maxCount = Math.max(...counts);
             const yMax = maxCount + 1;
@@ -21,7 +21,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Packages by Status',
+                        label: labels,
                         data: counts,
                         backgroundColor: [
                             '#4CAF50', // Available
@@ -59,23 +59,24 @@
                 <p>Total Packages</p>
             </div>
             <div class="card">
-                <h2>{{ $totalInTransitDeliveries }}</h2>
+
+                <h2>{{ $totalInTransitDeliveries['IN_TRANSIT'] }}</h2>
                 <p>In Transit</p>
             </div>
             <div class="card">
-                <h2>{{ $totalCompletedDeliveries }}</h2>
+                <h2>{{ $totalCompletedDeliveries['DELIVERED'] }}</h2>
                 <p>Completed Deliveries</p>
             </div>
             <div class="card">
-                <h2>{{ $totalPickedUpDeliveries }}</h2>
+                <h2>{{ $totalPickedUpDeliveries['PICKED_UP'] }}</h2>
                 <p>Picked Up Deliveries</p>
             </div>
             <div class="card">
-                <h2>{{ $totalScheduledDeliveries }}</h2>
+                <h2>{{ $totalScheduledDeliveries['SCHEDULED'] }}</h2>
                 <p>Scheduled Deliveries</p>
             </div>
             <div class="card">
-                <h2>{{ $totalFailedDeliveries }}</h2>
+                <h2>{{ $totalFailedDeliveries['FAILED'] }}</h2>
                 <p>Failed Deliveries</p>
             </div>
             <div class="card">
@@ -152,7 +153,7 @@
                 <select name="displayData" id="statusFilter" onchange="this.form.submit()">
                     <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>Packages</option>
                     <option value="deliveries" {{ $displayData === 'deliveries' ? 'selected' : '' }}>Deliveries</option>
-                    <option value="vehicles" {{ $displayData === 'vehicles' ? 'selected' : '' }}>Vehiceles
+                    <option value="vehicles" {{ $displayData === 'vehicles' ? 'selected' : '' }}>Vehicles
                     </option>
                     <option value="customers" {{ $displayData === 'customers' ? 'selected' : '' }}>Customers</option>
 

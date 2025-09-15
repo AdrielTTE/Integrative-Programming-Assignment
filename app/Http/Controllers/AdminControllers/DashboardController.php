@@ -13,18 +13,10 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller{
 protected DashboardService $dashboardService;
-protected PackageService $packageService;
-protected DeliveryDriverService $deliveryDriverService;
 
-public function __construct(PackageService $packageService, DeliveryDriverService $deliveryDriverService, DeliveryService $deliveryService)
+public function __construct()
 {
-    $this->dashboardService = new DashboardService(
-        $packageService,
-        $deliveryDriverService,
-        $deliveryService
-
-
-    );
+    $this->dashboardService = new DashboardService();
 }
 
     public function dashboard(Request $request){

@@ -45,10 +45,12 @@ class DashboardService
     return isset($data['count']) ? (int) $data['count'] : 0;
     }
 
-    public function getDeliveryCountByStatus(string $status): int
+    public function getDeliveryCountByStatus(string $status): Collection
     {
         $response = Http::get("{$this->baseUrl}/delivery/getCountByStatus/{$status}");
-        return $response->json();
+        $rawData = collect($response->json());
+
+        return collect($rawData->pluck('count', 'delivery_status')->toArray());
     }
 
     public function recentPackages(int $noOfRecords): Collection
@@ -89,5 +91,5 @@ class DashboardService
 
         return collect($rawData->pluck('count', 'customer_status')->toArray());
     }
-    
+
 }

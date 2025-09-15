@@ -46,6 +46,7 @@ Route::prefix('customer')->group(function () {
     Route::put('/{customer_id}', [CustomerController::class, 'update']);
     Route::delete('/{customer_id}', [CustomerController::class, 'delete']);
     Route::get('/{customer_id}/proofs', [CustomerController::class, 'getProofs']);
+    Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
 });
 
 Route::prefix('deliveryAssignment')->group(function () {
@@ -137,6 +138,7 @@ Route::prefix('vehicle')->group(function () {
     Route::get('/{vehicle_id}', [VehicleController::class, 'get']);
     Route::put('/{vehicle_id}', [VehicleController::class, 'update']);
     Route::delete('/{vehicle_id}', [VehicleController::class, 'delete']);
+    Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
 });
 
 
