@@ -1,0 +1,80 @@
+/* General styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f7fafc;
+    color: #4a4a4a;
+}
+
+/* Dashboard content styling */
+.dashboard-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+}
+
+th {
+    background-color: #f7fafc;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #f9fafb;
+}
+
+/* Hover effect for rows */
+tbody tr:hover {
+    background-color: #edf2f7;
+}
+
+/* Text colors */
+.text-green-600 {
+    color: #38a169;
+}
+
+.text-red-600 {
+    color: #e53e3e;
+}
+
+.text-blue-500 {
+    color: #4299e1;
+}
+
+/* Link styling */
+a {
+    text-decoration: none;
+    font-weight: bold;
+    color: inherit;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Header Styling */
+header {
+    color: #2d3748;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Section Title */
+h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 16px;
+}

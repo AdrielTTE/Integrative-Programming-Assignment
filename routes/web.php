@@ -14,6 +14,9 @@ use App\Http\Controllers\AdminControllers\SearchController as AdminSearchControl
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
 
+use App\Http\Controllers\DriverControllers\AssignedPackageController;
+
+
 Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
 Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
 
@@ -64,6 +67,11 @@ Route::prefix('driver')->group(function () {
 //Update this
     Route::middleware(['auth','driver'])->group(function () {
     Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('driver.dashboard');
+
+    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('driver.dashboard');
+    Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('driver.assignedPackages');
+
+
 });
 });
 
@@ -72,7 +80,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
 
 
 // Customer Routes
