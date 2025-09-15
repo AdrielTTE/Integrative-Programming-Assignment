@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
+use App\Http\Controllers\DriverControllers\PackageStatusController;
 
 Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
 Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
@@ -62,7 +63,7 @@ Route::prefix('driver')->group(function () {
 
 //Update this
    Route::middleware(['auth','driver'])->group(function () {
-    //Route::get('/package/manage', [DriverPackageController::class, 'packageManagement'])->name('driver.packageManagement');
+    Route::get('/package/manage', [PackageStatusController::class, 'driverpage'])->name('driver.driverpage');
 });
 });
 
