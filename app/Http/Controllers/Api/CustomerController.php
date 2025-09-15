@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\Api\CustomerService;
+use App\Models\ProofOfDelivery;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -49,5 +50,20 @@ class CustomerController extends Controller
     {
         $this->customerService->delete($customer_id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+    /**
+     * Get all proof of delivery records for a specific customer.
+     */
+    public function getProofs(string $customer_id)
+    {
+        // Find proofs where the related package belongs to the customer
+        $proofs = ProofOfDelivery::with(['delivery.package'])
+            ->whereHas('delivery.package', function ($query) use ($customer_id) {
+                $query->where('customer_id', $customer_id);
+            })
+            ->orderBy('timestamp_created', 'desc')
+            ->paginate(10); // Paginate the results
+
+        return response()->json($proofs);
     }
 }

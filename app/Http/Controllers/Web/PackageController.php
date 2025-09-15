@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\PackageService;
+use App\Services\Api\PackageService as ApiPackageService;
 use App\Services\ProofService; 
 use App\Http\Requests\CreatePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Http\Requests\BulkUpdatePackageRequest;
 use App\Http\Requests\SearchPackageRequest;
 use App\Models\Package;
+use App\Models\ProofOfDelivery; 
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -115,16 +117,23 @@ class PackageController extends Controller
      */
      public function show($packageId)
     {
+        
         try {
             $package = $this->packageService->getPackageWithDetails($packageId);
-            if (!$package) { return redirect()->route('customer.home')->with('error', 'Package not found.'); }
+
+            if (!$package) {
+                return redirect()->route('customer.home')->with('error', 'Package not found.');
+            }
+
             if (Auth::id() !== $package->customer_id) {
                 return redirect()->route('customer.home')->with('error', 'You are not authorized to view this package.');
             }
+
             $history = $this->packageService->getPackageHistory($packageId);
             $proof = null;
             $metadata = [];
             $verificationDetails = [];
+
             if ($package->package_status === 'DELIVERED') {
                 $proof = $this->proofService->getProofByPackageId($packageId);
                 if ($proof) {
@@ -271,6 +280,26 @@ class PackageController extends Controller
             Log::error('Error searching packages: ' . $e->getMessage());
             return back()->with('error', 'Error searching packages. Please try again.');
         }
+    }
+    /**
+     * Get the proof of delivery for a specific package.
+     *
+     * @param string $package_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProof(string $package_id)
+    {
+        $proof = ProofOfDelivery::whereHas('delivery', function ($query) use ($package_id) {
+            $query->where('package_id', $package_id);
+        })->first();
+
+        // If no proof is found, return a 404 error.
+        if (!$proof) {
+            return response()->json(['message' => 'Proof of delivery not found for this package.'], 404);
+        }
+
+        // If a proof is found, return it as JSON.
+        return response()->json($proof);
     }
 
     /**

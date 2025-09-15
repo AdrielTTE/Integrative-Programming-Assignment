@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\Api\PackageService as ApiPackageService;
 use App\Services\PackageService;
+
 use App\Http\Requests\CreatePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Http\Requests\BulkUpdatePackageRequest;
 use App\Http\Requests\SearchPackageRequest;
 use App\Models\Package;
+use App\Models\ProofOfDelivery;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -127,6 +129,42 @@ class PackageController extends Controller
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+    /**
+     * Get a single package with all its related details (customer, delivery, driver).
+     *
+     * @param string $package_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWithDetails(string $package_id)
+    {
+        // Eager-load all the relationships the web controller needs
+        $package = Package::with(['customer', 'delivery.driver'])->findOrFail($package_id);
+
+        return response()->json($package);
+    }
+
+    /**
+     * Get the proof of delivery for a specific package.
+     *
+     * @param string $package_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProof(string $package_id)
+    {
+        $package = Package::find($package_id);
+        if (!$package) {
+            return response()->json(['message' => 'Package not found.'], 404);
+        }
+        $proof = ProofOfDelivery::whereHas('delivery', function ($query) use ($package_id) {
+            $query->where('package_id', $package_id);
+        })->first();
+
+        if (!$proof) {
+            return response()->json(['message' => 'Proof of delivery not found for this package.'], 404);
+        }
+
+        return response()->json($proof);
     }
 
     public function getStatistics($period = 'month')

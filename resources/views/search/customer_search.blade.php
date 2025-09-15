@@ -84,7 +84,8 @@
                                 <td class="p-4">{{ $package->tracking_number }}</td>
                                 <td class="p-4">{{ $package->recipient_address }}</td>
                                 <td class="p-4">{{ $package->package_status }}</td>
-                                <td class="p-4">{{ $package->created_at->format('Y-m-d') }}</td>
+                                {{-- THIS IS THE CORRECTED LINE --}}
+                                <td class="p-4">{{ $package->created_at?->format('Y-m-d') ?? 'N/A' }}</td>
                                 <td class="p-4 text-right">
                                     <a
                                         href="{{ route('customer.package.show', ['packageId' => $package->package_id]) }}"

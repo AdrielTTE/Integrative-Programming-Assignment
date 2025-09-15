@@ -3,9 +3,14 @@
 namespace App\Services;
 
 use App\Models\Package;
+use App\Models\Customer;
+use App\Models\Delivery;
+use App\Models\User;
 use App\Repositories\PackageRepository;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\RequestException;
 
 /**
  * Service Layer Pattern Implementation
@@ -14,17 +19,46 @@ use Illuminate\Support\Facades\Log;
 class PackageService
 {
     protected $packageRepository;
+    protected string $baseUrl;
 
     public function __construct(PackageRepository $packageRepository)
     {
         $this->packageRepository = $packageRepository;
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
     public function getPackageWithDetails($id)
     {
-        return $this->packageRepository->findWithRelations($id);
-    }
+        try {
+            $response = Http::get("{$this->baseUrl}/package/{$id}/details")->throw()->json();
 
+            $package = new Package();
+            $package->fill($response);
+
+            if (!empty($response['customer'])) {
+                $package->setRelation('customer', new Customer((array)$response['customer']));
+            }
+
+            if (!empty($response['delivery'])) {
+                $delivery = new Delivery((array)$response['delivery']);
+                if (!empty($response['delivery']['driver'])) {
+                    $delivery->setRelation('driver', new User((array)$response['delivery']['driver']));
+                }
+                $package->setRelation('delivery', $delivery);
+            }
+
+            return $package;
+        } catch (RequestException $e) {
+            // This is the new debugging code. It will catch the 500 error
+            // and throw a new exception with the full HTML error message from the API.
+            $apiErrorBody = $e->response->body();
+            throw new \Exception("API Error during getPackageWithDetails: " . $apiErrorBody);
+        } catch (\Exception $e) {
+            Log::error("Failed to fetch package details for ID {$id}: " . $e->getMessage());
+            return null;
+        }
+    }
+    
     /**
      * Create a new package with business logic
      */

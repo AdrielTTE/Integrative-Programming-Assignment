@@ -9,30 +9,12 @@ use Illuminate\Support\Facades\Auth;
 
 class CustomerSearchStrategy implements SearchStrategyInterface
 {
-    public function search(Request $request): LengthAwarePaginator
+    public function search(Request $request): array
     {
-        $customerId = Auth::id(); 
-        
-        $query = Package::query()->where('customer_id', $customerId);
+        // Build query parameters for the API call, ensuring the customer_id is included.
+        $params = $request->only(['keyword', 'date_from', 'date_to']);
+        $params['customer_id'] = Auth::id();
 
-        if ($request->filled('keyword')) {
-            $keyword = $request->input('keyword');
-            $keywordLike = '%' . $keyword . '%';
-
-            $query->where(function ($q) use ($keyword, $keywordLike) {
-                // MODIFIED: Use an exact match for the tracking number, which is more precise.
-                $q->where('tracking_number', '=', $keyword)
-                  // Keep using LIKE for broader fields like address and contents.
-                  ->orWhere('recipient_address', 'LIKE', $keywordLike)
-                  ->orWhere('package_contents', 'LIKE', $keywordLike);
-            });
-        }
-        
-        // --- FOR DEBUGGING ONLY ---
-        // If the search still fails, uncomment the line below to see the exact SQL query.
-        // Then, copy the query and run it directly in a database tool like phpMyAdmin to test it.
-        // dd($query->toSql());
-
-        return $query->orderBy('created_at', 'desc')->paginate(10);
+        return $params;
     }
 }

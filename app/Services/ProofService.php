@@ -8,19 +8,68 @@ use App\Services\Strategies\Proof\VerificationStrategyInterface;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 
 class ProofService
 {
     protected VerificationStrategyInterface $verificationStrategy;
+    protected string $baseUrl;
 
     public function __construct(VerificationStrategyInterface $verificationStrategy)
     {
         $this->verificationStrategy = $verificationStrategy;
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
+    }
+
+    protected function createPaginator(array $response): LengthAwarePaginator
+    {
+        $items = $response['data'] ?? [];
+        $total = $response['total'] ?? 0;
+        $perPage = $response['per_page'] ?? 15;
+        $currentPage = $response['current_page'] ?? 1;
+
+        $hydratedItems = collect($items)->map(function ($item) {
+            // Manually create model instances to ensure compatibility with Blade templates
+            $proof = new ProofOfDelivery((array)$item);
+            if (!empty($item['delivery'])) {
+                $proof->setRelation('delivery', new \App\Models\Delivery((array)$item['delivery']));
+                if (!empty($item['delivery']['package'])) {
+                    $proof->delivery->setRelation('package', new \App\Models\Package((array)$item['delivery']['package']));
+                }
+            }
+            if (!empty($item['verifier'])) {
+                $proof->setRelation('verifier', new \App\Models\User((array)$item['verifier']));
+            }
+            return $proof;
+        });
+
+        return new LengthAwarePaginator($hydratedItems, $total, $perPage, $currentPage, [
+            'path' => request()->url(),
+            'query' => request()->query(),
+        ]);
     }
 
     public function getProofForAdmin(string $proofId): ProofOfDelivery
     {
-        return ProofOfDelivery::with('delivery.package.customer', 'verifier')->findOrFail($proofId);
+        $response = Http::get("{$this->baseUrl}/proofOfDelivery/{$proofId}")->throw()->json();
+        $proof = new ProofOfDelivery($response);
+        // Manually hydrate relationships if needed by the view
+        if (!empty($response['delivery'])) {
+            $delivery = new \App\Models\Delivery((array)$response['delivery']);
+            if(!empty($response['delivery']['package'])){
+                 $delivery->setRelation('package', new \App\Models\Package((array)$response['delivery']['package']));
+                 if(!empty($response['delivery']['package']['customer'])){
+                     $delivery->package->setRelation('customer', new \App\Models\Customer((array)$response['delivery']['package']['customer']));
+                 }
+            }
+            $proof->setRelation('delivery', $delivery);
+        }
+        if (!empty($response['verifier'])) {
+             $proof->setRelation('verifier', new \App\Models\User((array)$response['verifier']));
+        }
+        return $proof;
     }
 
     public function verifyProof(ProofOfDelivery $proof): array
@@ -28,69 +77,44 @@ class ProofService
         return $this->verificationStrategy->verify($proof);
     }
 
-    public function getProofsAwaitingVerification()
+    public function getProofsAwaitingVerification(): LengthAwarePaginator
     {
-        return ProofOfDelivery::with('delivery.package')
-            ->whereIn('verification_status', ['PENDING', 'NEEDS_RESUBMISSION'])
-            ->orderBy('timestamp_created', 'desc')
-            ->paginate(15);
+        $response = Http::get("{$this->baseUrl}/proofOfDelivery", [
+            'status' => 'awaiting_verification',
+            'page' => request('page', 1)
+        ])->throw()->json();
+
+        return $this->createPaginator($response);
     }
 
-    public function getAllProofsPaginated()
+    public function getAllProofsPaginated(): LengthAwarePaginator
     {
-        return ProofOfDelivery::with(['verifier', 'delivery.package'])
-            ->orderBy('verified_at', 'desc')
-            ->orderBy('timestamp_created', 'desc')
-            ->paginate(20);
+        $response = Http::get("{$this->baseUrl}/proofOfDelivery/history", [
+            'page' => request('page', 1)
+        ])->throw()->json();
+        return $this->createPaginator($response);
     }
 
     public function processVerification(string $proofId, string $action, ?string $reason = null): string
     {
-        $adminId = Auth::id();
-        $proof = ProofOfDelivery::with('delivery')->findOrFail($proofId);
-        $delivery = $proof->delivery;
-        if (!$delivery) {
-            throw new \Exception('Associated delivery not found for this proof.');
-        }
-        switch ($action) {
-            case 'approve':
-                $proof->verification_status = 'APPROVED';
-                $proof->notes = 'Proof approved on ' . now();
-                $delivery->delivery_status = 'DELIVERED';
-                $delivery->actual_delivery_time = now();
-                $message = 'Proof has been approved and delivery marked as complete.';
-                break;
-            case 'reject':
-                $proof->verification_status = 'REJECTED';
-                $proof->notes = 'Proof REJECTED. Reason: ' . ($reason ?: 'Not specified.');
-                $delivery->delivery_status = 'FAILED';
-                $message = 'Proof has been rejected and delivery marked as failed.';
-                break;
-            case 'resubmit':
-                $proof->verification_status = 'NEEDS_RESUBMISSION';
-                $proof->notes = 'PROOF RESUBMISSION REQUESTED. Reason: ' . ($reason ?: 'Not specified.');
-                $message = 'Proof has been rejected and a resubmission has been requested.';
-                break;
-            default:
-                throw new \Exception('Invalid verification action specified.');
-        }
-        $proof->verified_at = now();
-        $proof->verified_by = $adminId;
-        $proof->save();
-        $delivery->save();
-        Auth::logout();
-        return $message;
+        $response = Http::post("{$this->baseUrl}/proofOfDelivery/{$proofId}/process", [
+            'action' => $action,
+            'reason' => $reason,
+            'admin_id' => Auth::id(), // Pass the admin ID to the API
+        ])->throw()->json();
+
+        return $response['message'] ?? 'Action processed successfully.';
     }
 
     public function getProofByPackageId(string $packageId)
     {
-        return ProofOfDelivery::whereHas('delivery', function ($query) use ($packageId) {
-            $query->where('package_id', $packageId);
-        })->first();
+        $response = Http::get("{$this->baseUrl}/package/{$packageId}/proof")->throw()->json();
+        return new ProofOfDelivery($response);
     }
 
     public function getProofMetadata(ProofOfDelivery $proof): array
     {
+        // This logic can remain as it seems to be generating simulated/static data
         if ($proof->proof_type === 'PHOTO') {
             return [
                 'Capture Device' => 'MobileApp v2.1 (Android)',
@@ -101,28 +125,23 @@ class ProofService
         return [];
     }
 
-    public function getProofsForCustomer()
+    public function getProofsForCustomer(): LengthAwarePaginator
     {
         $customerId = Auth::id();
-        return ProofOfDelivery::with(['delivery.package'])
-            ->whereHas('delivery.package', function ($query) use ($customerId) {
-                $query->where('customer_id', $customerId);
-            })
-            ->orderBy('timestamp_created', 'desc')
-            ->paginate(10);
+        $response = Http::get("{$this->baseUrl}/customer/{$customerId}/proofs", [
+             'page' => request('page', 1)
+        ])->throw()->json();
+        
+        return $this->createPaginator($response);
     }
     
-    public function saveCustomerReport(string $proofId, string $reason): ProofOfDelivery
+    public function saveCustomerReport(string $proofId, string $reason): bool
     {
-        $proof = ProofOfDelivery::findOrFail($proofId);
-        $customerId = Auth::id(); 
-        $isOwner = $proof->delivery->package->customer_id === $customerId;
-        if (!$isOwner) {
-            throw new AuthorizationException('You are not authorized to report this proof.');
-        }
-        $proof->notes = "Customer Report ({$customerId}): " . $reason;
-        $proof->verification_status = 'NEEDS_RESUBMISSION';
-        $proof->save();
-        return $proof;
+        $response = Http::post("{$this->baseUrl}/proofOfDelivery/{$proofId}/report", [
+            'reason' => $reason,
+            'customer_id' => Auth::id(),
+        ])->throw();
+
+        return $response->successful();
     }
 }
