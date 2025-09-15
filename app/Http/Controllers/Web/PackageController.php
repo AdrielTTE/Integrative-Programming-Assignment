@@ -116,7 +116,6 @@ class PackageController extends Controller
      public function show($packageId)
     {
         try {
-            Auth::loginUsingId('C004');
             $package = $this->packageService->getPackageWithDetails($packageId);
             if (!$package) { return redirect()->route('customer.home')->with('error', 'Package not found.'); }
             if (Auth::id() !== $package->customer_id) {

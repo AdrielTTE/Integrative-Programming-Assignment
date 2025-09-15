@@ -46,7 +46,6 @@ class ProofService
 
     public function processVerification(string $proofId, string $action, ?string $reason = null): string
     {
-        Auth::loginUsingId('AD001');
         $adminId = Auth::id();
         $proof = ProofOfDelivery::with('delivery')->findOrFail($proofId);
         $delivery = $proof->delivery;
@@ -104,9 +103,7 @@ class ProofService
 
     public function getProofsForCustomer()
     {
-        $customerId = Auth::id() ?? 'C004'; // Hardcoded for testing
-
-        // This query finds proofs where the delivery's package belongs to the customer
+        $customerId = Auth::id();
         return ProofOfDelivery::with(['delivery.package'])
             ->whereHas('delivery.package', function ($query) use ($customerId) {
                 $query->where('customer_id', $customerId);
@@ -118,7 +115,7 @@ class ProofService
     public function saveCustomerReport(string $proofId, string $reason): ProofOfDelivery
     {
         $proof = ProofOfDelivery::findOrFail($proofId);
-        $customerId = Auth::id() ?? 'C001';
+        $customerId = Auth::id(); 
         $isOwner = $proof->delivery->package->customer_id === $customerId;
         if (!$isOwner) {
             throw new AuthorizationException('You are not authorized to report this proof.');
