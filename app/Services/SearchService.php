@@ -5,53 +5,59 @@ namespace App\Services;
 use App\Services\Strategies\Search\SearchStrategyInterface;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use App\Models\Package;
+use Illuminate\Http\Client\RequestException; 
 
 class SearchService
 {
     protected SearchStrategyInterface $searchStrategy;
+    protected string $baseUrl;
 
     public function __construct(SearchStrategyInterface $searchStrategy)
     {
         $this->searchStrategy = $searchStrategy;
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
     public function executeSearch(Request $request): LengthAwarePaginator
     {
-        return $this->searchStrategy->search($request);
-    }
+        $params = $this->searchStrategy->search($request);
+        $params['page'] = $request->input('page', 1);
 
-    /**
-     * Apply bulk operations to a filtered set of package IDs.
-     *
-     * @param array $packageIds
-     * @param string $action
-     * @return array
-     */
+       
+        $response = Http::get("{$this->baseUrl}/search/packages", $params)->throw()->json();
+
+        $items = collect($response['data'] ?? [])->map(function ($item) {
+            $package = new Package();
+            $package->fill((array)$item);
+            return $package;
+        });
+
+        return new LengthAwarePaginator(
+            $items,
+            $response['total'] ?? 0,
+            $response['per_page'] ?? 15,
+            $response['current_page'] ?? 1,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+    }
+    
     public function performBulkAction(array $packageIds, string $action): array
     {
         if (empty($packageIds)) {
             return ['success' => 0, 'failed' => 0, 'message' => 'No packages selected.'];
         }
 
-        // Securely ensure all IDs are valid before processing
-        $validatedIds = DB::table('Package')->whereIn('package_id', $packageIds)->pluck('package_id')->toArray();
-
-        $count = 0;
-        switch ($action) {
-            case 'cancel':
-                $count = Package::whereIn('package_id', $validatedIds)
-                    ->where('package_status', 'PENDING')
-                    ->update(['package_status' => 'CANCELLED']);
-                break;
-            // Add other bulk actions here, e.g., 'archive', 'export'
-        }
-
+        $response = Http::post("{$this->baseUrl}/packages/bulk-action", [
+            'package_ids' => $packageIds,
+            'action' => $action
+        ])->throw()->json();
+        
         return [
-            'success' => $count,
-            'failed' => count($packageIds) - $count,
-            'message' => "Successfully processed {$count} packages."
+            'success' => $response['success_count'] ?? 0,
+            'failed' => $response['failed_count'] ?? count($packageIds),
+            'message' => $response['message'] ?? "Bulk action processed."
         ];
     }
 }

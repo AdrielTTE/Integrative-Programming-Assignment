@@ -1,3 +1,4 @@
+{{-- resources/views/layouts/driverLayout.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -46,8 +47,8 @@
             </div>
             <div class="relative z-10">
                 <i class="fas fa-shipping-fast text-3xl mb-2"></i>
-                <h1 class="text-2xl font-bold">Track Pack</h1>
-                <p class="text-blue-100 text-sm">Professional Package Tracking</p>
+                <h1 class="text-2xl font-bold">Driver Portal</h1>
+                <p class="text-blue-100 text-sm">Delivery Management System</p>
             </div>
         </div>
 
@@ -55,49 +56,39 @@
         <div class="flex-1 overflow-y-auto p-6 space-y-3">
 
             <!-- Qi Yao, put your navigation like this-->
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('driver.dashboard') }}"
+                class="nav-link {{ request()->routeIs('driver.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
-                <span class="font-medium">Dashboard</span>
+                <span class="font-medium">Driver Dashboard</span>
             </a>
+
             <!--END Qi Yao, put your navigation like this-->
-
-
-            <a href="{{ route('packages.track') }}"
-                class="nav-link {{ request()->routeIs('packages.track') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('driver.assignedPackages') }}"
+                class="nav-link {{ request()->routeIs('driver.assignedPackages') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-box w-5 mr-3"></i>
-                <span class="font-medium">Package Management</span>
+                <span class="font-medium">My Assigned Packages</span>
             </a>
             <a href="{{ route('admin.proof.index') }}"
                 class="nav-link {{ request()->routeIs('admin.proof.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-truck w-5 mr-3"></i>
-                <span class="font-medium">Delivery & Proof</span>
+                <span class="font-medium">Update Delivery Status</span>
             </a>
             <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('notifications') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-bell w-5 mr-3"></i>
-                <span class="font-medium">Notifications</span>
+                <span class="font-medium">My Delivery History</span>
             </a>
             <a href="{{ route('admin.search') }}"
                 class="nav-link {{ request()->routeIs('admin.search') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-bell w-5 mr-3"></i>
-                <span class="font-medium">Search Package</span>
+                <span class="font-medium">My Performance</span>
             </a>
             <a href="{{ route('admin.dashboard') }}"
                 class="nav-link {{ request()->routeIs('packages.history') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-history w-5 mr-3"></i>
-                <span class="font-medium">Package History</span>
+                <span class="font-medium">Search Package</span>
             </a>
-            <a href="{{ route('admin.proof.history') }}"
-                class="nav-link {{ request()->routeIs('admin.proof.history') ? 'active' : '' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
-                <i class="fas fa-history w-5 mr-3"></i>
-                <span class="font-medium">Proof History</span>
-            </a>
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('feedback.rating') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
-                <i class="fas fa-star w-5 mr-3"></i>
-                <span class="font-medium">Feedback & Rating</span>
-            </a>
+    
         </div>
 
         <!-- Bottom: user info + logout -->
