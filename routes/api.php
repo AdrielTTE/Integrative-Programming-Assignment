@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\LogisticHubController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\ProofOfDeliveryController;
 use App\Http\Controllers\Api\RouteController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\PackageController as ApiPackageController;
@@ -44,6 +45,7 @@ Route::prefix('customer')->group(function () {
     Route::get('/{customer_id}', [CustomerController::class, 'get']);
     Route::put('/{customer_id}', [CustomerController::class, 'update']);
     Route::delete('/{customer_id}', [CustomerController::class, 'delete']);
+    Route::get('/{customer_id}/proofs', [CustomerController::class, 'getProofs']);
 });
 
 Route::prefix('deliveryAssignment')->group(function () {
@@ -94,13 +96,17 @@ Route::prefix('logisticHub')->group(function () {
         Route::get('/getCountPackage', [PackageController::class,'getCountPackage']);
         Route::get('/getRecentPackages/{noOfRecords}', [PackageController::class,'getRecentPackages']);
         Route::get('/getCountByStatus/{status}', [PackageController::class,'getCountByStatus']);
-
+        Route::get('/{package_id}/details', [PackageController::class, 'getWithDetails']);
+        Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
     });
 
 Route::prefix('proofOfDelivery')->group(function () {
     Route::get('/', [ProofOfDeliveryController::class, 'getAll']);
     Route::post('/', [ProofOfDeliveryController::class, 'add']);
     Route::get('/getBatch/{pageNo}', [ProofOfDeliveryController::class, 'getBatch']);
+    Route::get('/history', [ProofOfDeliveryController::class, 'getHistory']);
+    Route::post('/{proof_id}/process', [ProofOfDeliveryController::class, 'processVerification']);
+    Route::post('/{proof_id}/report', [ProofOfDeliveryController::class, 'customerReport']);
     Route::get('/{proof_id}', [ProofOfDeliveryController::class, 'get']);
     Route::put('/{proof_id}', [ProofOfDeliveryController::class, 'update']);
     Route::delete('/{proof_id}', [ProofOfDeliveryController::class, 'delete']);
@@ -176,3 +182,5 @@ Route::prefix('v1')->group(function () {
         Route::get('/{packageId}/route', [ApiPackageController::class, 'getRoute'])->name('api.packages.route');
     });
 });
+
+Route::get('/search/packages', [SearchController::class, 'searchPackages']);

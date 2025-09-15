@@ -3,15 +3,15 @@
 namespace App\Services\Strategies\Search;
 
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 interface SearchStrategyInterface
 {
     /**
-     * Execute the search strategy.
+     * Prepare the search parameters for an API request.
      *
      * @param Request $request The search request.
-     * @return LengthAwarePaginator The paginated search results.
+     * @return array The array of parameters to be sent to the API.
      */
-    public function search(Request $request): LengthAwarePaginator;
+    // CHANGE THE RETURN TYPE HERE
+    public function search(Request $request): array;
 }
