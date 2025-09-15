@@ -95,29 +95,37 @@ do {
 
     public function login(Request $request): RedirectResponse
 {
-    $credentials = $request->only('email', 'password');
-
-    if (Auth::attempt($credentials)) {
-        $user = Auth::user();
-
-
-        if (str_starts_with($user->user_id, 'C')) {
-            return redirect()->route('customer.dashboard');
-        }
-
-
-        Auth::logout();
-
-        return back()->withErrors([
-        'email' => 'You are not authorized to access the customer system.',
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
     ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    // ❌ No user or wrong role
+    if (!$user || !str_starts_with($user->user_id, 'C')) {
+        return back()->withErrors([
+            'email' => 'You are not authorized to access the customer system.',
+        ]);
     }
 
+    // ❌ Wrong password
+    if (!Hash::check($request->password, $user->password)) {
+        return back()->withErrors([
+            'email' => 'Invalid login credentials.',
+        ]);
+    }
 
-    return back()->withErrors([
-        'email' => 'Invalid login credentials.',
-    ]);
+    // ✅ Optional: clear any previous "intended" URLs
+    session()->forget('url.intended');
+
+    // ✅ Safe login
+    Auth::login($user);
+
+    return redirect()->route('customer.dashboard');
 }
+
+
 }
 
 

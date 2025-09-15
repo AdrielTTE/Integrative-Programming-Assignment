@@ -19,17 +19,17 @@ Route::post('/track', [PackageController::class, 'track'])->name('packages.track
 Route::get('/', function () { return view('welcome'); });
 
 Route::prefix('customer')->group(function () {
-Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('customer.login');
-Route::post('login', [CustomerAuthController::class, 'login']);
-Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('customer.register');
-Route::post('register', [CustomerAuthController::class, 'store'])->name('customer.register.submit');
+    Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('customer.login');
+    Route::post('login', [CustomerAuthController::class, 'login']);
+    Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('customer.register');
+    Route::post('register', [CustomerAuthController::class, 'store'])->name('customer.register.submit');
 
-Route::middleware(['auth','customer'])->group(function () {
-    Route::get('/dashboard', fn() => view('customer.dashboard'))->name('customer.dashboard');
-});
+    Route::middleware(['auth','customer'])->group(function () {
+        Route::get('/dashboard', fn() => view('customer.dashboard'))->name('customer.dashboard');
+    });
 
-Route::get('notification', [CustomerNotificationController::class, 'notification'])
-    ->name('customer.notification');
+    Route::get('notification', [CustomerNotificationController::class, 'notification'])
+        ->name('customer.notification');
 
 });
 
@@ -62,7 +62,7 @@ Route::prefix('driver')->group(function () {
 
 //Update this
    Route::middleware(['auth','driver'])->group(function () {
-    Route::get('/package/manage', [DriverPackageController::class, 'packageManagement'])->name('driver.packageManagement');
+    //Route::get('/package/manage', [DriverPackageController::class, 'packageManagement'])->name('driver.packageManagement');
 });
 });
 

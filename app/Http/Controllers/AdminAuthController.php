@@ -106,7 +106,6 @@ do {
     if (Auth::attempt($credentials)) {
         $user = Auth::user();
 
-
         if (str_starts_with($user->user_id, 'AD')) {
             return redirect()->route('admin.dashboard');
         }
