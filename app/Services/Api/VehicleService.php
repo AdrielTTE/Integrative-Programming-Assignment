@@ -5,6 +5,8 @@ namespace App\Services\Api;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class VehicleService
 {
@@ -64,5 +66,20 @@ class VehicleService
     {
         $vehicle = Vehicle::findOrFail($id);
         $vehicle->delete();
+    }
+
+     public function getCountByStatus(string $status): Collection{
+        if (strtolower($status) === 'all') {
+        return Vehicle::query()
+            ->select('vehicle_status', DB::raw('count(*) as count'))
+            ->groupBy('vehicle_status')
+            ->get()
+            ->collect();
+    }
+     $count = Vehicle::where('vehicle_status', $status)->count();
+
+    return collect([
+        ['vehicle_status' => $status, 'count' => $count]
+    ]);
     }
 }

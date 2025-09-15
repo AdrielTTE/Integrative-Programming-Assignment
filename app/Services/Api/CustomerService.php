@@ -6,6 +6,8 @@ namespace App\Services\Api;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class CustomerService
 {
@@ -66,5 +68,20 @@ class CustomerService
     {
         $customer = Customer::findOrFail($id);
         $customer->delete();
+    }
+
+    public function getCountByStatus(string $status): Collection{
+        if (strtolower($status) === 'all') {
+        return Customer::query()
+            ->select('customer_status', DB::raw('count(*) as count'))
+            ->groupBy('customer_status')
+            ->get()
+            ->collect();
+    }
+     $count = Customer::where('customer_status', $status)->count();
+
+    return collect([
+        ['customer_status' => $status, 'count' => $count]
+    ]);
     }
 }

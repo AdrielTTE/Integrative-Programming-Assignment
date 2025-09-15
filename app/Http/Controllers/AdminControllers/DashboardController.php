@@ -47,16 +47,32 @@ public function __construct(PackageService $packageService, DeliveryDriverServic
         $totalFailedDeliveries = $this->dashboardService->getDeliveryCountByStatus("FAILED");
         $totalPickedUpDeliveries = $this->dashboardService->getDeliveryCountByStatus("PICKED_UP");
         $totalScheduledDeliveries = $this->dashboardService->getDeliveryCountByStatus("SCHEDULED");
-        if($displayData === 'packages'){
-            $packageByStatus = $this->dashboardService->getPackageCountByStatus("all");
-        }else{
-            $packageByStatus = $this->dashboardService->getPackageCountByStatus("all");
-        }
         $recentPackages = $this->dashboardService->recentPackages(5);
         $driverList = $this->dashboardService->getDrivers($page, $pageSize, $driverStatus);
 
+        switch($displayData){
+            case "packages":
+                $dataForGraph = $this->dashboardService->getPackageCountByStatus("all");
+                break;
+
+            case "deliveries":
+                $dataForGraph = $this->dashboardService->getDeliveryCountByStatus("all");
+                break;
+
+            case "vehicles":
+                $dataForGraph = $this->dashboardService->getVehicleCountByStatus("all");
+                break;
+
+            default:
+                $dataForGraph = $this->dashboardService->getCustomerCountByStatus("all");
+                break;
+
+        }
 
 
-        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'packageByStatus', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries'));
+
+
+
+        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'dataForGraph', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries'));
     }
 }

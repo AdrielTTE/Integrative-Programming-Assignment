@@ -66,4 +66,8 @@ class CustomerController extends Controller
 
         return response()->json($proofs);
     }
+
+    public function getCountByStatus(string $status){
+        return response()->json($this->customerService->getCountByStatus($status));
+    }
 }

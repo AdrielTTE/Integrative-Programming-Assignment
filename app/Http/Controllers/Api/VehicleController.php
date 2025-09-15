@@ -48,4 +48,8 @@ class VehicleController extends Controller
         $this->vehicleService->delete($vehicle_id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function getCountByStatus(string $status){
+        return response()->json($this->vehicleService->getCountByStatus($status));
+    }
 }

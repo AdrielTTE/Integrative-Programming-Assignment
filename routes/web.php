@@ -83,7 +83,7 @@ Route::prefix('driver')->name('driver.')->group(function () {
 
 //Update this
     Route::middleware(['auth','driver'])->group(function () {
-    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('driver.dashboard');
+    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
 });
 });
 

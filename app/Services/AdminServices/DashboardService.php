@@ -73,4 +73,21 @@ class DashboardService
 
         return collect($rawData->pluck('count', 'package_status')->toArray());
     }
+
+    public function getVehicleCountByStatus(string $status): Collection
+    {
+        $response = Http::get("{$this->baseUrl}/vehicle/getCountByStatus/{$status}");
+        $rawData = collect($response->json());
+
+        return collect($rawData->pluck('count', 'vehicle_status')->toArray());
+    }
+
+     public function getCustomerCountByStatus(string $status): Collection
+    {
+        $response = Http::get("{$this->baseUrl}/customer/getCountByStatus/{$status}");
+        $rawData = collect($response->json());
+
+        return collect($rawData->pluck('count', 'customer_status')->toArray());
+    }
+    
 }

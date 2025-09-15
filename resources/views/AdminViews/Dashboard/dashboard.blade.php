@@ -150,12 +150,12 @@
             <form method="GET" action="{{ route('admin.dashboard') }}">
                 <label for="statusFilter">Show:</label>
                 <select name="displayData" id="statusFilter" onchange="this.form.submit()">
-                    <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>All</option>
-                    <option value="DELIVERED" {{ $displayData === 'DELIVERED' ? 'selected' : '' }}>Delivered</option>
-                    <option value="IN_TRANSIT" {{ $displayData === 'IN_TRANSIT' ? 'selected' : '' }}>In Transit
+                    <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>Packages</option>
+                    <option value="deliveries" {{ $displayData === 'deliveries' ? 'selected' : '' }}>Deliveries</option>
+                    <option value="vehicles" {{ $displayData === 'vehicles' ? 'selected' : '' }}>Vehiceles
                     </option>
-                    <option value="PENDING" {{ $displayData === 'PENDING' ? 'selected' : '' }}>Pending</option>
-                    <option value="PICKED_UP" {{ $displayData === 'PICKED_UP' ? 'selected' : '' }}>Picked Up</option>
+                    <option value="customers" {{ $displayData === 'customers' ? 'selected' : '' }}>Customers</option>
+
                 </select>
             </form>
 

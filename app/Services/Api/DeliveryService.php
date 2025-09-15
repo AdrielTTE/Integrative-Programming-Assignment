@@ -5,6 +5,8 @@ namespace App\Services\Api;
 use App\Models\Delivery;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DeliveryService
 {
@@ -80,7 +82,18 @@ class DeliveryService
         return Delivery::count();
     }
 
-    public function getCountByStatus(string $status): int{
-        return Delivery::where('delivery_status', $status)->count();
+    public function getCountByStatus(string $status): Collection{
+        if (strtolower($status) === 'all') {
+        return Delivery::query()
+            ->select('delivery_status', DB::raw('count(*) as count'))
+            ->groupBy('delivery_status')
+            ->get()
+            ->collect();
+    }
+     $count = Delivery::where('delivery_status', $status)->count();
+
+    return collect([
+        ['delivery_status' => $status, 'count' => $count]
+    ]);
     }
 }
