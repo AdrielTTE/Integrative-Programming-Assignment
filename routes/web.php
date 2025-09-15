@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\PackageController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
+
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
 
 use App\Http\Controllers\DriverControllers\AssignedPackageController;
@@ -83,7 +84,10 @@ Route::prefix('driver')->name('driver.')->group(function () {
 
 //Update this
     Route::middleware(['auth','driver'])->group(function () {
-    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('driver.dashboard');
+
+
+    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
 });
 });
 
