@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'admin'    => \App\Http\Middleware\AdminCheckMiddleware::class,
             'customer' => \App\Http\Middleware\CustomerCheckMiddleware::class,
+            'driver' => \App\Http\Middleware\DriverCheckMiddleware::class,
         ]);
 
         //

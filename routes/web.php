@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\DriverAuthController;
 use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\Web\PackageController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
@@ -49,6 +50,19 @@ Route::prefix('admin')->group(function () {
     Route::post('/proofs/{proofId}/update-status', [ProofManagementController::class, 'updateStatus'])->name('admin.proof.updateStatus');
     Route::get('/search', [AdminSearchController::class, 'search'])->name('admin.search');
     Route::post('/search/bulk', [AdminSearchController::class, 'bulkAction'])->name('admin.search.bulk');
+});
+});
+
+//Driver routes @Qi Yao put your page here
+Route::prefix('driver')->group(function () {
+    Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('driver.login');
+    Route::post('login', [DriverAuthController::class, 'login'])->name('driver.login');
+    Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('driver.register');
+    Route::post('register', [DriverAuthController::class, 'store'])->name('driver.register.submit');
+
+//Update this
+   Route::middleware(['auth','driver'])->group(function () {
+    Route::get('/package/manage', [DriverPackageController::class, 'packageManagement'])->name('driver.packageManagement');
 });
 });
 
