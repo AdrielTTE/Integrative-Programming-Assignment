@@ -62,9 +62,6 @@ public function __construct()
         }
 
 
-
-
-
         return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'dataForGraph', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries'));
     }
 }

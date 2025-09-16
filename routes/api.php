@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\ProofOfDeliveryController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\PackageController as ApiPackageController;
@@ -25,7 +26,7 @@ use App\Http\Controllers\Api\PackageController as ApiPackageController;
         Route::put('/{delivery_id}', [DeliveryController::class, 'update']);
         Route::delete('/{delivery_id}', [DeliveryController::class, 'delete']);
         Route::get('getCountDeliveries', [DeliveryController::class,'getCountDeliveries']);
-        Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
+        Route::get('/getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
 
     });
 
@@ -46,7 +47,7 @@ Route::prefix('customer')->group(function () {
     Route::put('/{customer_id}', [CustomerController::class, 'update']);
     Route::delete('/{customer_id}', [CustomerController::class, 'delete']);
     Route::get('/{customer_id}/proofs', [CustomerController::class, 'getProofs']);
-    Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
+    Route::get('/getCountByStatus/{status}', [CustomerController::class,'getCountByStatus']);
 });
 
 Route::prefix('deliveryAssignment')->group(function () {
@@ -75,6 +76,17 @@ Route::prefix('deliveryDetails')->group(function () {
         Route::get('/{driver_id}', [DeliveryDriverController::class, 'get']);
         Route::put('/{driver_id}', [DeliveryDriverController::class, 'update']);
         Route::delete('/{driver_id}', [DeliveryDriverController::class, 'delete']);
+
+    });
+
+    Route::prefix('feedback')->group(function () {
+        Route::get('/', [FeedbackController::class, 'getAll']);
+        Route::post('/', [FeedbackController::class, 'add']);
+        Route::get('/getBatch/{pageNo}/{pageSize}', [FeedbackController::class, 'getBatch']);
+        Route::get('/getByRating/{rating}', [FeedbackController::class,'getCountByRating']);
+        Route::get('/{driver_id}', [FeedbackController::class, 'get']);
+        Route::put('/{driver_id}', [FeedbackController::class, 'update']);
+        Route::delete('/{driver_id}', [FeedbackController::class, 'delete']);
 
     });
 
@@ -138,7 +150,7 @@ Route::prefix('vehicle')->group(function () {
     Route::get('/{vehicle_id}', [VehicleController::class, 'get']);
     Route::put('/{vehicle_id}', [VehicleController::class, 'update']);
     Route::delete('/{vehicle_id}', [VehicleController::class, 'delete']);
-    Route::get('getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
+    Route::get('getCountByStatus/{status}', [VehicleController::class,'getCountByStatus']);
 });
 
 
