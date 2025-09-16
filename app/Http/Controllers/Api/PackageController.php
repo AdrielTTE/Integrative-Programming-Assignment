@@ -139,7 +139,7 @@ class PackageController extends Controller
     public function getWithDetails(string $package_id)
     {
         // Eager-load all the relationships the web controller needs
-        $package = Package::with(['customer', 'delivery.driver'])->findOrFail($package_id);
+        $package = Package::with(['user', 'delivery.driver'])->findOrFail($package_id);
 
         return response()->json($package);
     }

@@ -35,8 +35,8 @@ class PackageService
             $package = new Package();
             $package->fill($response);
 
-            if (!empty($response['customer'])) {
-                $package->setRelation('customer', new Customer((array)$response['customer']));
+            if (!empty($response['user'])) {
+                $package->setRelation('user', new User((array)$response['user']));
             }
 
             if (!empty($response['delivery'])) {

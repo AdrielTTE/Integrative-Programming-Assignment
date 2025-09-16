@@ -12,7 +12,7 @@ class CreatePackageCommand extends AbstractPackageCommand
     {
         return DB::transaction(function () {
             // Add customer_id to data
-            $this->data['user_id'] = $this->customerId;
+            $this->data['user_id'] = $this->userId;
             
             // Generate IDs if not provided
             if (empty($this->data['package_id'])) {

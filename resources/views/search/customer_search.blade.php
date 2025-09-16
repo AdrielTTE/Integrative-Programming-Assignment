@@ -88,7 +88,7 @@
                                 <td class="p-4">{{ $package->created_at?->format('Y-m-d') ?? 'N/A' }}</td>
                                 <td class="p-4 text-right">
                                     <a
-                                        href="{{ route('customer.package.show', ['packageId' => $package->package_id]) }}"
+                                        href="{{ route('customer.packages.show', ['packageId' => $package->package_id]) }}"
                                         class="text-blue-500 hover:underline"
                                     >
                                         View

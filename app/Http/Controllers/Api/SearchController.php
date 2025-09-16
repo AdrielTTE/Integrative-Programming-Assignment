@@ -14,7 +14,7 @@ class SearchController extends Controller
      */
     public function searchPackages(Request $request)
     {
-        $query = Package::query()->with(['customer', 'delivery.driver']);
+        $query = Package::query()->with(['user', 'delivery.driver']);
 
         if ($request->filled('keyword')) {
             $keyword = $request->input('keyword');
@@ -25,8 +25,8 @@ class SearchController extends Controller
 
                   // --- THIS IS THE CORRECTED SECTION ---
                   // Search the related Customer's first_name AND last_name
-                  ->orWhereHas('customer', function ($customerQuery) use ($keyword) {
-                      $customerQuery->where('first_name', 'LIKE', "%{$keyword}%")
+                  ->orWhereHas('user', function ($userQuery) use ($keyword) {
+                      $userQuery->where('first_name', 'LIKE', "%{$keyword}%")
                                     ->orWhere('last_name', 'LIKE', "%{$keyword}%");
                   })
 
@@ -43,8 +43,8 @@ class SearchController extends Controller
             $query->where('package.package_status', $request->input('package_status'));
         }
         
-        if ($request->filled('customer_id')) {
-            $query->where('package.customer_id', $request->input('customer_id'));
+        if ($request->filled('user_id')) {
+            $query->where('package.user_id', $request->input('user_id'));
         }
 
         if ($request->filled('date_from')) {

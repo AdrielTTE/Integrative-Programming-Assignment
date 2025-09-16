@@ -14,14 +14,14 @@ class PackageService
 {
     public function getAll()
     {
-        return Package::with(['customer', 'delivery', 'assignment'])->get();
+        return Package::with(['user', 'delivery', 'assignment'])->get();
     }
 
     public function create(array $data)
     {
         $validator = Validator::make($data, [
             'package_id'         => 'required|string|unique:package,package_id',
-            'customer_id'        => 'required|string|exists:customer,customer_id',
+            'user_id'            => 'required|string|exists:user,user_id',
             'tracking_number'    => 'required|string|unique:package,tracking_number',
             'package_weight'     => 'nullable|numeric',
             'package_dimensions' => 'nullable|string|max:100',
@@ -36,17 +36,17 @@ class PackageService
             throw new ValidationException($validator);
         }
 
-        return Package::create($validator->validated())->load(['customer', 'delivery', 'assignment']);
+        return Package::create($validator->validated())->load(['user', 'delivery', 'assignment']);
     }
 
     public function getById(string $id)
     {
-        return Package::with(['customer', 'delivery', 'assignment'])->findOrFail($id);
+        return Package::with(['user', 'delivery', 'assignment'])->findOrFail($id);
     }
 
     public function getPaginated(int $pageNo, int $perPage = 20)
     {
-        return Package::with(['customer', 'delivery', 'assignment'])
+        return Package::with(['user', 'delivery', 'assignment'])
             ->paginate($perPage, ['*'], 'page', $pageNo);
     }
 
@@ -55,7 +55,7 @@ class PackageService
         $pkg = Package::findOrFail($id);
 
         $validator = Validator::make($data, [
-            'customer_id'        => 'sometimes|required|string|exists:customer,customer_id',
+            'user_id'            => 'sometimes|required|string|exists:user,user_id',
             'tracking_number'    => "sometimes|required|string|unique:package,tracking_number,{$id},package_id",
             'package_weight'     => 'nullable|numeric',
             'package_dimensions' => 'nullable|string|max:100',
@@ -72,7 +72,7 @@ class PackageService
 
         $pkg->update($validator->validated());
 
-        return $pkg->load(['customer', 'delivery', 'assignment']);
+        return $pkg->load(['user', 'delivery', 'assignment']);
     }
 
     public function delete(string $id): void
@@ -84,7 +84,7 @@ class PackageService
     // This is the new method containing the query logic
     public function getUnassignedPackages()
     {
-        return Package::with('customer')
+        return Package::with('user')
             ->whereIn('package_status', [Package::STATUS_PENDING, Package::STATUS_PROCESSING])
             ->whereDoesntHave('delivery')
             ->orderBy('created_at', 'asc')
@@ -104,7 +104,7 @@ class PackageService
 
     public function getRecentPackages(int $noOfRecords):Collection
 {
-    return Package::with('customer')
+    return Package::with('user')
                   ->orderBy('created_at', 'desc')
                   ->limit($noOfRecords)
                   ->get();
