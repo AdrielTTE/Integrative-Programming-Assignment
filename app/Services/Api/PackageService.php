@@ -81,10 +81,12 @@ class PackageService
         $pkg->delete();
     }
 
-    public function getCountPackage(): int{
-        return Package::count();
-    }
-
+    public function getCountPackage()
+{
+    return response()->json([
+        'count' => Package::count()
+    ]);
+}
 
 
 

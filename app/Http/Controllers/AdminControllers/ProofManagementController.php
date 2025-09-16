@@ -41,8 +41,13 @@ class ProofManagementController extends Controller
                 return redirect()->route('admin.proof.history')->with('success', $message);
             }
             return redirect()->route('admin.proof.index')->with('success', $message);
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            // Specifically catch API errors to provide better feedback
+            $errorDetails = $e->response->json('message') ?? $e->getMessage();
+            return back()->with('error', 'API Error: Failed to process proof. Details: ' . $errorDetails);
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to process proof: ' . $e->getMessage());
+            // Catch any other general exceptions
+            return back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
     }
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\PackageController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
+use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
 
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
 
@@ -27,6 +28,23 @@ Route::get('/', function () {
 // Public package tracking page
 Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
 Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
+
+
+// Customer Package Management Routes
+Route::middleware(['auth', 'customer'])->prefix('customer')->name('customer.')->group(function () {
+    Route::get('/packages', [CustomerPackageController::class, 'index'])->name('packages.index');
+    Route::get('/packages/create', [PackageController::class, 'create'])->name('packages.create');
+    Route::post('/packages', [PackageController::class, 'store'])->name('packages.store');
+    Route::get('/packages/{packageId}', [PackageController::class, 'show'])->name('packages.show');
+    Route::get('/packages/{packageId}/edit', [PackageController::class, 'edit'])->name('packages.edit');
+    Route::put('/packages/{packageId}', [PackageController::class, 'update'])->name('packages.update');
+    Route::delete('/packages/{packageId}', [PackageController::class, 'destroy'])->name('packages.destroy');
+    Route::post('/packages/undo', [PackageController::class, 'undo'])->name('packages.undo');
+    Route::post('/packages/calculate-cost', [PackageController::class, 'calculateCost'])->name('packages.calculate-cost');
+    Route::resource('packages', PackageController::class);
+    Route::post('/packages/undo', [PackageController::class, 'undo'])->name('packages.undo');
+    Route::post('/packages/calculate-cost', [PackageController::class, 'calculateCost'])->name('packages.calculate-cost');
+});
 
 
 /*Customer Routes*/
