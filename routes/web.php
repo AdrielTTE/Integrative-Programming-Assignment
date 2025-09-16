@@ -7,6 +7,7 @@ use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\DriverAuthController;
 use App\Http\Controllers\AdminControllers\DashboardController;
+use App\Http\Controllers\AdminControllers\FeedbackController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
 use App\Http\Controllers\Web\PackageController;
@@ -30,10 +31,6 @@ Route::get('/track', [PackageController::class, 'track'])->name('packages.track'
 Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
 
 
-// Customer Package Management Routes
-Route::middleware(['auth', 'customer'])->prefix('customer')->name('customer.')->group(function () {
-
-});
 
 
 /*Customer Routes*/
@@ -47,7 +44,6 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::middleware(['auth', 'customer'])->group(function () {
         Route::get('/dashboard', fn() => redirect()->route('customer.search'))->name('dashboard');
         Route::get('/home', fn() => redirect()->route('customer.search'))->name('home');
-
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
 
         // Search, Package, and Proof routes are now correctly protected
@@ -84,6 +80,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
+        // Assign Packages
+        Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
+        
+        // Admin Package Creation and Assignment
+        Route::get('/packages/create', [AdminPackageController::class, 'create'])->name('packages.create');
+        Route::post('/packages', [AdminPackageController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{packageId}/assign', [AdminPackageController::class, 'showAssignForm'])->name('packages.show_assign_form');
+        Route::post('/packages/{packageId}/assign', [AdminPackageController::class, 'assignDriver'])->name('packages.assign_driver');
+
         // Proof Management
         Route::get('/proofs', [ProofManagementController::class, 'index'])->name('proof.index');
         Route::get('/proofs/history', [ProofManagementController::class, 'history'])->name('proof.history');
@@ -93,6 +98,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Admin Search
         Route::get('/search', [AdminSearchController::class, 'search'])->name('search');
         Route::post('/search/bulk', [AdminSearchController::class, 'bulkAction'])->name('search.bulk');
+
+        Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
     });
 });
 

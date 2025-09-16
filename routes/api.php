@@ -82,7 +82,7 @@ Route::prefix('deliveryDetails')->group(function () {
     Route::prefix('feedback')->group(function () {
         Route::get('/', [FeedbackController::class, 'getAll']);
         Route::post('/', [FeedbackController::class, 'add']);
-        Route::get('/getBatch/{pageNo}/{pageSize}', [FeedbackController::class, 'getBatch']);
+        Route::get('/getBatch', [FeedbackController::class, 'getBatch']);
         Route::get('/getByRating/{rating}', [FeedbackController::class,'getCountByRating']);
         Route::get('/{driver_id}', [FeedbackController::class, 'get']);
         Route::put('/{driver_id}', [FeedbackController::class, 'update']);
