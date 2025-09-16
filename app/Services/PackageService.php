@@ -63,7 +63,7 @@ class PackageService
      * Create a new package with business logic
      */
     public function createPackage(array $data)
-    {
+    {        
         // Generate IDs if not provided
         if (!isset($data['package_id'])) {
             $data['package_id'] = Package::generatePackageId();

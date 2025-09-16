@@ -21,7 +21,7 @@ class ModifyPackageCommand extends AbstractPackageCommand
     {
         return DB::transaction(function () {
             $package = Package::where('package_id', $this->packageId)
-                             ->where('customer_id', $this->customerId)
+                             ->where('user_id', $this->userId)
                              ->first();
 
             if (!$package) {
@@ -49,7 +49,7 @@ class ModifyPackageCommand extends AbstractPackageCommand
 
     public function getDescription(): string
     {
-        return "Modify package {$this->packageId} for customer: {$this->customerId}";
+        return "Modify package {$this->packageId} for user: {$this->userId}";
     }
 
     public function canUndo(): bool

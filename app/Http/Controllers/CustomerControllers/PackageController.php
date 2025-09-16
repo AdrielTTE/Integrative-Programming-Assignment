@@ -36,9 +36,9 @@ class PackageController extends Controller
     public function index(Request $request)
     {
         $statuses = Package::getStatuses();
-        $customerId = Auth::id();
+        $userId = Auth::id(); // <-- Renamed for clarity
 
-        $packages = Package::where('customer_id', $customerId)
+        $packages = Package::where('user_id', $userId) // <-- CHANGE HERE
                           ->with(['delivery.driver'])
                           ->when($request->status, function ($query, $status) {
                               return $query->where('package_status', $status);
@@ -84,7 +84,7 @@ class PackageController extends Controller
     public function show(string $packageId)
     {
         $package = Package::where('package_id', $packageId)
-                         ->where('customer_id', Auth::id())
+                         ->where('user_id', Auth::id()) // <-- CHANGE HERE
                          ->with(['delivery.driver'])
                          ->firstOrFail();
 
@@ -99,7 +99,7 @@ class PackageController extends Controller
     public function edit(string $packageId)
     {
         $package = Package::where('package_id', $packageId)
-                         ->where('customer_id', Auth::id())
+                         ->where('user_id', Auth::id()) // <-- CHANGE HERE
                          ->firstOrFail();
 
         if (!$package->canBeEdited()) {

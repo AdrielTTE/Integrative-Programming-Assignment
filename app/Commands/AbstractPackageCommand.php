@@ -11,18 +11,18 @@ abstract class AbstractPackageCommand implements PackageCommandInterface
     protected PackageService $packageService;
     protected array $data;
     protected mixed $result;
-    protected string $customerId;
+    protected ?string $userId;
 
     public function __construct(PackageService $packageService, array $data = [])
     {
         $this->packageService = $packageService;
         $this->data = $data;
-        $this->customerId = Auth::id();
+        $this->userId = Auth::id();
     }
 
     public function canUndo(): bool
     {
-        return false; // Override in subclasses if undo is supported
+        return false; 
     }
 
     public function undo(): mixed
@@ -30,10 +30,13 @@ abstract class AbstractPackageCommand implements PackageCommandInterface
         throw new \Exception("Undo not supported for this command");
     }
 
+    /**
+     * --- THIS METHOD IS NOW CORRECTED ---
+     */
     protected function logOperation(string $operation, mixed $result): void
     {
         Log::info("Customer Package Operation", [
-            'customer_id' => $this->customerId,
+            'user_id' => $this->userId,
             'operation' => $operation,
             'command' => static::class,
             'result' => $result

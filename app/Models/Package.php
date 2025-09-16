@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Customer;
+// Import the User model
+use App\Models\User; 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB; // Import DB facade
+use Illuminate\Support\Facades\DB;
 
 
 class Package extends Model
@@ -35,10 +36,11 @@ class Package extends Model
 
     /**
      * The attributes that are mass assignable.
+     * --- MODIFIED ---
      */
     protected $fillable = [
         'package_id',
-        'customer_id',
+        'user_id', // Changed from 'customer_id'
         'tracking_number',
         'package_weight',
         'package_dimensions',
@@ -130,12 +132,13 @@ class Package extends Model
      */
 
     /**
-     * Get the customer that owns the package.
+     * Get the user that owns the package.
+     * --- MODIFIED ---
      */
-    public function customer()
-{
-    return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
-}
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
 
 
     /**
@@ -182,11 +185,12 @@ class Package extends Model
     }
 
     /**
-     * Scope a query to only include packages for a specific customer.
+     * Scope a query to only include packages for a specific user.
+     * --- MODIFIED ---
      */
-    public function scopeForCustomer($query, $customerId)
+    public function scopeForUser($query, $userId)
     {
-        return $query->where('customer_id', $customerId);
+        return $query->where('user_id', $userId);
     }
 
     /**
