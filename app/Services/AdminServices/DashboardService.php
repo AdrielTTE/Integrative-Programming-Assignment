@@ -25,8 +25,14 @@ class DashboardService
 
     $data = $response->json();
 
-    return isset($data['count']) ? (int) $data['count'] : 0;
+    
+    if (isset($data['original']['count'])) {
+        return (int) $data['original']['count'];
+    }
+
+    return 0;
 }
+
 
 
     public function getDriverCountByStatus(string $status): int

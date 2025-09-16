@@ -102,6 +102,7 @@ Route::prefix('logisticHub')->group(function () {
      Route::prefix('package')->group(function () {
         Route::get('/', [PackageController::class, 'getAll']);
         Route::post('/', [PackageController::class, 'add']);
+        Route::get('/unassigned', [PackageController::class, 'getUnassignedPackages']); // This line is added
         Route::get('/getBatch/{pageNo}', [PackageController::class, 'getBatch']);
         Route::get('/getByPackageID/{package_id}', [PackageController::class, 'get']);
         Route::put('/{package_id}', [PackageController::class, 'update']);

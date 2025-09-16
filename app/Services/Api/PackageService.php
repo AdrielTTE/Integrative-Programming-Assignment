@@ -80,6 +80,16 @@ class PackageService
         $pkg = Package::findOrFail($id);
         $pkg->delete();
     }
+    
+    // This is the new method containing the query logic
+    public function getUnassignedPackages()
+    {
+        return Package::with('customer')
+            ->whereIn('package_status', [Package::STATUS_PENDING, Package::STATUS_PROCESSING])
+            ->whereDoesntHave('delivery')
+            ->orderBy('created_at', 'asc')
+            ->paginate(15);
+    }
 
     public function getCountPackage()
 {

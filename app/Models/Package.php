@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB; // Import DB facade
+
 
 class Package extends Model
 {
@@ -233,12 +235,22 @@ class Package extends Model
      */
     public static function generatePackageId()
     {
-        do {
-            $packageId = 'PKG' . date('Ymd') . strtoupper(substr(md5(uniqid()), 0, 6));
-        } while (self::where('package_id', $packageId)->exists());
+        // Find the highest existing package number
+        $lastPackage = DB::table('package')->where('package_id', 'like', 'P%')->orderBy('package_id', 'desc')->first();
+        
+        if ($lastPackage) {
+            // Extract the number, increment it
+            $number = (int)substr($lastPackage->package_id, 1);
+            $nextNumber = $number + 1;
+        } else {
+            // Start from 1 if no packages exist
+            $nextNumber = 1;
+        }
 
-        return $packageId;
+        // Format it with leading zeros
+        return 'P' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
+
 
     /**
      * Generate a unique tracking number
@@ -414,6 +426,7 @@ class Package extends Model
 
         return $locations[$this->package_status] ?? 'Unknown';
     }
+    
 
     /**
      * Get status color for UI
