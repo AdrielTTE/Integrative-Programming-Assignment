@@ -21,13 +21,13 @@ class PackageController extends Controller
     private PackageService $packageService;
 
     public function __construct(
-        PackageCommandInvoker $commandInvoker, 
+        PackageCommandInvoker $commandInvoker,
         PackageService $packageService
     ) {
         $this->commandInvoker = $commandInvoker;
         $this->packageService = $packageService;
-        $this->middleware('auth');
-        $this->middleware('customer');
+        //$this->middleware('auth');
+        //$this->middleware('customer');
     }
 
     /**
@@ -36,7 +36,7 @@ class PackageController extends Controller
     public function index(Request $request)
     {
         $customerId = Auth::id();
-        
+
         $packages = Package::where('customer_id', $customerId)
                           ->with(['delivery.driver'])
                           ->when($request->status, function ($query, $status) {
@@ -118,11 +118,11 @@ class PackageController extends Controller
     {
         try {
             $command = new ModifyPackageCommand(
-                $this->packageService, 
-                $packageId, 
+                $this->packageService,
+                $packageId,
                 $request->validated()
             );
-            
+
             $package = $this->commandInvoker->execute($command);
 
             return redirect()
@@ -162,7 +162,7 @@ class PackageController extends Controller
     {
         try {
             $result = $this->commandInvoker->undo();
-            
+
             return back()
                 ->with('success', 'Last operation has been undone successfully!');
 
