@@ -16,10 +16,18 @@ class DashboardService
     }
 
     public function getTotalPackages(): int
-    {
-        $response = Http::get("{$this->baseUrl}/package/getCountPackage");
-        return $response->json(); // assuming the endpoint returns just an integer
+{
+    $response = Http::get("{$this->baseUrl}/package/getCountPackage");
+
+    if ($response->failed()) {
+        return 0;
     }
+
+    $data = $response->json();
+
+    return isset($data['count']) ? (int) $data['count'] : 0;
+}
+
 
     public function getDriverCountByStatus(string $status): int
     {

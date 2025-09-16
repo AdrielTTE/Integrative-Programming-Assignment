@@ -91,10 +91,12 @@ class PackageService
             ->paginate(15);
     }
 
-    public function getCountPackage(): int{
-        return Package::count();
-    }
-
+    public function getCountPackage()
+{
+    return response()->json([
+        'count' => Package::count()
+    ]);
+}
 
 
 

@@ -34,6 +34,11 @@
                 },
                 options: {
                     responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: true,
@@ -146,7 +151,7 @@
 
         <!-- Package Status Chart Placeholder -->
         <div class="section">
-            <h3>Package Status Summary</h3>
+            <h3>Status Summary</h3>
             </br>
             <form method="GET" action="{{ route('admin.dashboard') }}">
                 <label for="statusFilter">Show:</label>
