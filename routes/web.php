@@ -17,7 +17,8 @@ use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
 
 use App\Http\Controllers\DriverControllers\AssignedPackageController;
-
+use App\Http\Controllers\AdminControllers\AdminPackageController; // Import new controller
+use App\Http\Controllers\AdminControllers\PackageAssignmentController;
 
 /*Public Routes (No Login Required)*/
 Route::get('/', function () {
@@ -62,6 +63,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
+        // Assign Packages
+        Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
+        
+        // Admin Package Creation and Assignment
+        Route::get('/packages/create', [AdminPackageController::class, 'create'])->name('packages.create');
+        Route::post('/packages', [AdminPackageController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{packageId}/assign', [AdminPackageController::class, 'showAssignForm'])->name('packages.show_assign_form');
+        Route::post('/packages/{packageId}/assign', [AdminPackageController::class, 'assignDriver'])->name('packages.assign_driver');
 
         // Proof Management
         Route::get('/proofs', [ProofManagementController::class, 'index'])->name('proof.index');

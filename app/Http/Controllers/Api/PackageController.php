@@ -165,6 +165,7 @@ class PackageController extends Controller
         }
 
         return response()->json($proof);
+        
     }
 
     public function getStatistics($period = 'month')
@@ -216,4 +217,12 @@ class PackageController extends Controller
     public function getCountByStatus(string $status){
         return response()->json($this->apiPackageService->getCountByStatus($status));
     }
+    
+    // This is the new method to handle the request
+    public function getUnassignedPackages()
+    {
+        $packages = $this->apiPackageService->getUnassignedPackages();
+        return response()->json($packages);
+    }
+    
 }

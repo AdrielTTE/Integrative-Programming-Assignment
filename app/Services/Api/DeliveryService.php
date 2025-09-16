@@ -17,17 +17,18 @@ class DeliveryService
 
     public function create(array $data)
     {
+        // Corrected table names in 'exists' rules
         $validator = Validator::make($data, [
             'delivery_id'             => 'required|string|unique:delivery,delivery_id',
-            'package_id'              => 'required|string|exists:packages,package_id',
-            'driver_id'               => 'required|string|exists:delivery_drivers,driver_id',
-            'vehicle_id'              => 'required|string|exists:vehicles,vehicle_id',
-            'route_id'                => 'required|string|exists:routes,route_id',
+            'package_id'              => 'required|string|exists:package,package_id',
+            'driver_id'               => 'required|string|exists:deliverydriver,driver_id',
+            'vehicle_id'              => 'required|string|exists:vehicle,vehicle_id',
+            'route_id'                => 'nullable|string|exists:route,route_id',
             'pickup_time'             => 'required|date',
             'estimated_delivery_time' => 'required|date|after_or_equal:pickup_time',
             'actual_delivery_time'    => 'nullable|date',
             'delivery_status'         => 'required|string',
-            'delivery_cost'           => 'required|numeric',
+            'delivery_cost'           => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -51,16 +52,17 @@ class DeliveryService
     {
         $delivery = Delivery::findOrFail($id);
 
+        // Corrected table names in 'exists' rules
         $validator = Validator::make($data, [
-            'package_id'              => 'sometimes|required|string|exists:packages,package_id',
-            'driver_id'               => 'sometimes|required|string|exists:delivery_drivers,driver_id',
-            'vehicle_id'              => 'sometimes|required|string|exists:vehicles,vehicle_id',
-            'route_id'                => 'sometimes|required|string|exists:routes,route_id',
+            'package_id'              => 'sometimes|required|string|exists:package,package_id',
+            'driver_id'               => 'sometimes|required|string|exists:deliverydriver,driver_id',
+            'vehicle_id'              => 'sometimes|required|string|exists:vehicle,vehicle_id',
+            'route_id'                => 'nullable|string|exists:route,route_id',
             'pickup_time'             => 'sometimes|required|date',
             'estimated_delivery_time' => 'sometimes|required|date|after_or_equal:pickup_time',
             'actual_delivery_time'    => 'nullable|date',
             'delivery_status'         => 'sometimes|required|string',
-            'delivery_cost'           => 'sometimes|required|numeric',
+            'delivery_cost'           => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
