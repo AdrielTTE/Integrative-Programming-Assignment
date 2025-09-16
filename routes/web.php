@@ -52,7 +52,7 @@ Route::get('/', function () {
 /*                                 CUSTOMER ROUTES                                   */
 /* ================================================================================= */
 Route::prefix('customer')->name('customer.')->group(function () {
-    
+
     // --- Guest routes for customer login & registration ---
     Route::middleware('guest')->group(function() {
         Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
@@ -63,7 +63,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
-        
+
         Route::get('/dashboard', fn() => redirect()->route('customer.packages.index'))->name('dashboard');
         Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
@@ -89,7 +89,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 /*                                  ADMIN ROUTES                                     */
 /* ================================================================================= */
 Route::prefix('admin')->name('admin.')->group(function () {
-    
+
     // --- Guest routes for admin login ---
     Route::middleware('guest')->group(function() {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
@@ -124,7 +124,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 /*                                  DRIVER ROUTES                                    */
 /* ================================================================================= */
 Route::prefix('driver')->name('driver.')->group(function () {
-    
+
     // --- Guest routes for driver login ---
     Route::middleware('guest')->group(function() {
         Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');

@@ -59,6 +59,8 @@
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
+
+            {{--
             <a href="{{ route('packages.index') }}"
                 class="nav-link {{ request()->routeIs('packages.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-box w-5 mr-3"></i>
@@ -70,6 +72,7 @@
                 <i class="fas fa-tasks w-5 mr-3"></i>
                 <span class="font-medium">Assign Packages</span>
             </a>
+        --}}
 
             <a href="{{ route('admin.proof.index') }}"
                 class="nav-link {{ request()->routeIs('admin.proof.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
