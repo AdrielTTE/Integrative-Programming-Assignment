@@ -2,7 +2,12 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">Package Search</h1>
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Package Management</h1>
+        <a href="{{ route('admin.packages.create') }}" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600">
+            + Create New Package
+        </a>
+    </div>
 
     <!-- Search Form -->
     <div class="bg-white p-6 rounded-lg shadow-md mb-6">

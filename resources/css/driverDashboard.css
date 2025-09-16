@@ -1,131 +1,130 @@
-/* resources/css/driverPage.css */
+body {
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+    color: #333;
+}
 
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
+header {
+    background-color: #2e3a59;
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.5rem;
+}
+
+.dashboard {
+    padding: 2rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 20px;
+.card h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.8rem;
 }
 
-.table {
+.card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.section h3 {
+    margin-top: 0;
+}
+
+table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin-top: 1rem;
 }
 
-.table th,
-.table td {
-    padding: 12px;
+table th,
+table td {
+    padding: 0.75rem;
     text-align: left;
     border-bottom: 1px solid #ddd;
 }
 
-.table th {
-    background-color: #27ae60;
-    color: #fff;
-}
-
-.table tr:nth-child(even) {
-    background-color: #f8f9fa;
-}
-
-.table tr:hover {
-    background-color: #e9ecef;
-}
-
-.actions {
+.driver-status {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.actions select {
-    padding: 8px;
-    border: 1px solid #ddd;
+.driver {
+    padding: 0.75rem;
+    background: #f9fafc;
+    border-left: 5px solid #3b82f6;
     border-radius: 4px;
 }
 
-.actions button {
-    padding: 8px 15px;
-    background-color: #27ae60;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.driver.available {
+    border-color: #10b981;
+}
+.driver.busy {
+    border-color: #f59e0b;
 }
 
-.actions button:hover {
-    background-color: #219653;
+.driver.neutral {
+    border-color: #5d5e5e;
+}
+.driver.unavailable {
+    border-color: #ef4444;
 }
 
-.view-details,
-.view-history {
-    display: inline-block;
-    padding: 8px 15px;
-    background-color: #3498db;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 4px;
+@media (max-width: 768px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
 }
 
-.view-details:hover,
-.view-history:hover {
-    background-color: #2980b9;
+.statusFilter {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 200px;
+    outline: none;
 }
 
-.filter-form {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 10px;
+.statusFilter:focus {
+    border-color: #4f46e5; /* indigo-600 */
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-.filter-form select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+select {
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
 }
 
-.filter-form button {
-    padding: 8px 15px;
-    background-color: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.filter-form button:hover {
-    background-color: #2980b9;
-}
-
-.alert {
-    padding: 10px;
-    margin-bottom: 20px;
-    border-radius: 4px;
-    text-align: center;
-}
-
-.alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.inline-form {
-    display: inline-flex;
-    gap: 10px;
-    align-items: center;
+select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    outline: none;
 }
