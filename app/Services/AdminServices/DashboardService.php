@@ -25,7 +25,7 @@ class DashboardService
 
     $data = $response->json();
 
-    // Adjusted for "original" wrapper
+    
     if (isset($data['original']['count'])) {
         return (int) $data['original']['count'];
     }
