@@ -80,7 +80,7 @@ class PackageService
         $pkg = Package::findOrFail($id);
         $pkg->delete();
     }
-    
+
     // This is the new method containing the query logic
     public function getUnassignedPackages()
     {
@@ -93,9 +93,11 @@ class PackageService
 
     public function getCountPackage()
 {
+    $count = Package::count();
+
     return response()->json([
-        'count' => Package::count()
-    ]);
+        'count' => $count
+    ], 200);
 }
 
 

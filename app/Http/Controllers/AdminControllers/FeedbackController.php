@@ -16,8 +16,15 @@ public function __construct()
     $this->feedbackService = new FeedbackAndRatingService();
 }
 
-    public function feedbac(Request $request){
+    public function feedback(Request $request)
+{
+    $page     = (int) $request->input('page', 1);
+    $pageSize = (int) $request->input('pageSize', 10);
+    $rating   = $request->input('rating', null); // default = all
 
-        return view('AdminViews.FeedbackAndRating.dashboard', );
-    }
+    $feedbacks = $this->feedbackService->getBatch($page, $pageSize, $rating);
+
+    return view('AdminViews.feedback', compact('feedbacks'));
+}
+
 }

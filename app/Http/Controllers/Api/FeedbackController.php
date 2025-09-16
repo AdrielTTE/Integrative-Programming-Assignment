@@ -32,10 +32,23 @@ class FeedbackController extends Controller
         return response()->json($this->feedbackService->getById($feedback_id));
     }
 
-    public function getBatch(int $pageNo, int $pageSize)
-    {
-        return response()->json($this->feedbackService->getBatch($pageNo, $pageSize));
+    public function getBatch(Request $request)
+{
+    $page     = (int) $request->input('page', 1);
+    $pageSize = (int) $request->input('pageSize', 10);
+    $rating   = $request->input('rating', null);
+
+    // Normalize: if rating is "null" or "all", treat it as no filter
+    if ($rating === 'null' || $rating === 'all') {
+        $rating = null;
+    } elseif (!is_null($rating)) {
+        $rating = (int) $rating;
     }
+
+    return $this->feedbackService->getBatch($page, $pageSize, $rating);
+}
+
+
 
     public function update(Request $request, $feedback_id)
     {
