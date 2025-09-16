@@ -35,6 +35,7 @@ class PackageController extends Controller
      */
     public function index(Request $request)
     {
+        $statuses = Package::getStatuses();
         $customerId = Auth::id();
 
         $packages = Package::where('customer_id', $customerId)
@@ -45,7 +46,7 @@ class PackageController extends Controller
                           ->orderBy('created_at', 'desc')
                           ->paginate(15);
 
-        return view('customer.packages.index', compact('packages'));
+        return view('customer.packages.index', compact('packages', 'statuses'));
     }
 
     /**

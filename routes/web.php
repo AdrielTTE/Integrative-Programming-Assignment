@@ -2,85 +2,103 @@
 
 use Illuminate\Support\Facades\Route;
 
+// ---------------------------------------------------------------------------------
+// CONTROLLER IMPORTS WITH ALIASES TO PREVENT NAMING CONFLICTS
+// ---------------------------------------------------------------------------------
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\DriverAuthController;
+
+// Admin Controllers
 use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
-use App\Http\Controllers\Web\PackageController;
-use App\Http\Controllers\Web\ProofController as WebProofController;
-use App\Http\Controllers\Web\SearchController as WebSearchController;
+
+// Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
 
+// Driver Controllers
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
-
 use App\Http\Controllers\DriverControllers\AssignedPackageController;
 
+// General Web Controllers
+use App\Http\Controllers\Web\PackageController as WebPackageController;
+use App\Http\Controllers\Web\ProofController as WebProofController;
+use App\Http\Controllers\Web\SearchController as WebSearchController;
 
-/*Public Routes (No Login Required)*/
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+/* ================================================================================= */
+/*                            PUBLIC ROUTES (No Login Required)                      */
+/* ================================================================================= */
+
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Public package tracking page
-Route::get('/track', [PackageController::class, 'track'])->name('packages.track');
-Route::post('/track', [PackageController::class, 'track'])->name('packages.track.submit');
+// Public package tracking page (uses the general WebPackageController)
+Route::get('/track', [WebPackageController::class, 'track'])->name('packages.track');
+Route::post('/track', [WebPackageController::class, 'track'])->name('packages.track.submit');
 
 
-// Customer Package Management Routes
-Route::middleware(['auth', 'customer'])->prefix('customer')->name('customer.')->group(function () {
-
-});
-
-
-/*Customer Routes*/
+/* ================================================================================= */
+/*                                 CUSTOMER ROUTES                                   */
+/* ================================================================================= */
 Route::prefix('customer')->name('customer.')->group(function () {
-    // Guest routes for customer login & registration
-    Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [CustomerAuthController::class, 'login']);
-    Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('register', [CustomerAuthController::class, 'store'])->name('register.submit');
+    
+    // --- Guest routes for customer login & registration ---
+    Route::middleware('guest')->group(function() {
+        Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [CustomerAuthController::class, 'login']);
+        Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('register', [CustomerAuthController::class, 'store'])->name('register.submit');
+    });
 
+    // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
-        Route::get('/dashboard', fn() => redirect()->route('customer.search'))->name('dashboard');
-        Route::get('/home', fn() => redirect()->route('customer.search'))->name('home');
+        
+        Route::get('/dashboard', fn() => redirect()->route('customer.packages.index'))->name('dashboard');
+        Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
-        Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
+        // --- Package Management Routes (All correctly point to CustomerPackageController) ---
+        Route::resource('packages', CustomerPackageController::class)
+             ->parameters(['packages' => 'packageId']); // Ensures URLs use {packageId}
 
-        // Search, Package, and Proof routes are now correctly protected
+        // --- Other Custom Package Routes ---
+        Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
+        // Note: The calculate-cost route was in your original file but missing from the controller. Add the method if needed.
+        // Route::post('/packages/calculate-cost', [CustomerPackageController::class, 'calculateCost'])->name('packages.calculate-cost');
+
+        // --- Other Customer-Specific Routes ---
         Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('search');
-        Route::get('/my-packages/{packageId}', [PackageController::class, 'show'])->name('package.show');
         Route::get('/my-proofs', [WebProofController::class, 'history'])->name('proof.history');
         Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('proof.report');
-
-        //For customer Packages
-        Route::get('/packages', [CustomerPackageController::class, 'index'])->name('packages.index');
-    Route::get('/packages/create', [PackageController::class, 'create'])->name('packages.create');
-    Route::post('/packages', [PackageController::class, 'store'])->name('packages.store');
-    Route::get('/packages/{packageId}', [PackageController::class, 'show'])->name('packages.show');
-    Route::get('/packages/{packageId}/edit', [PackageController::class, 'edit'])->name('packages.edit');
-    Route::put('/packages/{packageId}', [PackageController::class, 'update'])->name('packages.update');
-    Route::delete('/packages/{packageId}', [PackageController::class, 'destroy'])->name('packages.destroy');
-    Route::post('/packages/undo', [PackageController::class, 'undo'])->name('packages.undo');
-    Route::post('/packages/calculate-cost', [PackageController::class, 'calculateCost'])->name('packages.calculate-cost');
-    //Route::resource('packages', PackageController::class);
-    Route::post('/packages/undo', [PackageController::class, 'undo'])->name('packages.undo');
-    Route::post('/packages/calculate-cost', [PackageController::class, 'calculateCost'])->name('packages.calculate-cost');
+        Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
     });
 });
 
 
-/*Admin Routes*/
+/* ================================================================================= */
+/*                                  ADMIN ROUTES                                     */
+/* ================================================================================= */
 Route::prefix('admin')->name('admin.')->group(function () {
-    // Guest routes for admin login & registration
-    Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [AdminAuthController::class, 'login']);
-    Route::get('register', [AdminAuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('register', [AdminAuthController::class, 'store'])->name('register.submit');
+    
+    // --- Guest routes for admin login ---
+    Route::middleware('guest')->group(function() {
+        Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [AdminAuthController::class, 'login']);
+        Route::get('register', [AdminAuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('register', [AdminAuthController::class, 'store'])->name('register.submit');
+    });
 
+    // --- Authenticated Admin Routes ---
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
@@ -96,23 +114,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-/*Driver Routes*/
+
+/* ================================================================================= */
+/*                                  DRIVER ROUTES                                    */
+/* ================================================================================= */
 Route::prefix('driver')->name('driver.')->group(function () {
-    Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [DriverAuthController::class, 'login']);
-    Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('register', [DriverAuthController::class, 'store'])->name('register.submit');
+    
+    // --- Guest routes for driver login ---
+    Route::middleware('guest')->group(function() {
+        Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [DriverAuthController::class, 'login']);
+        Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('register', [DriverAuthController::class, 'store'])->name('register.submit');
+    });
 
-//Update this
+    // --- Authenticated Driver Routes ---
     Route::middleware(['auth','driver'])->group(function () {
-
-
-    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-    Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
-});
+        Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
+        Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
+    });
 });
 
-/* General Authenticated Routes (For all logged-in users)*/
+
+/* ================================================================================= */
+/*                 GENERAL AUTHENTICATED ROUTES (For all logged-in users)            */
+/* ================================================================================= */
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -120,22 +146,5 @@ Route::middleware('auth')->group(function () {
 });
 
 
-
-// Customer Routes
-Route::group([], function() {
-    Route::get('/home', function () { return redirect()->route('customer.search'); })->name('customer.home');
-    Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('customer.search');
-    Route::get('/my-packages/{packageId}', [PackageController::class, 'show'])->name('customer.package.show');
-    Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('customer.proof.report');
-    Route::get('/my-proofs', [WebProofController::class, 'history'])->name('customer.proof.history');
-});
-
-// General Package Routes
-Route::group([], function () {
-    Route::get('/dashboard', [PackageController::class, 'dashboard'])->name('packages.dashboard');
-    Route::resource('packages', PackageController::class)->except(['show']);
-    Route::post('/packages/bulk-update', [PackageController::class, 'bulkUpdate'])->name('packages.bulk.update');
-    Route::get('/packages/reports/generate', [PackageController::class, 'generateReport'])->name('packages.reports.generate');
-});
-
+// This file often contains the logout route and other authentication routes.
 require __DIR__ . '/auth.php';
