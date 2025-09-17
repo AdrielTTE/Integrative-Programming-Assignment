@@ -3,14 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Customer;
+use App\Models\Delivery;
 
 class Feedback extends Model
 {
+    use HasFactory;
 
-     protected $table = 'feedback';
+    protected $table = 'feedback';
 
     // Primary key
     protected $primaryKey = 'feedback_id';
@@ -30,6 +32,7 @@ class Feedback extends Model
         'delivery_id',
         'customer_id',
         'rating',
+        'category',
         'comment',
         'created_at',
         'updated_at'
@@ -45,6 +48,4 @@ class Feedback extends Model
     {
         return $this->belongsTo(Delivery::class, 'delivery_id');
     }
-
-
 }

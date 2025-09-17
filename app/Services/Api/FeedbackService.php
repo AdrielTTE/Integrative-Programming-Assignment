@@ -35,13 +35,18 @@ class FeedbackService
         return Feedback::findOrFail($id);
     }
 
-    public function getBatch(int $pageNo, int $perPage, ?int $rating = null)
+    public function getBatch(int $pageNo, int $perPage, ?int $rating = null, string $category = 'all')
 {
     $query = Feedback::query();
 
-    // Only filter if rating was provided
+    // Filter by rating if provided
     if (!is_null($rating)) {
         $query->where('rating', $rating);
+    }
+
+    // Filter by category if it's not 'all'
+    if ($category !== 'all') {
+        $query->where('category', $category);
     }
 
     return $query->paginate($perPage, ['*'], 'page', $pageNo);

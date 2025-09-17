@@ -37,6 +37,7 @@ class FeedbackController extends Controller
     $page     = (int) $request->input('page', 1);
     $pageSize = (int) $request->input('pageSize', 10);
     $rating   = $request->input('rating', null);
+$category = $request->input('category', 'all');
 
     // Normalize: if rating is "null" or "all", treat it as no filter
     if ($rating === 'null' || $rating === 'all') {
@@ -45,7 +46,7 @@ class FeedbackController extends Controller
         $rating = (int) $rating;
     }
 
-    return $this->feedbackService->getBatch($page, $pageSize, $rating);
+    return $this->feedbackService->getBatch($page, $pageSize, $rating, $category);
 }
 
 

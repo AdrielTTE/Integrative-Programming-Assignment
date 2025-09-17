@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class FeedbackAndRatingService
+class FeedbackApiFacade
 {
     protected string $baseUrl;
 
@@ -16,12 +16,13 @@ class FeedbackAndRatingService
         $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
-      public function getBatch(int $page, int $pageSize, $rating = null)
+      public function getBatch(int $page, int $pageSize, $rating = null, string $category)
 {
     $response = Http::get("{$this->baseUrl}/feedback/getBatch", [
         'page'     => $page,
         'pageSize' => $pageSize,
         'rating'   => $rating,
+        'category'=> $category,
     ]);
 
     $data = $response->json();
