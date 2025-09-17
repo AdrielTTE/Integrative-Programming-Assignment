@@ -17,6 +17,10 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\PackageController as ApiPackageController;
 
+use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\RefundController;
+
 
     Route::prefix('delivery')->group(function () {
         Route::get('/', [DeliveryController::class, 'getAll']);
@@ -199,3 +203,14 @@ Route::prefix('v1')->group(function () {
 });
 
 Route::get('/search/packages', [SearchController::class, 'searchPackages']);
+
+
+Route::prefix('v1')->group(function () {
+    // Payment API
+    Route::post('/payment/process', [PaymentController::class, 'apiProcess']);
+    Route::get('/payment/status/{transactionId}', [PaymentController::class, 'apiStatus']);
+    
+    // Refund API
+    Route::post('/refund/request', [RefundController::class, 'apiRequest']);
+    Route::get('/refund/status/{refundId}', [RefundController::class, 'apiStatus']);
+});

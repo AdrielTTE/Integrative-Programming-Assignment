@@ -37,6 +37,9 @@ use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 
 
+use App\Http\Controllers\AdminControllers\PaymentController;
+use App\Http\Controllers\AdminControllers\RefundController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -164,3 +167,17 @@ Route::middleware('auth')->group(function () {
 
 // This file often contains the logout route and other authentication routes.
 require __DIR__ . '/auth.php';
+
+
+Route::prefix('admin')->middleware(['auth'])->group(function () {
+    // Payment Management
+    Route::get('/payment', [PaymentController::class, 'index'])->name('admin.payment');
+    Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('admin.payment.report');
+    Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('admin.payment.invoice');
+    
+    // Refund Management
+    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds');
+    Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
+    Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
+    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
+});
