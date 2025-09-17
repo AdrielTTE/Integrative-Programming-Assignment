@@ -22,7 +22,7 @@
         <form action="{{ route('customer.packages.update', $package->package_id) }}" method="POST" id="editPackageForm">
             @csrf
             @method('PUT')
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Package Details -->
                 <div class="space-y-4">
@@ -42,8 +42,9 @@
                         <div>
                             <label for="package_weight" class="block text-sm font-medium text-gray-700">Weight (kg) *</label>
                             <input type="number" name="package_weight" id="package_weight" step="0.01" min="0.01"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" 
-                                   value="{{ old('package_weight', $package->package_weight) }}" required>
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed" 
+                                value="{{ old('package_weight', $package->package_weight) }}" readonly>
+                            <small class="text-gray-500">Weight cannot be changed after creation. Delete package and add a new one instead.</small>
                             @error('package_weight')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -63,13 +64,15 @@
                     <div>
                         <label for="priority" class="block text-sm font-medium text-gray-700">Delivery Priority *</label>
                         <select name="priority" id="priority" 
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed" 
+                                disabled required>
                             @foreach($priorities as $value => $label)
                                 <option value="{{ $value }}" {{ old('priority', $package->priority) == $value ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
                         </select>
+                        <small class="text-gray-500">Priority cannot be changed after creation. Delete package and add a new one instead.</small>
                         @error('priority')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -112,13 +115,13 @@
                 </div>
             </div>
 
-            <!-- Cost Estimation -->
+            <!-- Cost Display (No longer editable) -->
             <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 class="text-md font-semibold text-gray-700 mb-2">Estimated Cost</h4>
-                <div id="costEstimation" class="text-lg font-bold text-indigo-600">
-                    Calculate cost based on weight and priority
+                <h4 class="text-md font-semibold text-gray-700 mb-2">Package Cost</h4>
+                <div id="costDisplay" class="text-lg font-bold text-indigo-600">
+                    RM{{ number_format($package->shipping_cost, 2) }}
                 </div>
-                <small class="text-gray-500">Final cost will be recalculated after submission</small>
+                <small class="text-gray-500">Cost is locked and cannot be modified after creation</small>
             </div>
 
             <!-- Form Actions -->
@@ -139,30 +142,57 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editPackageForm');
-    const weightInput = document.getElementById('package_weight');
-    const prioritySelect = document.getElementById('priority');
-    const costEstimation = document.getElementById('costEstimation');
-
-    function updateCostEstimation() {
-        const weight = parseFloat(weightInput.value) || 0;
-        const priority = prioritySelect.value;
-        
-        if (weight > 0) {
-            let baseCost = 10.00;
-            let weightCost = weight * 2.5;
-            let priorityMultiplier = priority === 'express' ? 1.5 : priority === 'urgent' ? 2 : 1;
-            
-            let estimatedCost = (baseCost + weightCost) * priorityMultiplier;
-            costEstimation.textContent = `$${estimatedCost.toFixed(2)}`;
-        } else {
-            costEstimation.textContent = 'Enter weight to calculate';
-        }
-    }
-
-    weightInput.addEventListener('input', updateCostEstimation);
-    prioritySelect.addEventListener('change', updateCostEstimation);
     
-    updateCostEstimation();
+    // Form validation before submission
+    form.addEventListener('submit', function(e) {
+        const requiredFields = [
+            { id: 'package_contents', name: 'Contents Description' },
+            { id: 'sender_address', name: 'Pickup Address' },
+            { id: 'recipient_address', name: 'Delivery Address' }
+        ];
+        
+        let isValid = true;
+        let errorMessages = [];
+        
+        // Reset previous error styling
+        document.querySelectorAll('.border-red-500').forEach(field => {
+            field.classList.remove('border-red-500');
+        });
+        
+        // Validate required fields
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element.value.trim()) {
+                isValid = false;
+                element.classList.add('border-red-500');
+                errorMessages.push(field.name + ' is required');
+            }
+        });
+        
+        // Validate dimensions format if provided
+        const dimensionsField = document.getElementById('package_dimensions');
+        if (dimensionsField.value.trim()) {
+            const dimensionPattern = /^\d+x\d+x\d+$/;
+            if (!dimensionPattern.test(dimensionsField.value.trim())) {
+                isValid = false;
+                dimensionsField.classList.add('border-red-500');
+                errorMessages.push('Dimensions must be in format: LengthxWidthxHeight (e.g., 30x20x10)');
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errorMessages.join('\n'));
+        }
+    });
+    
+    // Add input event listeners to remove error styling when user starts typing
+    ['package_contents', 'sender_address', 'recipient_address', 'package_dimensions'].forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        field.addEventListener('input', function() {
+            this.classList.remove('border-red-500');
+        });
+    });
 });
 </script>
 @endsection

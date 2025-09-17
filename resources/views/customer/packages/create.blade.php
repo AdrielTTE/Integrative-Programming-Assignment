@@ -147,12 +147,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const priority = prioritySelect.value;
         
         if (weight > 0) {
-            let baseCost = 10.00;
-            let weightCost = weight * 2.5;
+            let baseCost = 8.00;
+            let weightCost = weight * 3.50;
             let priorityMultiplier = priority === 'express' ? 1.5 : priority === 'urgent' ? 2 : 1;
             
             let estimatedCost = (baseCost + weightCost) * priorityMultiplier;
-            costEstimation.textContent = `$${estimatedCost.toFixed(2)}`;
+            costEstimation.textContent = `RM${estimatedCost.toFixed(2)}`;
         } else {
             costEstimation.textContent = 'Enter weight to calculate';
         }

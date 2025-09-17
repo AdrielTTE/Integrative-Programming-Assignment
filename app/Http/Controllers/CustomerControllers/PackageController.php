@@ -88,24 +88,31 @@ class PackageController extends Controller
     }
 
     public function update(UpdatePackageRequest $request, string $packageId)
-    {
-        try {
-            $package = Package::where('package_id', $packageId)
-                             ->where('user_id', Auth::id())
-                             ->firstOrFail();
+{
+    try {
+        $package = Package::where('package_id', $packageId)
+                         ->where('user_id', Auth::id())
+                         ->firstOrFail();
 
-            $this->packageService->updatePackage($package, $request->validated());
+        // Update only the allowed fields, preserving weight and shipping_cost
+        $package->update([
+            'package_contents' => $request->package_contents,
+            'package_dimensions' => $request->package_dimensions,
+            'sender_address' => $request->sender_address,
+            'recipient_address' => $request->recipient_address,
+            'notes' => $request->notes,
+        ]);
 
-            return redirect()
-                ->route('customer.packages.show', $packageId)
-                ->with('success', 'Package details updated successfully!');
+        return redirect()
+            ->route('customer.packages.show', $packageId)
+            ->with('success', 'Package details updated successfully!');
 
-        } catch (Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to update package: ' . $e->getMessage());
-        }
+    } catch (Exception $e) {
+        return back()
+            ->withInput()
+            ->with('error', 'Failed to update package: ' . $e->getMessage());
     }
+}
 
     public function destroy(string $packageId)
     {

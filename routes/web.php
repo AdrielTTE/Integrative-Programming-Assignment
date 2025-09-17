@@ -18,13 +18,10 @@ use App\Http\Controllers\AdminControllers\SearchController as AdminSearchControl
 
 use App\Http\Controllers\AdminControllers\AdminAssignmentController;
 
-// Note: AdminPackageController and PackageAssignmentController were missing, add them if they exist
-// use App\Http\Controllers\AdminControllers\AdminPackageController;
-// use App\Http\Controllers\AdminControllers\PackageAssignmentController;
-
 // Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
+use App\Http\Controllers\CustomerControllers\CustomerDashboardController;
 use App\Http\Controllers\CustomerControllers\TemporaryController;
 
 // Driver Controllers
@@ -66,11 +63,11 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
-
-        Route::get('/dashboard', fn() => redirect()->route('customer.packages.index'))->name('dashboard');
+        Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
+        
         Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
-        // --- Package Management Routes (All correctly point to CustomerPackageController) ---
+        // --- Package Management Routes ---
         Route::resource('packages', CustomerPackageController::class)
              ->parameters(['packages' => 'packageId']); 
         
@@ -79,8 +76,6 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
-        // Note: The calculate-cost route was in your original file but may be missing from the controller. Add the method if needed.
-        // Route::post('/packages/calculate-cost', [CustomerPackageController::class, 'calculateCost'])->name('packages.calculate-cost');
 
         // --- Other Customer-Specific Routes ---
         Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('search');
@@ -89,8 +84,8 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
 
         Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+    }); // This closing brace should be here to include all authenticated routes
 
-    });
 });
 
 

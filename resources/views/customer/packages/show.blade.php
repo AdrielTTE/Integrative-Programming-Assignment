@@ -72,7 +72,7 @@
                             @endif
                             <div><strong>Priority:</strong> {{ ucfirst($package->priority) }}</div>
                             @if($package->shipping_cost)
-                                <div><strong>Cost:</strong> ${{ number_format($package->shipping_cost, 2) }}</div>
+                                <div><strong>Cost:</strong> RM{{ number_format($package->shipping_cost, 2) }}</div>
                             @endif
                         </div>
                     </div>
