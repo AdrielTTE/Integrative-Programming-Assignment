@@ -15,6 +15,9 @@ use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\AdminControllers\FeedbackController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
+
+use App\Http\Controllers\AdminControllers\AdminAssignmentController;
+
 // Note: AdminPackageController and PackageAssignmentController were missing, add them if they exist
 // use App\Http\Controllers\AdminControllers\AdminPackageController;
 // use App\Http\Controllers\AdminControllers\PackageAssignmentController;
@@ -53,7 +56,7 @@ Route::get('/', function () {
 Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Guest routes for customer login & registration ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [CustomerAuthController::class, 'login']);
         Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('register');
@@ -68,7 +71,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         // --- Package Management Routes (All correctly point to CustomerPackageController) ---
         Route::resource('packages', CustomerPackageController::class)
-             ->parameters(['packages' => 'packageId']); // Ensures URLs use {packageId}
+            ->parameters(['packages' => 'packageId']); // Ensures URLs use {packageId}
 
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
@@ -90,7 +93,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // --- Guest routes for admin login ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminAuthController::class, 'login']);
         Route::get('register', [AdminAuthController::class, 'showRegisterForm'])->name('register');
@@ -104,6 +107,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Note: Add 'use' statements for AdminPackageController and PackageAssignmentController if they exist.
         // Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
         // Route::resource('packages', AdminPackageController::class); // Example of using a resource controller for admin
+
+
+        Route::get('/package-assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
+        Route::post('/package-assignments/{packageId}/assign', [AdminAssignmentController::class, 'assign'])->name('assignments.assign');
+
 
         // Proof Management
         Route::get('/proofs', [ProofManagementController::class, 'index'])->name('proof.index');
@@ -125,7 +133,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('driver')->name('driver.')->group(function () {
 
     // --- Guest routes for driver login ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [DriverAuthController::class, 'login']);
         Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('register');
@@ -133,7 +141,7 @@ Route::prefix('driver')->name('driver.')->group(function () {
     });
 
     // --- Authenticated Driver Routes ---
-    Route::middleware(['auth','driver'])->group(function () {
+    Route::middleware(['auth', 'driver'])->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
     });

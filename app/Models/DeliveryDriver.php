@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeliveryDriver extends Model
 {
-    protected $table = 'deliverydriver'; // Table is not plural
-
+    protected $table = 'deliverydriver';
     protected $primaryKey = 'driver_id';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    // --- THIS IS THE FIX ---
+    // This line tells Laravel to NOT manage 'created_at' and 'updated_at' columns.
     public $timestamps = false;
 
     protected $fillable = [
