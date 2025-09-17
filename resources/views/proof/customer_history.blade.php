@@ -24,7 +24,7 @@
                             <td class="p-4 whitespace-nowrap">{{ $proof->timestamp_created->format('F j, Y, g:i a') }}</td>
                             <td class="p-4 whitespace-nowrap">{{ $proof->proof_type }}</td>
                             <td class="p-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{{ route('customer.package.show', optional($proof->delivery->package)->package_id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                <a href="{{ route('customer.packages.show', optional($proof->delivery->package)->package_id) }}" class="text-indigo-600 hover:text-indigo-900">
                                     View Details
                                 </a>
                             </td>
