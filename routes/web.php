@@ -18,13 +18,10 @@ use App\Http\Controllers\AdminControllers\SearchController as AdminSearchControl
 
 use App\Http\Controllers\AdminControllers\AdminAssignmentController;
 
-// Note: AdminPackageController and PackageAssignmentController were missing, add them if they exist
-// use App\Http\Controllers\AdminControllers\AdminPackageController;
-// use App\Http\Controllers\AdminControllers\PackageAssignmentController;
-
 // Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
+use App\Http\Controllers\CustomerControllers\CustomerDashboardController;
 use App\Http\Controllers\CustomerControllers\TemporaryController;
 
 // Driver Controllers
@@ -35,6 +32,7 @@ use App\Http\Controllers\DriverControllers\AssignedPackageController;
 use App\Http\Controllers\Web\PackageController as WebPackageController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
+
 
 
 use App\Http\Controllers\AdminControllers\PaymentController;
@@ -69,18 +67,19 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
-
-        Route::get('/dashboard', fn() => redirect()->route('customer.packages.index'))->name('dashboard');
+        Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
+        
         Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
-        // --- Package Management Routes (All correctly point to CustomerPackageController) ---
+        // --- Package Management Routes ---
         Route::resource('packages', CustomerPackageController::class)
-            ->parameters(['packages' => 'packageId']); // Ensures URLs use {packageId}
+             ->parameters(['packages' => 'packageId']); 
+        
+        Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
+             ->name('packages.process');
 
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
-        // Note: The calculate-cost route was in your original file but may be missing from the controller. Add the method if needed.
-        // Route::post('/packages/calculate-cost', [CustomerPackageController::class, 'calculateCost'])->name('packages.calculate-cost');
 
         // --- Other Customer-Specific Routes ---
         Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('search');
@@ -89,8 +88,8 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
 
         Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+    }); // This closing brace should be here to include all authenticated routes
 
-    });
 });
 
 
@@ -115,7 +114,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
         // Route::resource('packages', AdminPackageController::class); // Example of using a resource controller for admin
 
-
+        Route::resource('packages', WebPackageController::class)->parameters(['packages' => 'packageId']);
         Route::get('/package-assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
         Route::post('/package-assignments/{packageId}/assign', [AdminAssignmentController::class, 'assign'])->name('assignments.assign');
 
@@ -167,17 +166,3 @@ Route::middleware('auth')->group(function () {
 
 // This file often contains the logout route and other authentication routes.
 require __DIR__ . '/auth.php';
-
-
-Route::prefix('admin')->middleware(['auth'])->group(function () {
-    // Payment Management
-    Route::get('/payment', [PaymentController::class, 'index'])->name('admin.payment');
-    Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('admin.payment.report');
-    Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('admin.payment.invoice');
-    
-    // Refund Management
-    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds');
-    Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
-    Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
-    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
-});

@@ -17,10 +17,6 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\PackageController as ApiPackageController;
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\Admin\PaymentController;
-use App\Http\Controllers\Admin\RefundController;
-
 
     Route::prefix('delivery')->group(function () {
         Route::get('/', [DeliveryController::class, 'getAll']);
@@ -34,6 +30,9 @@ use App\Http\Controllers\Admin\RefundController;
 
     });
 
+// -------------------
+// Admin Module
+// -------------------
 Route::prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'getAll']);
     Route::post('/', [AdminController::class, 'add']);
@@ -43,6 +42,9 @@ Route::prefix('admin')->group(function () {
     Route::delete('/{admin_id}', [AdminController::class, 'delete']);
 });
 
+// -------------------
+// Customer Module
+// -------------------
 Route::prefix('customer')->group(function () {
     Route::get('/', [CustomerController::class, 'getAll']);
     Route::post('/', [CustomerController::class, 'add']);
@@ -51,9 +53,12 @@ Route::prefix('customer')->group(function () {
     Route::put('/{customer_id}', [CustomerController::class, 'update']);
     Route::delete('/{customer_id}', [CustomerController::class, 'delete']);
     Route::get('/{customer_id}/proofs', [CustomerController::class, 'getProofs']);
-    Route::get('/getCountByStatus/{status}', [CustomerController::class,'getCountByStatus']);
+    Route::get('/getCountByStatus/{status}', [CustomerController::class, 'getCountByStatus']);
 });
 
+// -------------------
+// Delivery Assignment
+// -------------------
 Route::prefix('deliveryAssignment')->group(function () {
     Route::get('/', [DeliveryAssignmentController::class, 'getAll']);
     Route::post('/', [DeliveryAssignmentController::class, 'add']);
@@ -63,6 +68,9 @@ Route::prefix('deliveryAssignment')->group(function () {
     Route::delete('/{assignment_id}', [DeliveryAssignmentController::class, 'delete']);
 });
 
+// -------------------
+// Delivery Details
+// -------------------
 Route::prefix('deliveryDetails')->group(function () {
     Route::get('/', [DeliveryDetailsController::class, 'getAll']);
     Route::post('/', [DeliveryDetailsController::class, 'add']);
@@ -72,28 +80,35 @@ Route::prefix('deliveryDetails')->group(function () {
     Route::delete('/{detail_id}', [DeliveryDetailsController::class, 'delete']);
 });
 
-     Route::prefix('deliveryDriver')->group(function () {
-        Route::get('/', [DeliveryDriverController::class, 'getAll']);
-        Route::post('/', [DeliveryDriverController::class, 'add']);
-        Route::get('/getBatch/{pageNo}/{pageSize}/{status}', [DeliveryDriverController::class, 'getBatch']);
-        Route::get('/getByStatus/{status}', [DeliveryDriverController::class,'getCountByStatus']);
-        Route::get('/{driver_id}', [DeliveryDriverController::class, 'get']);
-        Route::put('/{driver_id}', [DeliveryDriverController::class, 'update']);
-        Route::delete('/{driver_id}', [DeliveryDriverController::class, 'delete']);
+// -------------------
+// Delivery Driver
+// -------------------
+Route::prefix('deliveryDriver')->group(function () {
+    Route::get('/', [DeliveryDriverController::class, 'getAll']);
+    Route::post('/', [DeliveryDriverController::class, 'add']);
+    Route::get('/getBatch/{pageNo}/{pageSize}/{status}', [DeliveryDriverController::class, 'getBatch']);
+    Route::get('/getByStatus/{status}', [DeliveryDriverController::class, 'getCountByStatus']);
+    Route::get('/{driver_id}', [DeliveryDriverController::class, 'get']);
+    Route::put('/{driver_id}', [DeliveryDriverController::class, 'update']);
+    Route::delete('/{driver_id}', [DeliveryDriverController::class, 'delete']);
+});
 
-    });
+// -------------------
+// Feedback
+// -------------------
+Route::prefix('feedback')->group(function () {
+    Route::get('/', [FeedbackController::class, 'getAll']);
+    Route::post('/', [FeedbackController::class, 'add']);
+    Route::get('/getBatch', [FeedbackController::class, 'getBatch']);
+    Route::get('/getByRating/{rating}', [FeedbackController::class, 'getCountByRating']);
+    Route::get('/{driver_id}', [FeedbackController::class, 'get']);
+    Route::put('/{driver_id}', [FeedbackController::class, 'update']);
+    Route::delete('/{driver_id}', [FeedbackController::class, 'delete']);
+});
 
-    Route::prefix('feedback')->group(function () {
-        Route::get('/', [FeedbackController::class, 'getAll']);
-        Route::post('/', [FeedbackController::class, 'add']);
-        Route::get('/getBatch', [FeedbackController::class, 'getBatch']);
-        Route::get('/getByRating/{rating}', [FeedbackController::class,'getCountByRating']);
-        Route::get('/{driver_id}', [FeedbackController::class, 'get']);
-        Route::put('/{driver_id}', [FeedbackController::class, 'update']);
-        Route::delete('/{driver_id}', [FeedbackController::class, 'delete']);
-
-    });
-
+// -------------------
+// Logistic Hub
+// -------------------
 Route::prefix('logisticHub')->group(function () {
     Route::get('/', [LogisticHubController::class, 'getAll']);
     Route::post('/', [LogisticHubController::class, 'add']);
@@ -103,21 +118,27 @@ Route::prefix('logisticHub')->group(function () {
     Route::delete('/{hub_id}', [LogisticHubController::class, 'delete']);
 });
 
-     Route::prefix('package')->group(function () {
-        Route::get('/', [PackageController::class, 'getAll']);
-        Route::post('/', [PackageController::class, 'add']);
-        Route::get('/unassigned', [PackageController::class, 'getUnassignedPackages']); // This line is added
-        Route::get('/getBatch/{pageNo}', [PackageController::class, 'getBatch']);
-        Route::get('/getByPackageID/{package_id}', [PackageController::class, 'get']);
-        Route::put('/{package_id}', [PackageController::class, 'update']);
-        Route::delete('/{package_id}', [PackageController::class, 'delete']);
-        Route::get('/getCountPackage', [PackageController::class,'getCountPackage']);
-        Route::get('/getRecentPackages/{noOfRecords}', [PackageController::class,'getRecentPackages']);
-        Route::get('/getCountByStatus/{status}', [PackageController::class,'getCountByStatus']);
-        Route::get('/{package_id}/details', [PackageController::class, 'getWithDetails']);
-        Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
-    });
+// -------------------
+// Package (Legacy + New API v1)
+// -------------------
+Route::prefix('package')->group(function () {
+    Route::get('/', [PackageController::class, 'getAll']);
+    Route::post('/', [PackageController::class, 'add']);
+    Route::get('/unassigned', [PackageController::class, 'getUnassignedPackages']);
+    Route::get('/getBatch/{pageNo}', [PackageController::class, 'getBatch']);
+    Route::get('/getByPackageID/{package_id}', [PackageController::class, 'get']);
+    Route::put('/{package_id}', [PackageController::class, 'update']);
+    Route::delete('/{package_id}', [PackageController::class, 'delete']);
+    Route::get('/getCountPackage', [PackageController::class, 'getCountPackage']);
+    Route::get('/getRecentPackages/{noOfRecords}', [PackageController::class, 'getRecentPackages']);
+    Route::get('/getCountByStatus/{status}', [PackageController::class, 'getCountByStatus']);
+    Route::get('/{package_id}/details', [PackageController::class, 'getWithDetails']);
+    Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
+});
 
+// -------------------
+// Proof Of Delivery
+// -------------------
 Route::prefix('proofOfDelivery')->group(function () {
     Route::get('/', [ProofOfDeliveryController::class, 'getAll']);
     Route::post('/', [ProofOfDeliveryController::class, 'add']);
@@ -130,6 +151,9 @@ Route::prefix('proofOfDelivery')->group(function () {
     Route::delete('/{proof_id}', [ProofOfDeliveryController::class, 'delete']);
 });
 
+// -------------------
+// Route Management
+// -------------------
 Route::prefix('route')->group(function () {
     Route::get('/', [RouteController::class, 'getAll']);
     Route::post('/', [RouteController::class, 'add']);
@@ -139,6 +163,9 @@ Route::prefix('route')->group(function () {
     Route::delete('/{route_id}', [RouteController::class, 'delete']);
 });
 
+// -------------------
+// User
+// -------------------
 Route::prefix('user')->group(function () {
     Route::get('/', [UserController::class, 'getAll']);
     Route::post('/', [UserController::class, 'add']);
@@ -148,6 +175,9 @@ Route::prefix('user')->group(function () {
     Route::delete('/{user_id}', [UserController::class, 'delete']);
 });
 
+// -------------------
+// Vehicle
+// -------------------
 Route::prefix('vehicle')->group(function () {
     Route::get('/', [VehicleController::class, 'getAll']);
     Route::post('/', [VehicleController::class, 'add']);
@@ -155,53 +185,72 @@ Route::prefix('vehicle')->group(function () {
     Route::get('/{vehicle_id}', [VehicleController::class, 'get']);
     Route::put('/{vehicle_id}', [VehicleController::class, 'update']);
     Route::delete('/{vehicle_id}', [VehicleController::class, 'delete']);
-    Route::get('getCountByStatus/{status}', [VehicleController::class,'getCountByStatus']);
+    Route::get('/getCountByStatus/{status}', [VehicleController::class, 'getCountByStatus']);
 });
 
+// -------------------
+// Unified API v1 (State + External + Protected)
+// -------------------
+Route::prefix('v1')->middleware(['api'])->group(function () {
 
-Route::prefix('v1')->group(function () {
+    // Public tracking
+    Route::get('packages/track/{trackingNumber}', [PackageController::class, 'track'])
+        ->name('api.packages.track');
 
-    // Public API endpoints (no auth)
-    Route::prefix('packages')->group(function () {
-        Route::get('/track/{trackingNumber}', [ApiPackageController::class, 'track'])
-            ->name('api.packages.track');
+    // External integrations
+    Route::prefix('external')->group(function () {
+        Route::post('packages', [WebServiceController::class, 'createPackageExternal'])
+            ->name('api.external.packages.create');
+        Route::put('packages/{packageId}', [WebServiceController::class, 'updatePackageStatusExternal'])
+            ->name('api.external.packages.update');
+        Route::get('packages/{trackingNumber}', [WebServiceController::class, 'getPackageStatusExternal'])
+            ->name('api.external.packages.status');
     });
 
-    // Protected API (requires auth:sanctum)
+    // Protected package management
     Route::middleware(['auth:sanctum'])->prefix('packages')->group(function () {
-
         // Basic CRUD
-        Route::get('/', [ApiPackageController::class, 'getAll'])->name('api.packages.index');
-        Route::post('/', [ApiPackageController::class, 'add'])->name('api.packages.store');
-        Route::get('/{packageId}', [ApiPackageController::class, 'get'])->name('api.packages.show');
-        Route::put('/{packageId}', [ApiPackageController::class, 'update'])->name('api.packages.update');
-        Route::delete('/{packageId}', [ApiPackageController::class, 'delete'])->name('api.packages.destroy');
+        Route::get('/', [PackageController::class, 'getAll'])->name('api.packages.index');
+        Route::post('/', [PackageController::class, 'add'])->name('api.packages.store');
+        Route::get('/{packageId}', [PackageController::class, 'get'])->name('api.packages.show');
+        Route::put('/{packageId}', [PackageController::class, 'update'])->name('api.packages.update');
+        Route::delete('/{packageId}', [PackageController::class, 'delete'])->name('api.packages.destroy');
 
-        // Pagination
-        Route::get('/batch/{pageNo}', [ApiPackageController::class, 'getBatch'])->name('api.packages.batch');
+        // Batch / Search
+        Route::get('/batch/{pageNo}', [PackageController::class, 'getBatch'])->name('api.packages.batch');
+        Route::post('/search', [PackageController::class, 'search'])->name('api.packages.search');
+        Route::post('/bulk-update', [PackageController::class, 'bulkUpdate'])->name('api.packages.bulk.update');
 
-        // Search & Bulk Ops
-        Route::post('/search', [ApiPackageController::class, 'search'])->name('api.packages.search');
-        Route::post('/bulk-update', [ApiPackageController::class, 'bulkUpdate'])->name('api.packages.bulk.update');
+        // State operations
+        Route::post('/{packageId}/process', [PackageController::class, 'process'])->name('api.packages.process');
+        Route::post('/{packageId}/cancel', [PackageController::class, 'cancel'])->name('api.packages.cancel');
+        Route::post('/{packageId}/assign', [PackageController::class, 'assign'])->name('api.packages.assign');
+        Route::post('/{packageId}/deliver', [PackageController::class, 'deliver'])->name('api.packages.deliver');
 
-        // Reports & Statistics
-        Route::get('/statistics/{period?}', [ApiPackageController::class, 'getStatistics'])->name('api.packages.statistics');
-        Route::get('/reports/generate', [ApiPackageController::class, 'generateReport'])->name('api.packages.reports');
+        // Reports & Stats
+        Route::get('/statistics/{period?}', [PackageController::class, 'getStatistics'])->name('api.packages.statistics');
+        Route::get('/reports/generate', [PackageController::class, 'generateReport'])->name('api.packages.reports');
 
-        // Status updates
-        Route::get('/status/{status}', [ApiPackageController::class, 'getByStatus'])->name('api.packages.by.status');
-        Route::patch('/{packageId}/status', [ApiPackageController::class, 'updateStatus'])->name('api.packages.status.update');
+        // Status / History
+        Route::get('/status/{status}', [PackageController::class, 'getByStatus'])->name('api.packages.by.status');
+        Route::patch('/{packageId}/status', [PackageController::class, 'updateStatus'])->name('api.packages.status.update');
+        Route::get('/{packageId}/history', [PackageController::class, 'getHistory'])->name('api.packages.history');
+        Route::get('/{packageId}/route', [PackageController::class, 'getRoute'])->name('api.packages.route');
 
-        // Assignment / Alerts
-        Route::get('/unassigned', [ApiPackageController::class, 'getUnassigned'])->name('api.packages.unassigned');
-        Route::get('/attention', [ApiPackageController::class, 'getAttention'])->name('api.packages.attention');
+        // Assignments / Alerts
+        Route::get('/unassigned', [PackageController::class, 'getUnassigned'])->name('api.packages.unassigned');
+        Route::get('/attention', [PackageController::class, 'getAttention'])->name('api.packages.attention');
 
-        // History / Tracking
-        Route::get('/{packageId}/history', [ApiPackageController::class, 'getHistory'])->name('api.packages.history');
-        Route::get('/{packageId}/route', [ApiPackageController::class, 'getRoute'])->name('api.packages.route');
+        // Legacy support
+        Route::get('/count', [PackageController::class, 'getCountPackage']);
+        Route::get('/recent/{noOfRecords}', [PackageController::class, 'getRecentPackages']);
+        Route::get('/count-by-status/{status}', [PackageController::class, 'getCountByStatus']);
     });
 });
 
+// -------------------
+// Global Search
+// -------------------
 Route::get('/search/packages', [SearchController::class, 'searchPackages']);
 
 

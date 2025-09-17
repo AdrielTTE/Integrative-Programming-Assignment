@@ -89,7 +89,7 @@ do {
 
          Auth::login($user);
 
-        return redirect()->route('customer.search');
+        return redirect()->route('customer.dashboard');
 
     }
 
@@ -119,7 +119,7 @@ do {
 
     Auth::login($user);
 
-    return redirect()->route('customer.temporaryPage');
+    return redirect()->route('customer.dashboard');
 }
 
 

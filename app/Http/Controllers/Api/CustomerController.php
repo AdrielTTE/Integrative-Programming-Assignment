@@ -59,7 +59,8 @@ class CustomerController extends Controller
         // Find proofs where the related package belongs to the customer
         $proofs = ProofOfDelivery::with(['delivery.package'])
             ->whereHas('delivery.package', function ($query) use ($customer_id) {
-                $query->where('customer_id', $customer_id);
+                // CORRECTED: Changed 'customer_id' to 'user_id' to match the database schema
+                $query->where('user_id', $customer_id);
             })
             ->orderBy('timestamp_created', 'desc')
             ->paginate(10); // Paginate the results

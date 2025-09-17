@@ -3,377 +3,370 @@
 namespace App\Services;
 
 use App\Models\Package;
-use App\Models\Customer;
-use App\Models\Delivery;
 use App\Models\User;
 use App\Repositories\PackageRepository;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use App\Factories\PackageStateFactory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
-/**
- * Service Layer Pattern Implementation
- * Handles business logic for package management
- */
 class PackageService
 {
-    protected $packageRepository;
-    protected string $baseUrl;
+    protected PackageRepository $repository;
 
-    public function __construct(PackageRepository $packageRepository)
+    public function __construct(PackageRepository $repository)
     {
-        $this->packageRepository = $packageRepository;
-        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
+        $this->repository = $repository;
     }
 
-    public function getPackageWithDetails($id)
-    {
-        try {
-            $response = Http::get("{$this->baseUrl}/package/{$id}/details")->throw()->json();
-
-            $package = new Package();
-            $package->fill($response);
-
-            if (!empty($response['user'])) {
-                $package->setRelation('user', new User((array)$response['user']));
-            }
-
-            if (!empty($response['delivery'])) {
-                $delivery = new Delivery((array)$response['delivery']);
-                if (!empty($response['delivery']['driver'])) {
-                    $delivery->setRelation('driver', new User((array)$response['delivery']['driver']));
-                }
-                $package->setRelation('delivery', $delivery);
-            }
-
-            return $package;
-        } catch (RequestException $e) {
-            // This is the new debugging code. It will catch the 500 error
-            // and throw a new exception with the full HTML error message from the API.
-            $apiErrorBody = $e->response->body();
-            throw new \Exception("API Error during getPackageWithDetails: " . $apiErrorBody);
-        } catch (\Exception $e) {
-            Log::error("Failed to fetch package details for ID {$id}: " . $e->getMessage());
-            return null;
-        }
-    }
-    
     /**
-     * Create a new package with business logic
+     * Create a new package with security checks
      */
-    public function createPackage(array $data)
-    {        
-        // Generate IDs if not provided
-        if (!isset($data['package_id'])) {
-            $data['package_id'] = Package::generatePackageId();
+    public function createPackage(array $data): Package
+    {
+        $user = Auth::user();
+        
+        // Ensure user_id is from authenticated user (prevent privilege escalation)
+        $data['user_id'] = $user->user_id;
+        
+        // Rate limiting - prevent spam package creation
+        $cacheKey = "package_creation_rate_limit_{$user->user_id}";
+        $attempts = Cache::get($cacheKey, 0);
+        
+        if ($attempts >= 10) { // Max 10 packages per hour
+            throw new \Exception('Package creation rate limit exceeded. Please try again later.');
         }
-
-        if (!isset($data['tracking_number'])) {
-            $data['tracking_number'] = Package::generateTrackingNumber();
-        }
-
-        // Set default status
-        if (!isset($data['package_status'])) {
-            $data['package_status'] = Package::STATUS_PENDING;
-        }
-
-        // Set default priority
-        if (!isset($data['priority'])) {
-            $data['priority'] = Package::PRIORITY_STANDARD;
-        }
-
-        // Create temporary package instance to calculate shipping cost
-        $tempPackage = new Package($data);
-        if (!isset($data['shipping_cost'])) {
-            $data['shipping_cost'] = $tempPackage->calculateShippingCost();
-        }
-
-        // Calculate estimated delivery
-        if (!isset($data['estimated_delivery'])) {
-            $data['estimated_delivery'] = $tempPackage->calculateEstimatedDelivery();
-        }
-
-        // Create package using repository
-        $package = $this->packageRepository->create($data);
-
-        // Clear cache
-        $this->clearPackageCache();
-
-        // Send notification (implement notification system)
-        $this->sendPackageCreatedNotification($package);
+        
+        Cache::put($cacheKey, $attempts + 1, 3600); // 1 hour
+        
+        $package = $this->repository->create($data);
+        
+        Log::info('Package created', [
+            'package_id' => $package->package_id,
+            'user_id' => $package->user_id,
+            'status' => $package->package_status,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent()
+        ]);
 
         return $package;
     }
 
     /**
-     * Update package with business logic
+     * Update package with ownership verification
      */
-    public function updatePackage(Package $package, array $data)
+    public function updatePackage(Package $package, array $data): Package
     {
-        // Recalculate shipping cost if weight or dimensions changed
-        if (isset($data['package_weight']) || isset($data['package_dimensions']) || isset($data['priority'])) {
-            $package->fill($data);
-            $data['shipping_cost'] = $package->calculateShippingCost();
+        $user = Auth::user();
+        
+        // Authorization check - ensure user owns the package
+        if (!$this->canUserModifyPackage($user, $package)) {
+            throw new \Exception('Unauthorized: You can only modify your own packages');
         }
 
-        // Recalculate estimated delivery if priority changed
-        if (isset($data['priority'])) {
-            $package->priority = $data['priority'];
-            $data['estimated_delivery'] = $package->calculateEstimatedDelivery();
+        // Check if package can be edited based on status
+        if (in_array($package->package_status, ['delivered', 'cancelled', 'returned'])) {
+            throw new \Exception('Package cannot be edited in current state: ' . $package->package_status);
         }
 
-        // Update package using repository
-        $package = $this->packageRepository->update($package->package_id, $data);
+        // Sanitize and validate critical fields
+        $data = $this->sanitizePackageData($data);
+        $updated = $this->repository->update($package->package_id, $data);
+        
+        Log::info('Package updated', [
+            'package_id' => $package->package_id,
+            'user_id' => $user->user_id,
+            'changes' => array_keys($data),
+            'ip_address' => request()->ip()
+        ]);
 
-        // Clear cache
-        $this->clearPackageCache();
-
-        return $package;
+        return $updated;
     }
 
     /**
-     * Get package statistics
+     * Process package - simplified without role checks
      */
-    public function getStatistics($period = 'month')
+    public function processPackage(string $packageId, array $data = []): Package
     {
-        return Cache::remember("package_stats_{$period}", 3600, function () use ($period) {
-            $query = Package::query();
-
-            // Apply period filter
-            switch ($period) {
-                case 'today':
-                    $query->whereDate('created_at', today());
-                    break;
-                case 'week':
-                    $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                    break;
-                case 'month':
-                    $query->whereMonth('created_at', now()->month)
-                          ->whereYear('created_at', now()->year);
-                    break;
-                case 'year':
-                    $query->whereYear('created_at', now()->year);
-                    break;
-            }
-
-            $total = $query->count();
-            $statusCounts = [];
-
-            foreach (Package::getStatuses() as $status => $label) {
-                $statusCounts[$status] = (clone $query)->where('package_status', $status)->count();
-            }
-
-            return [
-                'period' => $period,
-                'total' => $total,
-                'by_status' => $statusCounts,
-                'revenue' => $query->sum('shipping_cost'),
-                'average_weight' => $query->avg('package_weight'),
-                'pending_packages' => Package::pending()->count(),
-                'active_packages' => Package::active()->count(),
-                'delivered_today' => Package::where('package_status', Package::STATUS_DELIVERED)
-                    ->whereDate('actual_delivery', today())
-                    ->count()
-            ];
-        });
-    }
-
-    /**
-     * Bulk update packages
-     */
-    public function bulkUpdate(array $packageIds, string $action, string $value)
-    {
-        $results = [
-            'success' => 0,
-            'failed' => 0,
-            'details' => []
-        ];
-
-        foreach ($packageIds as $packageId) {
-            try {
-                $package = Package::find($packageId);
-                
-                if (!$package) {
-                    $results['failed']++;
-                    $results['details'][] = [
-                        'package_id' => $packageId,
-                        'error' => 'Package not found'
-                    ];
-                    continue;
-                }
-
-                switch ($action) {
-                    case 'update_status':
-                        if ($package->updateStatus($value)) {
-                            $results['success']++;
-                        } else {
-                            $results['failed']++;
-                            $results['details'][] = [
-                                'package_id' => $packageId,
-                                'error' => 'Invalid status transition'
-                            ];
-                        }
-                        break;
-
-                    case 'assign_driver':
-                        $package->assigned_driver_id = $value;
-                        if ($package->save()) {
-                            $results['success']++;
-                        } else {
-                            $results['failed']++;
-                            $results['details'][] = [
-                                'package_id' => $packageId,
-                                'error' => 'Failed to assign driver'
-                            ];
-                        }
-                        break;
-
-                    default:
-                        $results['failed']++;
-                        $results['details'][] = [
-                            'package_id' => $packageId,
-                            'error' => 'Unknown action'
-                        ];
-                }
-            } catch (\Exception $e) {
-                $results['failed']++;
-                $results['details'][] = [
-                    'package_id' => $packageId,
-                    'error' => $e->getMessage()
-                ];
-            }
+        $package = $this->repository->find($packageId);
+        $user = Auth::user();
+        
+        if (!$package) {
+            throw new \Exception('Package not found');
         }
 
-        $this->clearPackageCache();
+        // For now, allow any authenticated user to process packages
+        // You can add more specific logic here if needed
+        
+        // Update package status based on current status
+        $this->updatePackageStatus($package, $data);
+        
+        Log::info('Package processed', [
+            'package_id' => $packageId,
+            'old_status' => $package->getOriginal('package_status'),
+            'new_status' => $package->package_status,
+            'user_id' => $user->user_id
+        ]);
 
-        return $results;
+        return $package->fresh();
     }
 
     /**
-     * Search packages with complex criteria
+     * Cancel package with ownership verification
+     */
+    public function cancelPackage(string $packageId, ?User $user = null): Package
+    {
+        $package = $this->repository->find($packageId);
+        $user = $user ?? Auth::user();
+        
+        if (!$package) {
+            throw new \Exception('Package not found');
+        }
+
+        // Authorization check - ensure user owns package
+        if (!$this->canUserModifyPackage($user, $package)) {
+            throw new \Exception('Unauthorized: You can only cancel your own packages');
+        }
+
+        // Check if package can be cancelled
+        if (in_array($package->package_status, ['delivered', 'cancelled', 'returned'])) {
+            throw new \Exception('Package cannot be cancelled in current state: ' . $package->package_status);
+        }
+
+        $package->package_status = 'cancelled';
+        $package->save();
+        
+        Log::info('Package cancelled', [
+            'package_id' => $packageId,
+            'cancelled_by' => $user->user_id,
+            'new_status' => $package->package_status
+        ]);
+
+        return $package->fresh();
+    }
+
+    /**
+     * Search packages with user filtering
      */
     public function searchPackages(array $criteria)
     {
-        return $this->packageRepository->search($criteria);
+        $user = Auth::user();
+        
+        // For now, users can only see their own packages
+        $criteria['user_id'] = $user->user_id;
+
+        return $this->repository->search($criteria);
     }
 
     /**
-     * Get packages requiring attention
+     * Get package with authorization check
      */
-    public function getPackagesRequiringAttention()
+    public function getPackageWithDetails(string $packageId): ?Package
     {
-        return Cache::remember('packages_attention', 900, function () {
-            return $this->packageRepository->getPackagesRequiringAttention();
-        });
+        $package = $this->repository->findWithRelations($packageId);
+        $user = Auth::user();
+        
+        if (!$package) {
+            return null;
+        }
+
+        // Authorization check
+        if (!$this->canUserViewPackage($user, $package)) {
+            throw new \Exception('Unauthorized: Access denied to this package');
+        }
+
+        return $package;
     }
 
     /**
-     * Get unassigned packages
+     * SIMPLIFIED: Check if user can modify package (ownership only)
      */
-    public function getUnassignedPackages()
+    private function canUserModifyPackage(User $user, Package $package): bool
     {
-        return $this->packageRepository->getUnassignedPackages();
+        return $package->user_id === $user->user_id;
     }
 
     /**
-     * Clear package-related cache
+     * SIMPLIFIED: Check if user can view package (ownership only)
      */
-    protected function clearPackageCache()
+    private function canUserViewPackage(User $user, Package $package): bool
     {
-        Cache::forget('package_stats_today');
-        Cache::forget('package_stats_week');
-        Cache::forget('package_stats_month');
-        Cache::forget('package_stats_year');
-        Cache::forget('packages_attention');
+        // For now, users can only view their own packages
+        return $package->user_id === $user->user_id;
     }
 
     /**
-     * Send notification for package creation
+     * Sanitize package data to prevent injection attacks
      */
-    protected function sendPackageCreatedNotification(Package $package)
+    private function sanitizePackageData(array $data): array
     {
-        // Implement notification logic here
-        Log::info('Package created notification', [
-            'package_id' => $package->package_id,
-            'tracking_number' => $package->tracking_number
-        ]);
+        $sanitized = [];
+        
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $sanitized[$key] = htmlspecialchars(strip_tags(trim($value)), ENT_QUOTES, 'UTF-8');
+            } else {
+                $sanitized[$key] = $value;
+            }
+        }
+        
+        return $sanitized;
     }
 
     /**
-     * Calculate delivery route (integrate with Route module)
+     * Update package status based on current state
      */
-    public function calculateDeliveryRoute(Package $package)
+    private function updatePackageStatus(Package $package, array $data): void
     {
-        // This would integrate with the Route module
-        return [
-            'origin' => $package->sender_address,
-            'destination' => $package->recipient_address,
-            'estimated_distance' => rand(10, 100) . ' km',
-            'estimated_time' => rand(30, 180) . ' minutes'
+        $currentStatus = $package->package_status;
+        $newStatus = $data['status'] ?? null;
+        
+        // Define allowed status transitions
+        $allowedTransitions = [
+            'pending' => ['processing', 'cancelled'],
+            'processing' => ['picked_up', 'cancelled'],
+            'picked_up' => ['in_transit'],
+            'in_transit' => ['out_for_delivery', 'failed'],
+            'out_for_delivery' => ['delivered', 'failed'],
+            'failed' => ['out_for_delivery', 'returned'],
         ];
-    }
-
-    /**
-     * Get package history/audit trail
-     */
-    public function getPackageHistory($packageId)
-    {
-        // This would retrieve from an audit log table
-        return [
-            [
-                'timestamp' => now()->subDays(2),
-                'action' => 'Package created',
-                'status' => Package::STATUS_PENDING,
-                'user' => 'System'
-            ],
-            [
-                'timestamp' => now()->subDays(1),
-                'action' => 'Status updated',
-                'status' => Package::STATUS_PROCESSING,
-                'user' => 'Admin'
-            ],
-            [
-                'timestamp' => now()->subHours(6),
-                'action' => 'Driver assigned',
-                'status' => Package::STATUS_IN_TRANSIT,
-                'user' => 'Dispatcher'
-            ]
-        ];
-    }
-
-    /**
-     * Generate package report
-     */
-    public function generateReport($startDate, $endDate, $format = 'json')
-    {
-        $packages = Package::whereBetween('created_at', [$startDate, $endDate])->get();
-
-        $report = [
-            'period' => ['start' => $startDate, 'end' => $endDate],
-            'summary' => [
-                'total_packages' => $packages->count(),
-                'total_revenue' => $packages->sum('shipping_cost'),
-                'average_weight' => $packages->avg('package_weight'),
-                'by_status' => $packages->groupBy('package_status')->map->count(),
-                'by_priority' => $packages->groupBy('priority')->map->count()
-            ],
-            'packages' => $packages->map(function ($package) {
-                return $package->getFormattedDetails();
-            })
-        ];
-
-        // Handle different export formats
-        switch ($format) {
-            case 'csv':
-                return $this->exportToCsv($report);
-            case 'pdf':
-                return $this->exportToPdf($report);
-            default:
-                return $report;
+        
+        if ($newStatus && isset($allowedTransitions[$currentStatus])) {
+            if (in_array($newStatus, $allowedTransitions[$currentStatus])) {
+                $package->package_status = $newStatus;
+                
+                // Update delivery timestamp if delivered
+                if ($newStatus === 'delivered') {
+                    $package->actual_delivery = now();
+                }
+                
+                $package->save();
+            }
         }
     }
+    
+    public function getStatistics(string $period = 'month'): array
+    {
+        $user = Auth::user();
+        
+        // Return statistics for the current user's packages only
+        return $this->repository->getUserStats($user->user_id)->mapWithKeys(function ($stat) {
+            return [$stat->package_status => $stat->count];
+        })->toArray();
+    }
 
-    protected function exportToCsv($report) { return $report; }
-    protected function exportToPdf($report) { return $report; }
+    public function getPackageHistory(string $packageId): array
+    {
+        $package = Package::where('package_id', $packageId)->firstOrFail();
+        $user = Auth::user();
+        
+        // SIMPLIFIED Authorization check - only check ownership
+        if (!$this->canUserViewPackage($user, $package)) {
+            throw new \Exception('Unauthorized: Access denied to package history');
+        }
+        
+        return $this->generateHistoryFromPackageData($package);
+    }
+
+    private function generateHistoryFromPackageData(Package $package): array
+    {
+        $history = [];
+
+        // Always include package creation
+        $history[] = [
+            'status' => 'Package Created',
+            'action' => 'Pickup request submitted successfully',
+            'timestamp' => $package->created_at,
+        ];
+
+        // Add progression based on current status
+        if ($package->package_status !== 'pending') {
+            $history[] = [
+                'status' => 'Processing Started', 
+                'action' => 'Package accepted and being prepared for pickup',
+                'timestamp' => $this->estimateStatusChangeTime($package, 'processing'),
+            ];
+        }
+
+        if (in_array($package->package_status, ['in_transit', 'out_for_delivery', 'delivered', 'failed'])) {
+            $history[] = [
+                'status' => 'Picked Up',
+                'action' => 'Package collected from pickup location',
+                'timestamp' => $this->estimateStatusChangeTime($package, 'picked_up'),
+            ];
+            
+            $history[] = [
+                'status' => 'In Transit',
+                'action' => 'Package en route to destination',
+                'timestamp' => $this->estimateStatusChangeTime($package, 'in_transit'),
+            ];
+        }
+
+        if (in_array($package->package_status, ['out_for_delivery', 'delivered', 'failed'])) {
+            $history[] = [
+                'status' => 'Out for Delivery',
+                'action' => 'Package loaded for final delivery',
+                'timestamp' => $this->estimateStatusChangeTime($package, 'out_for_delivery'),
+            ];
+        }
+
+        // Terminal states
+        switch ($package->package_status) {
+            case 'delivered':
+                $history[] = [
+                    'status' => 'Delivered',
+                    'action' => 'Package successfully delivered to recipient',
+                    'timestamp' => $package->actual_delivery ?? $package->updated_at,
+                ];
+                break;
+                
+            case 'cancelled':
+                $history[] = [
+                    'status' => 'Cancelled',
+                    'action' => 'Delivery request cancelled by customer',
+                    'timestamp' => $package->updated_at,
+                ];
+                break;
+                
+            case 'failed':
+                $history[] = [
+                    'status' => 'Delivery Failed',
+                    'action' => 'Delivery attempt unsuccessful - will retry',
+                    'timestamp' => $package->updated_at,
+                ];
+                break;
+                
+            case 'returned':
+                $history[] = [
+                    'status' => 'Returned to Sender',
+                    'action' => 'Package returned due to delivery failure',
+                    'timestamp' => $package->updated_at,
+                ];
+                break;
+        }
+
+        // Sort by timestamp, most recent first
+        usort($history, function ($a, $b) {
+            return $b['timestamp']->timestamp <=> $a['timestamp']->timestamp;
+        });
+
+        return $history;
+    }
+
+    private function estimateStatusChangeTime(Package $package, string $status): \Carbon\Carbon
+    {
+        // Since we don't have actual timestamps, estimate based on created_at
+        $baseTime = $package->created_at;
+        
+        $estimates = [
+            'processing' => 2, // 2 hours after creation
+            'picked_up' => 6,  // 6 hours after creation  
+            'in_transit' => 12, // 12 hours after creation
+            'out_for_delivery' => 24, // 24 hours after creation
+        ];
+        
+        $hoursToAdd = $estimates[$status] ?? 1;
+        return $baseTime->copy()->addHours($hoursToAdd);
+    }
 }

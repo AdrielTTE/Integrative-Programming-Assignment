@@ -1,42 +1,53 @@
 <?php
 
-namespace App\Http\Requests; 
+namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Package;
 
 class UpdatePackageRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize()
     {
-        // You can keep your authorization logic
-        return auth()->check();
+        return true; // Assuming authorization is handled in the controller
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
         return [
-            'package_weight' => 'sometimes|required|numeric|min:0.01|max:999.99',
-            'package_dimensions' => 'sometimes|nullable|string|max:100|regex:/^\d+x\d+x\d+$/',
-            'package_contents' => 'sometimes|required|string|max:1000',
-            'sender_address' => 'sometimes|required|string|max:500',
-            'recipient_address' => 'sometimes|required|string|max:500',
-            'priority' => 'sometimes|required|in:' . implode(',', [
-                Package::PRIORITY_STANDARD,
-                Package::PRIORITY_EXPRESS,
-                Package::PRIORITY_URGENT
-            ]),
-            'notes' => 'sometimes|nullable|string|max:1000'
+            'package_contents' => 'required|string|max:1000',
+            'package_dimensions' => 'nullable|string|max:50|regex:/^\d+x\d+x\d+$/',
+            'sender_address' => 'required|string|max:500',
+            'recipient_address' => 'required|string|max:500',
+            'notes' => 'nullable|string|max:500',
+            
+            'package_weight' => 'prohibited',
+            'priority' => 'prohibited',
+            'shipping_cost' => 'prohibited',
         ];
+    }
+
+    public function messages()
+    {
+        return [
+            'package_contents.required' => 'Package contents description is required.',
+            'package_contents.max' => 'Package contents description must not exceed 1000 characters.',
+            'package_dimensions.regex' => 'Dimensions must be in format: LengthxWidthxHeight (e.g., 30x20x10).',
+            'sender_address.required' => 'Pickup address is required.',
+            'sender_address.max' => 'Pickup address must not exceed 500 characters.',
+            'recipient_address.required' => 'Delivery address is required.',
+            'recipient_address.max' => 'Delivery address must not exceed 500 characters.',
+            'notes.max' => 'Special instructions must not exceed 500 characters.',
+            'package_weight.prohibited' => 'Package weight cannot be modified.',
+            'priority.prohibited' => 'Priority cannot be modified.',
+            'shipping_cost.prohibited' => 'Shipping cost cannot be modified.',
+        ];
+    }
+
+    protected function prepareForValidation()
+    {
+        // Remove any prohibited fields from the request
+        $this->request->remove('package_weight');
+        $this->request->remove('priority');
+        $this->request->remove('shipping_cost');
     }
 }
