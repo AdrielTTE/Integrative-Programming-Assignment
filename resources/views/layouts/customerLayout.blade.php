@@ -73,8 +73,8 @@
                 <i class="fas fa-signature w-5 mr-3"></i>
                 <span class="font-medium">My Proofs</span>
             </a>
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('notifications') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('customer.notification') }}"
+                class="nav-link {{ request()->routeIs('customer.notification') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-bell w-5 mr-3"></i>
                 <span class="font-medium">Notifications</span>
             </a>

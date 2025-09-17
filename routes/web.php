@@ -15,6 +15,9 @@ use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\AdminControllers\FeedbackController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
+
+use App\Http\Controllers\AdminControllers\AdminAssignmentController;
+
 // Note: AdminPackageController and PackageAssignmentController were missing, add them if they exist
 // use App\Http\Controllers\AdminControllers\AdminPackageController;
 // use App\Http\Controllers\AdminControllers\PackageAssignmentController;
@@ -22,6 +25,7 @@ use App\Http\Controllers\AdminControllers\SearchController as AdminSearchControl
 // Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
+use App\Http\Controllers\CustomerControllers\TemporaryController;
 
 // Driver Controllers
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
@@ -53,7 +57,7 @@ Route::get('/', function () {
 Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Guest routes for customer login & registration ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [CustomerAuthController::class, 'login']);
         Route::get('register', [CustomerAuthController::class, 'showRegisterForm'])->name('register');
@@ -83,6 +87,9 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/my-proofs', [WebProofController::class, 'history'])->name('proof.history');
         Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('proof.report');
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
+
+        Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+
     });
 });
 
@@ -93,7 +100,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // --- Guest routes for admin login ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminAuthController::class, 'login']);
         Route::get('register', [AdminAuthController::class, 'showRegisterForm'])->name('register');
@@ -107,6 +114,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Note: Add 'use' statements for AdminPackageController and PackageAssignmentController if they exist.
         // Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
         // Route::resource('packages', AdminPackageController::class); // Example of using a resource controller for admin
+
+
+        Route::get('/package-assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
+        Route::post('/package-assignments/{packageId}/assign', [AdminAssignmentController::class, 'assign'])->name('assignments.assign');
+
 
         // Proof Management
         Route::get('/proofs', [ProofManagementController::class, 'index'])->name('proof.index');
@@ -128,7 +140,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('driver')->name('driver.')->group(function () {
 
     // --- Guest routes for driver login ---
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [DriverAuthController::class, 'login']);
         Route::get('register', [DriverAuthController::class, 'showRegisterForm'])->name('register');
@@ -136,7 +148,7 @@ Route::prefix('driver')->name('driver.')->group(function () {
     });
 
     // --- Authenticated Driver Routes ---
-    Route::middleware(['auth','driver'])->group(function () {
+    Route::middleware(['auth', 'driver'])->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
     });
