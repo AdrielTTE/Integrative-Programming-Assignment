@@ -104,6 +104,16 @@
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
+             <a href="{{ route('admin.refunds') }}"
+                class="nav-link {{ request()->routeIs('admin.feedback') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-star w-5 mr-3"></i>
+                <span class="font-medium">Request Refunds</span>
+            </a>
+             <a href="{{ route('admin.payment') }}"
+                class="nav-link {{ request()->routeIs('admin.feedback') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-star w-5 mr-3"></i>
+                <span class="font-medium">Manage Payments And Report</span>
+            </a>
         </div>
 
         <!-- Bottom: user info + logout -->
