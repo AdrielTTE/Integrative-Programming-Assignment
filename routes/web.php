@@ -68,7 +68,10 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         // --- Package Management Routes (All correctly point to CustomerPackageController) ---
         Route::resource('packages', CustomerPackageController::class)
-             ->parameters(['packages' => 'packageId']); // Ensures URLs use {packageId}
+             ->parameters(['packages' => 'packageId']); 
+        
+        Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
+             ->name('packages.process');
 
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');

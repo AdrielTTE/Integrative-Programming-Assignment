@@ -215,11 +215,25 @@
                                         </div>
                                         <div class="min-w-0 flex-1 pt-1.5">
                                             <div>
-                                                <p class="text-sm font-medium text-gray-900">{{ $event['status'] }}</p>
-                                                <p class="text-xs text-gray-500">{{ $event['action'] }}</p>
+                                                <p class="text-sm font-medium text-gray-900">
+                                                    {{ $event['status'] ?? 'Status Update' }}
+                                                </p>
+                                                @if(isset($event['action']))
+                                                    <p class="text-xs text-gray-500">{{ $event['action'] }}</p>
+                                                @elseif(isset($event['description']))
+                                                    <p class="text-xs text-gray-500">{{ $event['description'] }}</p>
+                                                @else
+                                                    <p class="text-xs text-gray-500">{{ ucwords(str_replace('_', ' ', $event['status'] ?? 'unknown')) }}</p>
+                                                @endif
                                             </div>
                                             <div class="mt-1 text-xs text-gray-400">
-                                                {{ $event['timestamp']->diffForHumans() }}
+                                                @if(isset($event['timestamp']))
+                                                    {{ $event['timestamp']->diffForHumans() }}
+                                                @elseif(isset($event['created_at']))
+                                                    {{ $event['created_at']->diffForHumans() }}
+                                                @else
+                                                    {{ now()->diffForHumans() }}
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

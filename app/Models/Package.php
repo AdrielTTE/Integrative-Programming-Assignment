@@ -3,44 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// Import the User model
-use App\Models\User; 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-
+use App\Factories\PackageStateFactory;
+use App\States\Package\PackageState;
 
 class Package extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'package';
-
-    /**
-     * The primary key associated with the table.
-     */
     protected $primaryKey = 'package_id';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     */
     public $incrementing = false;
-
-    /**
-     * The "type" of the auto-incrementing ID.
-     */
     protected $keyType = 'string';
 
-    /**
-     * The attributes that are mass assignable.
-     * --- MODIFIED ---
-     */
     protected $fillable = [
         'package_id',
-        'user_id', // Changed from 'customer_id'
+        'user_id',
         'tracking_number',
         'package_weight',
         'package_dimensions',
@@ -55,9 +36,6 @@ class Package extends Model
         'notes'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'package_weight' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
@@ -67,9 +45,7 @@ class Package extends Model
         'actual_delivery' => 'datetime',
     ];
 
-    /**
-     * Package status constants
-     */
+    // Status constants
     const STATUS_PENDING = 'pending';
     const STATUS_PROCESSING = 'processing';
     const STATUS_IN_TRANSIT = 'in_transit';
@@ -79,21 +55,18 @@ class Package extends Model
     const STATUS_RETURNED = 'returned';
     const STATUS_FAILED = 'failed';
 
-    /**
-     * Priority constants
-     */
+    // Priority constants
     const PRIORITY_STANDARD = 'standard';
     const PRIORITY_EXPRESS = 'express';
     const PRIORITY_URGENT = 'urgent';
 
-    /**
-     * Boot method to handle model events
-     */
+    // State management property
+    private ?PackageState $currentState = null;
+
     protected static function boot()
     {
         parent::boot();
 
-        // Auto-generate package_id and tracking_number if not provided
         static::creating(function ($package) {
             if (empty($package->package_id)) {
                 $package->package_id = self::generatePackageId();
@@ -104,22 +77,17 @@ class Package extends Model
             if (empty($package->package_status)) {
                 $package->package_status = self::STATUS_PENDING;
             }
-            // Calculate shipping cost if not set
             if (empty($package->shipping_cost) && !empty($package->package_weight)) {
                 $package->shipping_cost = $package->calculateShippingCost();
             }
         });
 
-        // Log status changes
         static::updating(function ($package) {
             if ($package->isDirty('package_status')) {
                 $oldStatus = $package->getOriginal('package_status');
                 $newStatus = $package->package_status;
-
-                // Create audit log (implement PackageStatusHistory model if needed)
                 \Log::info("Package {$package->package_id} status changed from {$oldStatus} to {$newStatus}");
 
-                // Update delivery times based on status
                 if ($newStatus === self::STATUS_DELIVERED && empty($package->actual_delivery)) {
                     $package->actual_delivery = now();
                 }
@@ -128,38 +96,106 @@ class Package extends Model
     }
 
     /**
-     * Relationships
+     * Get current state instance
      */
+    public function getState(): PackageState
+    {
+        if ($this->currentState === null) {
+            $this->currentState = PackageStateFactory::create($this);
+        }
+        return $this->currentState;
+    }
 
     /**
-     * Get the user that owns the package.
-     * --- MODIFIED ---
+     * Set new state
+     */
+    public function setState(PackageState $state): void
+    {
+        $this->currentState = $state;
+        $this->package_status = $state->getStatusName();
+    }
+
+    /**
+     * State-based operations
+     */
+    public function canBeEdited(): bool
+    {
+        return $this->getState()->canBeEdited();
+    }
+
+    public function canBeCancelled(): bool
+    {
+        return $this->getState()->canBeCancelled();
+    }
+
+    public function canBeAssigned(): bool
+    {
+        return $this->getState()->canBeAssigned();
+    }
+
+    public function getStatusColor(): string
+    {
+        return $this->getState()->getStatusColor();
+    }
+
+    public function getCurrentLocation(): string
+    {
+        return $this->getState()->getCurrentLocation();
+    }
+
+    /**
+     * State transitions
+     */
+    public function process(array $data = []): PackageState
+    {
+        $newState = $this->getState()->process($data);
+        $this->setState($newState);
+        $this->save();
+        return $newState;
+    }
+
+    public function cancel(\App\Models\User $user): PackageState
+    {
+        $newState = $this->getState()->cancel($user);
+        $this->setState($newState);
+        $this->save();
+        return $newState;
+    }
+
+    public function assign($driverId): PackageState
+    {
+        $newState = $this->getState()->assign($driverId);
+        $this->setState($newState);
+        $this->save();
+        return $newState;
+    }
+
+    public function deliver(array $proofData = []): PackageState
+    {
+        $newState = $this->getState()->deliver($proofData);
+        $this->setState($newState);
+        $this->save();
+        return $newState;
+    }
+
+    /**
+     * Relationships
      */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-
-    /**
-     * Get the delivery associated with the package.
-     */
     public function delivery()
     {
         return $this->hasOne(Delivery::class, 'package_id', 'package_id');
     }
 
-    /**
-     * Get the assignment associated with the package.
-     */
     public function assignment()
     {
         return $this->hasOne(DeliveryAssignment::class, 'package_id', 'package_id');
     }
 
-    /**
-     * Get the driver through assignment
-     */
     public function driver()
     {
         return $this->hasOneThrough(
@@ -173,29 +209,18 @@ class Package extends Model
     }
 
     /**
-     * Scopes for filtering
-     */
-
-    /**
-     * Scope a query to only include packages with a specific status.
+     * Scopes
      */
     public function scopeStatus($query, $status)
     {
         return $query->where('package_status', $status);
     }
 
-    /**
-     * Scope a query to only include packages for a specific user.
-     * --- MODIFIED ---
-     */
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * Scope a query to search packages
-     */
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {
@@ -207,58 +232,22 @@ class Package extends Model
     }
 
     /**
-     * Scope for pending packages
-     */
-    public function scopePending($query)
-    {
-        return $query->whereIn('package_status', [
-            self::STATUS_PENDING,
-            self::STATUS_PROCESSING
-        ]);
-    }
-
-    /**
-     * Scope for active packages
-     */
-    public function scopeActive($query)
-    {
-        return $query->whereNotIn('package_status', [
-            self::STATUS_DELIVERED,
-            self::STATUS_CANCELLED,
-            self::STATUS_RETURNED,
-            self::STATUS_FAILED
-        ]);
-    }
-
-    /**
-     * Business Logic Methods
-     */
-
-    /**
-     * Generate a unique package ID
+     * Static methods
      */
     public static function generatePackageId()
     {
-        // Find the highest existing package number
         $lastPackage = DB::table('package')->where('package_id', 'like', 'P%')->orderBy('package_id', 'desc')->first();
         
         if ($lastPackage) {
-            // Extract the number, increment it
             $number = (int)substr($lastPackage->package_id, 1);
             $nextNumber = $number + 1;
         } else {
-            // Start from 1 if no packages exist
             $nextNumber = 1;
         }
 
-        // Format it with leading zeros
         return 'P' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
-
-    /**
-     * Generate a unique tracking number
-     */
     public static function generateTrackingNumber()
     {
         do {
@@ -268,21 +257,16 @@ class Package extends Model
         return $trackingNumber;
     }
 
-    /**
-     * Calculate shipping cost based on weight and priority
-     */
     public function calculateShippingCost()
     {
         $baseCost = 10.00;
         $weightCost = ($this->package_weight ?? 0) * 2.5;
 
-        // Parse dimensions if in format "LxWxH"
         $dimensionCost = 0;
         if ($this->package_dimensions) {
             $dims = explode('x', strtolower($this->package_dimensions));
             if (count($dims) === 3) {
                 $volume = array_product(array_map('floatval', $dims));
-                // Add cost for large packages (volume > 10000 cm³)
                 if ($volume > 10000) {
                     $dimensionCost = ($volume / 10000) * 5;
                 }
@@ -302,32 +286,6 @@ class Package extends Model
         return round(($baseCost + $weightCost + $dimensionCost) * $priorityMultiplier, 2);
     }
 
-    /**
-     * Check if package can be edited
-     */
-    public function canBeEdited()
-    {
-        return in_array($this->package_status, [
-            self::STATUS_PENDING,
-            self::STATUS_PROCESSING
-        ]);
-    }
-
-    /**
-     * Check if package can be cancelled
-     */
-    public function canBeCancelled()
-    {
-        return !in_array($this->package_status, [
-            self::STATUS_DELIVERED,
-            self::STATUS_CANCELLED,
-            self::STATUS_RETURNED
-        ]);
-    }
-
-    /**
-     * Get all available statuses
-     */
     public static function getStatuses()
     {
         return [
@@ -342,9 +300,6 @@ class Package extends Model
         ];
     }
 
-    /**
-     * Get all available priorities
-     */
     public static function getPriorities()
     {
         return [
@@ -354,106 +309,6 @@ class Package extends Model
         ];
     }
 
-    /**
-     * Update package status with validation
-     */
-    public function updateStatus($newStatus)
-    {
-        // Define allowed status transitions (State Pattern)
-        $allowedTransitions = [
-            self::STATUS_PENDING => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-            self::STATUS_PROCESSING => [self::STATUS_IN_TRANSIT, self::STATUS_CANCELLED],
-            self::STATUS_IN_TRANSIT => [self::STATUS_OUT_FOR_DELIVERY, self::STATUS_RETURNED, self::STATUS_FAILED],
-            self::STATUS_OUT_FOR_DELIVERY => [self::STATUS_DELIVERED, self::STATUS_FAILED, self::STATUS_RETURNED],
-            self::STATUS_FAILED => [self::STATUS_IN_TRANSIT, self::STATUS_RETURNED],
-            self::STATUS_DELIVERED => [],
-            self::STATUS_CANCELLED => [],
-            self::STATUS_RETURNED => []
-        ];
-
-        $currentStatus = $this->package_status;
-
-        if (in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
-            $this->package_status = $newStatus;
-
-            // Update delivery timestamps
-            if ($newStatus === self::STATUS_DELIVERED) {
-                $this->actual_delivery = now();
-            }
-
-            return $this->save();
-        }
-
-        return false;
-    }
-
-    /**
-     * Calculate estimated delivery date
-     */
-    public function calculateEstimatedDelivery()
-    {
-        $daysToAdd = [
-            self::PRIORITY_STANDARD => 7,
-            self::PRIORITY_EXPRESS => 3,
-            self::PRIORITY_URGENT => 1
-        ];
-
-        $days = $daysToAdd[$this->priority ?? self::PRIORITY_STANDARD];
-
-        // Skip weekends
-        $date = now();
-        while ($days > 0) {
-            $date->addDay();
-            if (!$date->isWeekend()) {
-                $days--;
-            }
-        }
-
-        return $date;
-    }
-
-    /**
-     * Get current location/status description
-     */
-    public function getCurrentLocation()
-    {
-        $locations = [
-            self::STATUS_PENDING => 'Package registered, awaiting pickup',
-            self::STATUS_PROCESSING => 'At sorting facility',
-            self::STATUS_IN_TRANSIT => 'In transit to destination',
-            self::STATUS_OUT_FOR_DELIVERY => 'Out for delivery',
-            self::STATUS_DELIVERED => 'Delivered successfully',
-            self::STATUS_CANCELLED => 'Shipment cancelled',
-            self::STATUS_RETURNED => 'Returned to sender',
-            self::STATUS_FAILED => 'Delivery attempt failed'
-        ];
-
-        return $locations[$this->package_status] ?? 'Unknown';
-    }
-    
-
-    /**
-     * Get status color for UI
-     */
-    public function getStatusColor()
-    {
-        $colors = [
-            self::STATUS_PENDING => 'warning',
-            self::STATUS_PROCESSING => 'info',
-            self::STATUS_IN_TRANSIT => 'primary',
-            self::STATUS_OUT_FOR_DELIVERY => 'info',
-            self::STATUS_DELIVERED => 'success',
-            self::STATUS_CANCELLED => 'danger',
-            self::STATUS_RETURNED => 'secondary',
-            self::STATUS_FAILED => 'danger'
-        ];
-
-        return $colors[$this->package_status] ?? 'secondary';
-    }
-
-    /**
-     * Format package details for display
-     */
     public function getFormattedDetails()
     {
         return [
@@ -467,7 +322,8 @@ class Package extends Model
             'dimensions' => $this->package_dimensions,
             'cost' => '$' . number_format($this->shipping_cost ?? 0, 2),
             'can_edit' => $this->canBeEdited(),
-            'can_cancel' => $this->canBeCancelled()
+            'can_cancel' => $this->canBeCancelled(),
+            'allowed_transitions' => $this->getState()->getAllowedTransitions()
         ];
     }
 }
