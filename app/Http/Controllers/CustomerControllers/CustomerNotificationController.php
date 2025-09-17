@@ -19,13 +19,12 @@ public function __construct(DeliveryService $deliveryService, PackageService $pa
     $this->notificationService = new CustomerNotificationService(
         $packageService,
         $deliveryService
-
-
     );
 }
     public function notification(){
+        $notifications = [];
 
-        $notifications = $this->notificationService->getNotifications();
+        //$notifications = $this->notificationService->getNotifications();
         return view('CustomerViews.Notifications.notification', compact('notifications'));
     }
 

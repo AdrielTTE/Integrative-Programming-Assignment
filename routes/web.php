@@ -25,6 +25,7 @@ use App\Http\Controllers\AdminControllers\AdminAssignmentController;
 // Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
+use App\Http\Controllers\CustomerControllers\TemporaryController;
 
 // Driver Controllers
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
@@ -83,6 +84,9 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/my-proofs', [WebProofController::class, 'history'])->name('proof.history');
         Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('proof.report');
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
+
+        Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+
     });
 });
 
