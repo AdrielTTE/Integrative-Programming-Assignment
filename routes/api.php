@@ -134,6 +134,7 @@ Route::prefix('package')->group(function () {
     Route::get('/getCountByStatus/{status}', [PackageController::class, 'getCountByStatus']);
     Route::get('/{package_id}/details', [PackageController::class, 'getWithDetails']);
     Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
+    Route::get('/getPackagesByStatus/{status}/{page}/{pageSize}/{customerId}',[PackageController::class, 'getPackagesByStatus']);
 });
 
 // -------------------

@@ -24,7 +24,7 @@ class CustomerDashboardController extends Controller
             $userId = Auth::id();
 
             // Get user's packages
-            $packages = Package::where('customer_id', $userId)->get();
+            $packages = Package::where('user_id', $userId)->get();
 
             // Prepare dashboard data
             $dashboardData = [

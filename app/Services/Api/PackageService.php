@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 
 
@@ -125,6 +126,19 @@ public function getCountByStatus(string $status): Collection
     return collect([
         ['package_status' => $status, 'count' => $count]
     ]);
+}
+
+public function getPackagesByStatus(string $status, int $page, int $pageSize, string $customerId): LengthAwarePaginator
+{
+    $query = Package::query()
+        ->where('customer_id', $customerId); // filter by customer_id
+
+    if (strtolower($status) !== 'all') {
+        $query->where('package_status', strtolower($status)); // match status
+    }
+
+    return $query->orderBy('created_at', 'desc')
+                 ->paginate($pageSize, ['*'], 'page', $page);
 }
 
 

@@ -162,7 +162,7 @@ class PackageController extends Controller
     {
         try {
             $request->validate(['driver_id' => 'required|string|exists:user,user_id']);
-            
+
             $package = $this->packageService->assignPackage($packageId, $request->driver_id);
             return response()->json([
                 'success' => true,
@@ -255,10 +255,28 @@ class PackageController extends Controller
     {
         return response()->json($this->apiPackageService->getCountByStatus($status));
     }
-    
+
     public function getUnassignedPackages()
     {
         $packages = $this->apiPackageService->getUnassignedPackages();
         return response()->json($packages);
+    }
+
+    public function getPackagesByStatus(string $status, int $page, int $pageSize, string $customerId)
+    {
+        try {
+            // normalize status (handle uppercase "DELIVERED")
+            $status = strtolower($status);
+
+            $packages = $this->apiPackageService->getPackagesByStatus($status, $page, $pageSize, $customerId);
+
+            return response()->json($packages, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch package data',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

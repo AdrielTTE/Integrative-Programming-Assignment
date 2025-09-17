@@ -23,6 +23,7 @@ use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
 use App\Http\Controllers\CustomerControllers\PackageController as CustomerPackageController;
 use App\Http\Controllers\CustomerControllers\CustomerDashboardController;
 use App\Http\Controllers\CustomerControllers\TemporaryController;
+use App\Http\Controllers\CustomerControllers\FeedbackController as CustomerFeedbackController;
 
 // Driver Controllers
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
@@ -88,6 +89,8 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
 
         Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+
+        Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
     }); // This closing brace should be here to include all authenticated routes
 
 });
