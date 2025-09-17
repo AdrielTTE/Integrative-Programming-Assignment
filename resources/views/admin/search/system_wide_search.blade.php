@@ -70,18 +70,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                @forelse($results as $package)
-                    <tr class="border-b">
-                        <td class="p-3"><input type="checkbox" name="package_ids[]" value="{{ $package->package_id }}" class="pkg-checkbox"></td>
-                        <td class="p-3 font-mono text-sm">{{ $package->tracking_number }}</td>
-                        <td class="p-3">{{ optional($package->customer)->first_name }}</td>
-                        <td class="p-3 truncate max-w-xs">{{ $package->recipient_address }}</td>
-                        <td class="p-3">{{ $package->package_status }}</td>
-                        <td class="p-3">{{ optional($package->delivery->driver)->first_name }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="p-10 text-center text-gray-500">No results found.</td></tr>
-                @endforelse
+                    @forelse($results as $package)
+                        <tr class="border-b">
+                            <td class="p-3"><input type="checkbox" name="package_ids[]" value="{{ $package->package_id }}" class="pkg-checkbox"></td>
+                            <td class="p-3 font-mono text-sm">{{ $package->tracking_number }}</td>
+                            
+                            {{-- CORRECTED LINE for Customer Name --}}
+                            <td class="p-3">{{ optional($package->user)->username ?? 'N/A' }}</td>
+                            
+                            <td class="p-3 truncate max-w-xs">{{ $package->recipient_address }}</td>
+                            <td class="p-3">{{ $package->package_status }}</td>
+                            
+                            {{-- CORRECTED LINE for Driver Name --}}
+                            <td class="p-3">{{ $package->delivery?->driver?->first_name ?? 'N/A' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="p-10 text-center text-gray-500">No results found.</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

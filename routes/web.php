@@ -37,6 +37,7 @@ use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -112,7 +113,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
         // Route::resource('packages', AdminPackageController::class); // Example of using a resource controller for admin
 
-
+        Route::resource('packages', WebPackageController::class)->parameters(['packages' => 'packageId']);
         Route::get('/package-assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
         Route::post('/package-assignments/{packageId}/assign', [AdminAssignmentController::class, 'assign'])->name('assignments.assign');
 
