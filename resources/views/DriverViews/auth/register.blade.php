@@ -14,12 +14,18 @@
         <form method="POST" action="{{ route('driver.register.submit') }}" class="space-y-6">
             @csrf
 
-            <!-- Name -->
             <div>
-                <x-input-label for="username" class="login-label" :value="__('Name')" />
-                <x-text-input id="username" class="login-input" type="text" name="username" :value="old('username')"
-                    required autofocus autocomplete="username" />
-                <x-input-error :messages="$errors->get('username')" class="mt-2 text-sm text-red-600" />
+                <x-input-label for="first_name" class="login-label" :value="__('First Name')" />
+                <x-text-input id="first_name" class="login-input" type="text" name="first_name" :value="old('first_name')"
+                    required autofocus autocomplete="first_name" />
+                <x-input-error :messages="$errors->get('first_name')" class="mt-2 text-sm text-red-600" />
+            </div>
+
+            <div>
+                <x-input-label for="last_name" class="login-label" :value="__('Last Name')" />
+                <x-text-input id="last_name" class="login-input" type="text" name="last_name" :value="old('last_name')"
+                    required autofocus autocomplete="last_name" />
+                <x-input-error :messages="$errors->get('last_name')" class="mt-2 text-sm text-red-600" />
             </div>
 
             <!-- Email Address -->

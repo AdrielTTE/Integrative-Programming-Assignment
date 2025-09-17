@@ -11,6 +11,7 @@ class DeliveryDriver extends Model
     protected $primaryKey = 'driver_id';
     public $incrementing = false;
     protected $keyType = 'string';
+    public $timestamps = false;
 
     protected $fillable = [
         'driver_id',

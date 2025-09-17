@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\DeliveryDriver;
+
 
 class DriverAuthController extends Controller
 {
@@ -44,10 +46,14 @@ public function showRegisterForm()
 
 
         $request->validate([
-            'username' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+
+    'first_name'     => ['required', 'string', 'max:255'],
+    'last_name'      => ['required', 'string', 'max:255'],
+    'phone'          => ['required', 'string', 'max:20'],
+    'email'          => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+    'password'       => ['required', 'confirmed', Rules\Password::defaults()],
+]);
+
 
 
 
@@ -75,7 +81,7 @@ do {
         try {
     $user = User::create([
         'user_id' => $newId,
-        'username' => $request->username,
+        'username' => $request->first_name . ' ' . $request->last_name,
         'email' => $request->email,
         'phone_number' => $request->phone,
         'password' => Hash::make($request->password),
@@ -85,6 +91,16 @@ do {
     if (!$user) {
         dd('User creation returned null');
     }
+
+    DeliveryDriver::create([
+    'driver_id'      => $newId, // same as user_id
+    'first_name'     => $request->input('first_name', 'N/A'),
+    'last_name'      => $request->input('last_name', 'N/A'),
+    'license_number' => $request->input('license_number', 'N/A'),
+    'hire_date'      => now(),
+    'driver_status'  => 'AVAILABLE',
+]);
+
 
 
 } catch (\Exception $e) {
