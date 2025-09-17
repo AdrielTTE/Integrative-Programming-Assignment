@@ -258,7 +258,7 @@ Route::prefix('v1')->group(function () {
     // Payment API
     Route::post('/payment/process', [PaymentController::class, 'apiProcess']);
     Route::get('/payment/status/{transactionId}', [PaymentController::class, 'apiStatus']);
-    
+
     // Refund API
     Route::post('/refund/request', [RefundController::class, 'apiRequest']);
     Route::get('/refund/status/{refundId}', [RefundController::class, 'apiStatus']);

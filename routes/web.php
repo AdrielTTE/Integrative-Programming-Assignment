@@ -68,13 +68,13 @@ Route::prefix('customer')->name('customer.')->group(function () {
     // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
         Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
-        
+
         Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
         // --- Package Management Routes ---
         Route::resource('packages', CustomerPackageController::class)
-             ->parameters(['packages' => 'packageId']); 
-        
+             ->parameters(['packages' => 'packageId']);
+
         Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
              ->name('packages.process');
 
@@ -163,6 +163,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::prefix('admin')->middleware(['auth'])->group(function () {
+    // Payment Management
+    Route::get('/payment', [PaymentController::class, 'index'])->name('admin.payment');
+    Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('admin.payment.report');
+    Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('admin.payment.invoice');
+
+    // Refund Management
+    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds');
+    Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
+    Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
+    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
+});
 
 // This file often contains the logout route and other authentication routes.
 require __DIR__ . '/auth.php';

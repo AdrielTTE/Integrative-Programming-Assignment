@@ -11,7 +11,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             // Set up CSRF token for all AJAX requests
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
+
             // Package status data from backend (escaped for XSS prevention)
             const defaultData = {
                 'pending': 0,
@@ -27,8 +27,10 @@
 
             // Validate data before using
             const validatedData = {};
-            const allowedStatuses = ['pending', 'processing', 'in_transit', 'out_for_delivery', 'delivered', 'failed', 'cancelled', 'returned'];
-            
+            const allowedStatuses = ['pending', 'processing', 'in_transit', 'out_for_delivery', 'delivered',
+                'failed', 'cancelled', 'returned'
+            ];
+
             allowedStatuses.forEach(status => {
                 validatedData[status] = Number(packageData[status]) || 0;
             });
@@ -54,7 +56,7 @@
                                     '#10b981', // Delivered
                                     '#dc2626', // Failed
                                     '#6b7280', // Cancelled
-                                    '#f97316'  // Returned
+                                    '#f97316' // Returned
                                 ],
                                 borderWidth: 0,
                                 cutout: '60%'
@@ -68,7 +70,7 @@
                                     position: 'right',
                                     labels: {
                                         padding: 20,
-                                        font: { 
+                                        font: {
                                             size: 13,
                                             family: 'Inter, system-ui, -apple-system, sans-serif'
                                         },
@@ -89,15 +91,20 @@
             if (timelineCtx) {
                 // If no data, create sample data or empty chart
                 let validMonthlyData = [];
-                
+
                 if (Array.isArray(monthlyData) && monthlyData.length > 0) {
-                    validMonthlyData = monthlyData.filter(item => 
+                    validMonthlyData = monthlyData.filter(item =>
                         item && typeof item.month === 'string' && typeof item.count === 'number'
                     ).slice(0, 12);
                 } else {
                     // Create empty data for the last 6 months
-                    const months = ['6 months ago', '5 months ago', '4 months ago', '3 months ago', '2 months ago', 'Last month'];
-                    validMonthlyData = months.map(month => ({ month, count: 0 }));
+                    const months = ['6 months ago', '5 months ago', '4 months ago', '3 months ago', '2 months ago',
+                        'Last month'
+                    ];
+                    validMonthlyData = months.map(month => ({
+                        month,
+                        count: 0
+                    }));
                 }
 
                 new Chart(timelineCtx.getContext('2d'), {
@@ -122,10 +129,12 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false }
+                            legend: {
+                                display: false
+                            }
                         },
                         scales: {
-                            y: { 
+                            y: {
                                 beginAtZero: true,
                                 grid: {
                                     color: '#f3f4f6'
@@ -143,26 +152,26 @@
 
             // Auto-refresh notifications every 5 minutes (optional)
             setInterval(function() {
-                fetch('{{ route("customer.notification") }}', {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    // Update notification count if needed
-                    const notificationBadge = document.querySelector('.notification-badge');
-                    if (notificationBadge && data.unread_count) {
-                        notificationBadge.textContent = Math.min(99, data.unread_count);
-                        notificationBadge.style.display = data.unread_count > 0 ? 'inline' : 'none';
-                    }
-                })
-                .catch(error => console.log('Notification refresh failed:', error));
+                fetch('{{ route('customer.notification') }}', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Update notification count if needed
+                        const notificationBadge = document.querySelector('.notification-badge');
+                        if (notificationBadge && data.unread_count) {
+                            notificationBadge.textContent = Math.min(99, data.unread_count);
+                            notificationBadge.style.display = data.unread_count > 0 ? 'inline' : 'none';
+                        }
+                    })
+                    .catch(error => console.log('Notification refresh failed:', error));
             }, 300000); // 5 minutes
         });
     </script>
@@ -180,7 +189,7 @@
     </div>
 
     <div class="dashboard-layout">
-        
+
         <!-- Stats Overview -->
         <div class="stats-section">
             <div class="stat-item">
@@ -206,7 +215,7 @@
 
         <!-- Main Content -->
         <div class="content-grid">
-            
+
             <!-- Recent Packages -->
             <div class="content-card packages-card">
                 <div class="card-header">
@@ -230,7 +239,7 @@
                                 <div class="package-destination">{{ e(Str::limit($package->recipient_address, 45)) }}</div>
                                 <div class="package-meta">
                                     <span class="package-date">{{ $package->created_at->format('M d, Y') }}</span>
-                                    @if($location)
+                                    @if ($location)
                                         <span class="package-location">{{ e($location) }}</span>
                                     @endif
                                 </div>
@@ -487,7 +496,8 @@
             gap: 12px;
         }
 
-        .package-date, .package-location {
+        .package-date,
+        .package-location {
             font-size: 13px;
             color: #9ca3af;
         }
@@ -509,12 +519,35 @@
             text-transform: capitalize;
         }
 
-        .status-pill.warning { background: #fef3c7; color: #92400e; }
-        .status-pill.info { background: #dbeafe; color: #1e40af; }
-        .status-pill.primary { background: #dbeafe; color: #1d4ed8; }
-        .status-pill.success { background: #dcfce7; color: #166534; }
-        .status-pill.danger { background: #fee2e2; color: #991b1b; }
-        .status-pill.secondary { background: #f3f4f6; color: #374151; }
+        .status-pill.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-pill.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-pill.primary {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-pill.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-pill.secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
 
         /* Chart Cards */
         .chart-card {
@@ -618,7 +651,7 @@
             .dashboard-layout {
                 grid-template-columns: 1fr;
             }
-            
+
             .notifications-sidebar {
                 position: static;
             }
@@ -650,5 +683,4 @@
             }
         }
     </style>
-
 @endsection

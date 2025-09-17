@@ -22,16 +22,16 @@ class CustomerDashboardController extends Controller
     {
         try {
             $userId = Auth::id();
-            
+
             // Get user's packages
-            $packages = Package::where('user_id', $userId)->get();
-            
+            $packages = Package::where('customer_id', $userId)->get();
+
             // Prepare dashboard data
             $dashboardData = [
                 'totalPackages' => $packages->count(),
                 'activeDeliveries' => $packages->whereIn('package_status', [
                     'processing',
-                    'in_transit', 
+                    'in_transit',
                     'out_for_delivery'
                 ])->count(),
                 'deliveredPackages' => $packages->where('package_status', 'delivered')->count(),
@@ -96,22 +96,22 @@ class CustomerDashboardController extends Controller
 
         $monthlyData = [];
         $currentDate = now();
-        
+
         for ($i = 11; $i >= 0; $i--) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
             $monthLabel = $date->format('M Y');
-            
+
             $count = $packages->filter(function ($package) use ($monthKey) {
                 return $package->created_at->format('Y-m') === $monthKey;
             })->count();
-            
+
             $monthlyData[] = [
                 'month' => $monthLabel,
                 'count' => $count
             ];
         }
-        
+
         return $monthlyData;
     }
 }
