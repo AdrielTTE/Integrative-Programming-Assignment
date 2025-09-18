@@ -7,9 +7,10 @@
 
                 <input type="hidden" name="delivery_id" id="delivery_id">
 
+
                 <div class="modal-header">
                     <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback For Package: <b><input
-                                type="text" name="package_id" id="package_id" disabled></b></h5>
+                                type="text" name="package_id" id="package_id" readonly></b></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
