@@ -5,8 +5,6 @@
             <form method="POST" action="{{ route('customer.feedback.store') }}">
                 @csrf
 
-                <input type="hidden" name="delivery_id" id="delivery_id">
-
 
                 <div class="modal-header">
                     <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback For Package: <b><input

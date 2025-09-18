@@ -38,6 +38,7 @@ class FeedbackService{
     ]);
     }
 
-    
+    public function getDeliveryByPackageID(string $packageId){
+        $url = "{$this->baseUrl}/delivery/getDeliveryByPackageID/{$packageId}";
     }
-
+}

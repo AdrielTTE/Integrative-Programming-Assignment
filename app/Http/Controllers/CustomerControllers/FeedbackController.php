@@ -31,7 +31,12 @@ public function __construct()
 
     public function store(Request $request)
 {
+
     dd($request->all());
+    $request->merge([
+        'delivery_id' => $this->feedbackService->getDeliveryByPackageID($request->package_id)
+    ]);
+
     $validated = $request->validate([
         'delivery_id' => 'required|string|exists:delivery,delivery_id',
         'rating'      => 'required|integer|min:1|max:5',
@@ -47,6 +52,7 @@ public function __construct()
                         ->first();
 
     if ($feedback) {
+        // Update existing feedback
         $feedback->update([
             'rating'   => $validated['rating'],
             'category' => $validated['category'],
@@ -55,6 +61,7 @@ public function __construct()
 
         return redirect()->back()->with('success', 'Your feedback has been updated!');
     } else {
+        // Create new feedback
         Feedback::create([
             'feedback_id' => uniqid('fb_'),
             'delivery_id' => $validated['delivery_id'],
@@ -67,6 +74,7 @@ public function __construct()
         return redirect()->back()->with('success', 'Thank you for your feedback!');
     }
 }
+
 
 }
 
