@@ -1,48 +1,43 @@
+<!-- feedback_form.blade.php -->
 <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
-
             <form method="POST" action="{{ route('customer.feedback.store') }}">
                 @csrf
 
+                <input type="hidden" name="delivery_id" id="delivery_id">
+
+
                 <div class="modal-header">
-                    <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback</h5>
+                    <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback For Package: <b><input
+                                type="text" name="package_id" id="package_id" readonly></b></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body">
-                    <!-- Hidden Fields -->
-                    <input type="hidden" name="delivery_id" id="delivery_id">
-                    <input type="hidden" name="package_id" id="package_id">
-                    <input type="hidden" name="customer_id" value="{{ auth()->user()->user_id }}">
-
-                    <!-- Rating -->
                     <div class="mb-3">
                         <label for="rating" class="form-label">Rating</label>
-                        <select class="form-select" name="rating" id="rating" required>
-                            <option value="">-- Select Rating --</option>
-                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                            <option value="4">⭐⭐⭐⭐ Good</option>
-                            <option value="3">⭐⭐⭐ Average</option>
-                            <option value="2">⭐⭐ Poor</option>
-                            <option value="1">⭐ Very Bad</option>
+                        <select class="form-control" id="rating" name="rating" required>
+                            <option value=""disabled selected>Select Rating</option>
+                            @for ($i = 0; $i <= 5; $i++)
+                                <option value="{{ $i }}">{{ $i }}</option>
+                            @endfor
                         </select>
                     </div>
 
-                    <!-- Category -->
                     <div class="mb-3">
                         <label for="category" class="form-label">Category</label>
-                        <select class="form-select" name="category" id="category" required>
+                        <select class="form-control" id="category" name="category" required>
+                            <option value=""disabled selected>Select Category</option>
                             <option value="Package">Package</option>
                             <option value="Delivery">Delivery</option>
-                            <option value="Driver">Driver</option>
+                            <option value="Service">Service</option>
                         </select>
                     </div>
 
-                    <!-- Comment -->
                     <div class="mb-3">
                         <label for="comment" class="form-label">Comment</label>
-                        <textarea class="form-control" name="comment" id="comment" rows="3" placeholder="Enter your feedback..."></textarea>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Enter your feedback..."></textarea>
                     </div>
                 </div>
 
@@ -50,7 +45,6 @@
                     <button type="submit" class="btn btn-primary">Submit Feedback</button>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
