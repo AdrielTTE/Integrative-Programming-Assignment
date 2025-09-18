@@ -9,11 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class CustomerDashboardController extends Controller
 {
-    // Remove this entire constructor block:
-    // public function __construct()
-    // {
-    //     $this->middleware(['auth', 'customer']);
-    // }
 
     /**
      * Display customer dashboard
