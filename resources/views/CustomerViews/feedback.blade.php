@@ -32,11 +32,13 @@
                                     {{ $package['actual_delivery'] ? \Carbon\Carbon::parse($package['actual_delivery'])->format('Y-m-d') : 'N/A' }}
                                 </td>
                                 <td>
-                                    <button type="button" class="rate-btn" data-bs-toggle="modal"
+                                    <button type="button" class="btn btn-primary rate-btn" data-bs-toggle="modal"
                                         data-bs-target="#feedbackModal" data-package-id="{{ $package['package_id'] }}"
                                         data-delivery-id="{{ $package['delivery_id'] ?? '' }}">
                                         Rate
                                     </button>
+
+
                                 </td>
                             </tr>
                         @endforeach
@@ -47,18 +49,22 @@
     </div>
 
 
-    {{-- @include('CustomerViews.feedback_form') --}}
+    @include('CustomerViews.feedback_form')
+
 
     <script>
         const feedbackModal = document.getElementById('feedbackModal');
-        feedbackModal.addEventListener('show.bs.modal', function(event) {
-            let button = event.relatedTarget;
+        if (feedbackModal) {
+            feedbackModal.addEventListener('show.bs.modal', function(event) {
+                let button = event.relatedTarget;
 
-            let packageId = button.getAttribute('data-package-id');
-            let deliveryId = button.getAttribute('data-delivery-id');
+                let packageId = button.getAttribute('data-package-id');
+                let deliveryId = button.getAttribute('data-delivery-id');
 
-            document.getElementById('delivery_id').value = deliveryId ?? '';
-            document.getElementById('package_id').value = packageId ?? '';
-        });
+                document.getElementById('delivery_id').value = deliveryId ?? '';
+                document.getElementById('package_id').value = packageId ?? '';
+            });
+        }
     </script>
+
 @endsection
