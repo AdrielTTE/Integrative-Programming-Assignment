@@ -119,7 +119,7 @@ do {
 
     Auth::login($user);
 
-    return redirect()->route('customer.temporaryPage');
+    return redirect()->route('customer.dashboard');
 }
 
 

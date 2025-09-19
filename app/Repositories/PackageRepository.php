@@ -9,6 +9,15 @@ class PackageRepository
 {
     protected $model;
 
+    public function getUserStats($userId)
+{
+    return DB::table('package')
+        ->select('package_status', DB::raw('count(*) as count'))
+        ->where('user_id', $userId)
+        ->groupBy('package_status')
+        ->get();
+}
+
     public function __construct()
     {
         $this->model = new Package();

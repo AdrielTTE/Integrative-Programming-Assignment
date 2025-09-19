@@ -15,7 +15,7 @@ use App\Http\Controllers\AdminControllers\DashboardController;
 use App\Http\Controllers\AdminControllers\FeedbackController;
 use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
-
+use App\Http\Controllers\AdminControllers\AdminPackageController; // ADD THIS
 use App\Http\Controllers\AdminControllers\AdminAssignmentController;
 
 // Customer Controllers
@@ -33,8 +33,6 @@ use App\Http\Controllers\DriverControllers\AssignedPackageController;
 use App\Http\Controllers\Web\PackageController as WebPackageController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
-
-
 
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
@@ -92,8 +90,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
         Route::post('/feedback', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
-    }); // This closing brace should be here to include all authenticated routes
-
+    });
 });
 
 
@@ -114,14 +111,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
-        // Note: Add 'use' statements for AdminPackageController and PackageAssignmentController if they exist.
-        // Route::get('/assign-packages', [PackageAssignmentController::class, 'index'])->name('packages.assign');
-        // Route::resource('packages', AdminPackageController::class); // Example of using a resource controller for admin
+        // Package Management
+        Route::resource('packages', AdminPackageController::class)->parameters(['packages' => 'packageId']);
+        Route::post('/packages/bulk-action', [AdminPackageController::class, 'bulkAction'])->name('packages.bulk');
+        Route::get('/packages-export', [AdminPackageController::class, 'exportPackagesData'])->name('packages.export');
+        Route::post('/packages-import-feedback', [AdminPackageController::class, 'importCustomerFeedback'])->name('packages.import.feedback');
 
-        Route::resource('packages', WebPackageController::class)->parameters(['packages' => 'packageId']);
+        // Package Assignments
         Route::get('/package-assignments', [AdminAssignmentController::class, 'index'])->name('assignments.index');
         Route::post('/package-assignments/{packageId}/assign', [AdminAssignmentController::class, 'assign'])->name('assignments.assign');
-
 
         // Proof Management
         Route::get('/proofs', [ProofManagementController::class, 'index'])->name('proof.index');
@@ -133,6 +131,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/search', [AdminSearchController::class, 'search'])->name('search');
         Route::post('/search/bulk', [AdminSearchController::class, 'bulkAction'])->name('search.bulk');
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
+
+        // Payment Management
+        Route::get('/payment', [PaymentController::class, 'index'])->name('payment');
+        Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('payment.report');
+        Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('payment.invoice');
+
+        // Refund Management
+        Route::get('/refunds', [RefundController::class, 'index'])->name('refunds');
+        Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
+        Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
+        Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('refunds.process');
     });
 });
 
