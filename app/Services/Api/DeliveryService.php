@@ -98,4 +98,8 @@ class DeliveryService
         ['delivery_status' => $status, 'count' => $count]
     ]);
     }
+
+    public function getDeliveryByPackageID(string $packageId){
+        return Delivery::where('package_id', $packageId)->first();
+    }
 }

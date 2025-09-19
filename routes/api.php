@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\PackageController as ApiPackageController;
+use App\Http\Controllers\Api\WebServiceController;
+use App\Http\Controllers\AdminControllers\PaymentController;
 
 
     Route::prefix('delivery')->group(function () {
@@ -27,6 +29,7 @@ use App\Http\Controllers\Api\PackageController as ApiPackageController;
         Route::delete('/{delivery_id}', [DeliveryController::class, 'delete']);
         Route::get('getCountDeliveries', [DeliveryController::class,'getCountDeliveries']);
         Route::get('/getCountByStatus/{status}', [DeliveryController::class,'getCountByStatus']);
+        Route::get('/getDeliveryByPackageID/{package_id}', [DeliveryController::class,'getDeliveryByPackageID']);
 
     });
 
@@ -135,6 +138,8 @@ Route::prefix('package')->group(function () {
     Route::get('/{package_id}/details', [PackageController::class, 'getWithDetails']);
     Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
     Route::get('/getPackagesByStatus/{status}/{page}/{pageSize}/{customerId}',[PackageController::class, 'getPackagesByStatus']);
+    Route::put('/{package_id}/is-rated', [PackageController::class, 'updateIsRated']);
+
 });
 
 // -------------------

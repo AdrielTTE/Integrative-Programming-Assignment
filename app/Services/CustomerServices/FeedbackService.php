@@ -8,6 +8,8 @@ use App\Services\Api\DeliveryDriverService;
 use App\Services\Api\DeliveryService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use App\Models\Delivery;
+
 
 class FeedbackService{
 
@@ -38,7 +40,34 @@ class FeedbackService{
     ]);
     }
 
-    public function getDeliveryByPackageID(string $packageId){
-        $url = "{$this->baseUrl}/delivery/getDeliveryByPackageID/{$packageId}";
+    public function getDeliveryByPackageID(string $packageId): ?Delivery
+{
+    $url = "{$this->baseUrl}/delivery/getDeliveryByPackageID/{$packageId}";
+
+    $response = Http::get($url);
+
+    if ($response->successful()) {
+        // Assuming your API returns a Delivery-like JSON object
+        return new Delivery($response->json());
     }
+
+    return null;
+}
+
+
+public function updatePackageFeedback(string $packageId)
+{
+    $url = "{$this->baseUrl}/package/{$packageId}/is-rated";
+
+    $response = Http::withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+    ])->put($url, [
+        'is_rated' => true
+    ]);
+
+    return $response->successful() ? $response->json() : null;
+}
+
+
 }
