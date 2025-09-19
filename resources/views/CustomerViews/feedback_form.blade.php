@@ -4,11 +4,14 @@
         <div class="modal-content">
             <form method="POST" action="{{ route('customer.feedback.store') }}">
                 @csrf
+                <input type="hidden" name="package_id" id="package_id">
 
 
                 <div class="modal-header">
-                    <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback For Package: <b><input
-                                type="text" name="package_id" id="package_id" readonly></b></h5>
+                    <h5 class="modal-title" id="feedbackModalLabel">
+                        Submit Feedback For Package: <b><span id="modalPackageIdLabel"></span></b>
+                    </h5>
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 

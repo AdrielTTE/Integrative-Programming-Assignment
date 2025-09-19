@@ -91,7 +91,6 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
 
         Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
-        Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
         Route::post('/feedback', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
     }); // This closing brace should be here to include all authenticated routes
 

@@ -57,5 +57,9 @@ class DeliveryController extends Controller
     public function getCountByStatus($status){
         return response()->json($this->deliveryService->getCountByStatus($status));
     }
+
+    public function getDeliveryByPackageID($package_id){
+        return response()->json($this->deliveryService->getDeliveryByPackageID($package_id));
+    }
 }
 

@@ -19,6 +19,9 @@ class Package extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    /**
+     * Mass-assignable attributes
+     */
     protected $fillable = [
         'package_id',
         'user_id',
@@ -33,32 +36,37 @@ class Package extends Model
         'shipping_cost',
         'estimated_delivery',
         'actual_delivery',
-        'notes'
+        'notes',
+        'is_rated', // ✅ now fillable
     ];
 
+    /**
+     * Attribute casting
+     */
     protected $casts = [
-        'package_weight' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'estimated_delivery' => 'datetime',
-        'actual_delivery' => 'datetime',
+        'package_weight'      => 'decimal:2',
+        'shipping_cost'       => 'decimal:2',
+        'created_at'          => 'datetime',
+        'updated_at'          => 'datetime',
+        'estimated_delivery'  => 'datetime',
+        'actual_delivery'     => 'datetime',
+        'is_rated'            => 'boolean', // ✅ always true/false
     ];
 
     // Status constants
-    const STATUS_PENDING = 'pending';
-    const STATUS_PROCESSING = 'processing';
-    const STATUS_IN_TRANSIT = 'in_transit';
+    const STATUS_PENDING        = 'pending';
+    const STATUS_PROCESSING     = 'processing';
+    const STATUS_IN_TRANSIT     = 'in_transit';
     const STATUS_OUT_FOR_DELIVERY = 'out_for_delivery';
-    const STATUS_DELIVERED = 'delivered';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_RETURNED = 'returned';
-    const STATUS_FAILED = 'failed';
+    const STATUS_DELIVERED      = 'delivered';
+    const STATUS_CANCELLED      = 'cancelled';
+    const STATUS_RETURNED       = 'returned';
+    const STATUS_FAILED         = 'failed';
 
     // Priority constants
     const PRIORITY_STANDARD = 'standard';
-    const PRIORITY_EXPRESS = 'express';
-    const PRIORITY_URGENT = 'urgent';
+    const PRIORITY_EXPRESS  = 'express';
+    const PRIORITY_URGENT   = 'urgent';
 
     // State management property
     private ?PackageState $currentState = null;
@@ -80,6 +88,9 @@ class Package extends Model
             if (empty($package->shipping_cost) && !empty($package->package_weight)) {
                 $package->shipping_cost = $package->calculateShippingCost();
             }
+            if (!isset($package->is_rated)) {
+                $package->is_rated = false; // ✅ default to not rated
+            }
         });
 
         static::updating(function ($package) {
@@ -96,7 +107,7 @@ class Package extends Model
     }
 
     /**
-     * Get current state instance
+     * State methods
      */
     public function getState(): PackageState
     {
@@ -106,18 +117,12 @@ class Package extends Model
         return $this->currentState;
     }
 
-    /**
-     * Set new state
-     */
     public function setState(PackageState $state): void
     {
         $this->currentState = $state;
         $this->package_status = $state->getStatusName();
     }
 
-    /**
-     * State-based operations
-     */
     public function canBeEdited(): bool
     {
         return $this->getState()->canBeEdited();
@@ -154,7 +159,7 @@ class Package extends Model
         return $newState;
     }
 
-    public function cancel(\App\Models\User $user): PackageState
+    public function cancel(User $user): PackageState
     {
         $newState = $this->getState()->cancel($user);
         $this->setState($newState);
@@ -232,14 +237,17 @@ class Package extends Model
     }
 
     /**
-     * Static methods
+     * Static helpers
      */
     public static function generatePackageId()
     {
-        $lastPackage = DB::table('package')->where('package_id', 'like', 'P%')->orderBy('package_id', 'desc')->first();
-        
+        $lastPackage = DB::table('package')
+            ->where('package_id', 'like', 'P%')
+            ->orderBy('package_id', 'desc')
+            ->first();
+
         if ($lastPackage) {
-            $number = (int)substr($lastPackage->package_id, 1);
+            $number = (int) substr($lastPackage->package_id, 1);
             $nextNumber = $number + 1;
         } else {
             $nextNumber = 1;
@@ -289,14 +297,14 @@ class Package extends Model
     public static function getStatuses()
     {
         return [
-            self::STATUS_PENDING => 'Pending',
-            self::STATUS_PROCESSING => 'Processing',
-            self::STATUS_IN_TRANSIT => 'In Transit',
+            self::STATUS_PENDING        => 'Pending',
+            self::STATUS_PROCESSING     => 'Processing',
+            self::STATUS_IN_TRANSIT     => 'In Transit',
             self::STATUS_OUT_FOR_DELIVERY => 'Out for Delivery',
-            self::STATUS_DELIVERED => 'Delivered',
-            self::STATUS_CANCELLED => 'Cancelled',
-            self::STATUS_RETURNED => 'Returned',
-            self::STATUS_FAILED => 'Failed Delivery',
+            self::STATUS_DELIVERED      => 'Delivered',
+            self::STATUS_CANCELLED      => 'Cancelled',
+            self::STATUS_RETURNED       => 'Returned',
+            self::STATUS_FAILED         => 'Failed Delivery',
         ];
     }
 
@@ -304,26 +312,28 @@ class Package extends Model
     {
         return [
             self::PRIORITY_STANDARD => 'Standard (5-7 days)',
-            self::PRIORITY_EXPRESS => 'Express (2-3 days)',
-            self::PRIORITY_URGENT => 'Urgent (1 day)',
+            self::PRIORITY_EXPRESS  => 'Express (2-3 days)',
+            self::PRIORITY_URGENT   => 'Urgent (1 day)',
         ];
     }
 
     public function getFormattedDetails()
     {
         return [
-            'id' => $this->package_id,
-            'tracking' => $this->tracking_number,
-            'status' => $this->package_status,
-            'status_text' => self::getStatuses()[$this->package_status] ?? 'Unknown',
-            'status_color' => $this->getStatusColor(),
-            'location' => $this->getCurrentLocation(),
-            'weight' => $this->package_weight . ' kg',
-            'dimensions' => $this->package_dimensions,
-            'cost' => '$' . number_format($this->shipping_cost ?? 0, 2),
-            'can_edit' => $this->canBeEdited(),
-            'can_cancel' => $this->canBeCancelled(),
+            'id'                  => $this->package_id,
+            'tracking'            => $this->tracking_number,
+            'status'              => $this->package_status,
+            'status_text'         => self::getStatuses()[$this->package_status] ?? 'Unknown',
+            'status_color'        => $this->getStatusColor(),
+            'location'            => $this->getCurrentLocation(),
+            'weight'              => $this->package_weight . ' kg',
+            'dimensions'          => $this->package_dimensions,
+            'cost'                => '$' . number_format($this->shipping_cost ?? 0, 2),
+            'is_rated'            => $this->is_rated,
+            'can_edit'            => $this->canBeEdited(),
+            'can_cancel'          => $this->canBeCancelled(),
             'allowed_transitions' => $this->getState()->getAllowedTransitions()
         ];
     }
 }
+

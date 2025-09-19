@@ -29,12 +29,12 @@ public function __construct()
         return view('CustomerViews.feedback', compact('packages'));
     }
 
-    public function store(Request $request)
+ public function store(Request $request)
 {
+    $delivery = $this->feedbackService->getDeliveryByPackageID($request->package_id);
 
-    dd($request->all());
     $request->merge([
-        'delivery_id' => $this->feedbackService->getDeliveryByPackageID($request->package_id)
+        'delivery_id' => $delivery->delivery_id,
     ]);
 
     $validated = $request->validate([
@@ -44,7 +44,7 @@ public function __construct()
         'comment'     => 'nullable|string',
     ]);
 
-    $customerId = auth()->user()->id;
+    $customerId = auth()->user()->user_id;
 
     // Check if feedback already exists for this delivery & customer
     $feedback = Feedback::where('delivery_id', $validated['delivery_id'])
@@ -52,18 +52,25 @@ public function __construct()
                         ->first();
 
     if ($feedback) {
-        // Update existing feedback
         $feedback->update([
-            'rating'   => $validated['rating'],
-            'category' => $validated['category'],
-            'comment'  => $validated['comment'] ?? null,
+            'rating'    => $validated['rating'],
+            'category'  => $validated['category'],
+            'comment'   => $validated['comment'] ?? null,
         ]);
 
         return redirect()->back()->with('success', 'Your feedback has been updated!');
     } else {
-        // Create new feedback
+        $latestId = Feedback::max('feedback_id');
+
+        if ($latestId) {
+            $num = (int) substr($latestId, 1);
+            $newId = 'F' . str_pad($num + 1, 5, '0', STR_PAD_LEFT);
+        } else {
+            $newId = 'F00001';
+        }
+
         Feedback::create([
-            'feedback_id' => uniqid('fb_'),
+            'feedback_id' => $newId,
             'delivery_id' => $validated['delivery_id'],
             'customer_id' => $customerId,
             'rating'      => $validated['rating'],
@@ -71,9 +78,15 @@ public function __construct()
             'comment'     => $validated['comment'] ?? null,
         ]);
 
+     $this->feedbackService->updatePackageFeedback($request->package_id);
+
+
         return redirect()->back()->with('success', 'Thank you for your feedback!');
     }
 }
+
+
+
 
 
 }

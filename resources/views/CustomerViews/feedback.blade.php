@@ -31,15 +31,20 @@
                                 <td>
                                     {{ $package['actual_delivery'] ? \Carbon\Carbon::parse($package['actual_delivery'])->format('Y-m-d') : 'N/A' }}
                                 </td>
-                                <td>
-                                    <button type="button" class="btn btn-primary rate-btn" data-bs-toggle="modal"
-                                        data-bs-target="#feedbackModal" data-package-id="{{ $package['package_id'] }}"
-                                        data-delivery-id="{{ $package['delivery_id'] ?? '' }}">
-                                        Rate
-                                    </button>
+
+                                @if ($package['is_rated'])
+                                    <td>Rated</td>
+                                @else
+                                    <td>
+                                        <button type="button" class="btn btn-primary rate-btn" data-bs-toggle="modal"
+                                            data-bs-target="#feedbackModal" data-package-id="{{ $package['package_id'] }}"
+                                            data-delivery-id="{{ $package['delivery_id'] ?? '' }}">
+                                            Rate
+                                        </button>
 
 
-                                </td>
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
@@ -53,18 +58,25 @@
 
 
     <script>
-        const feedbackModal = document.getElementById('feedbackModal');
-        if (feedbackModal) {
-            feedbackModal.addEventListener('show.bs.modal', function(event) {
-                let button = event.relatedTarget;
+        document.addEventListener('DOMContentLoaded', function() {
+            const feedbackModal = document.getElementById('feedbackModal');
 
-                let packageId = button.getAttribute('data-package-id');
-                let deliveryId = button.getAttribute('data-delivery-id');
+            if (feedbackModal) {
+                feedbackModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
 
-                document.getElementById('delivery_id').value = deliveryId ?? '';
-                document.getElementById('package_id').value = packageId ?? '';
-            });
-        }
+                    const packageId = button.getAttribute('data-package-id');
+                    const deliveryId = button.getAttribute('data-delivery-id');
+
+                    const packageInput = document.getElementById('package_id');
+                    const deliveryInput = document.getElementById('delivery_id');
+                    const labelSpan = document.getElementById('modalPackageIdLabel');
+
+                    if (packageInput) packageInput.value = packageId ?? '';
+                    if (deliveryInput) deliveryInput.value = deliveryId ?? '';
+                    if (labelSpan) labelSpan.textContent = packageId ?? '';
+                });
+            }
+        });
     </script>
-
 @endsection

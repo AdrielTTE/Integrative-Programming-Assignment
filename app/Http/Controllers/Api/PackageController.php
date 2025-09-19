@@ -84,6 +84,56 @@ class PackageController extends Controller
         }
     }
 
+    public function update(Request $request, string $packageId)
+{
+    try {
+        $package = $this->apiPackageService->update($packageId, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'data'    => $package,
+            'message' => 'Package updated successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating package',
+            'error'   => $e->getMessage()
+        ], Response::HTTP_BAD_REQUEST);
+    }
+}
+
+
+public function updateIsRated(Request $request, string $packageId)
+{
+    \Log::info('updateIsRated request data:', $request->all());
+
+    $validated = $request->validate([
+        'is_rated' => 'required|boolean',
+    ]);
+
+    try {
+        $package = $this->apiPackageService->updateIsRated($packageId, $validated['is_rated']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $package,
+            'message' => 'Package rating status updated successfully.',
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update rating status.',
+            'error' => $e->getMessage(),
+        ], 400);
+    }
+}
+
+
+
+
+
+
     public function track($trackingNumber)
     {
         try {
