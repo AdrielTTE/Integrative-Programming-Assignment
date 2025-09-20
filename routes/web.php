@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminControllers\ProofManagementController;
 use App\Http\Controllers\AdminControllers\SearchController as AdminSearchController;
 use App\Http\Controllers\AdminControllers\AdminPackageController; // ADD THIS
 use App\Http\Controllers\AdminControllers\AdminAssignmentController;
+use App\Http\Controllers\AdminControllers\AnnouncementController;
 
 // Customer Controllers
 use App\Http\Controllers\CustomerControllers\CustomerNotificationController;
@@ -142,6 +143,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
         Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
         Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('refunds.process');
+
+        // Announcements and Notification
+        Route::get('/announcement', [AnnouncementController::class, 'create'])->name('announcement.create');
+Route::post('/announcement', [AnnouncementController::class, 'send'])->name('announcement.send');
     });
 });
 

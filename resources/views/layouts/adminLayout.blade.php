@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <title>Package Tracking System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     @vite('resources/css/app.css')
     <style>
         .gradient-bg {
@@ -59,29 +61,29 @@
                 <span class="font-medium">Dashboard</span>
             </a>
 
-            
+
             <a href="{{ route('admin.packages.index') }}"
                 class="nav-link {{ request()->routeIs('admin.packages.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-box w-5 mr-3"></i>
                 <span class="font-medium">Package Management</span>
             </a>
 
-            
+
             <a href="{{ route('admin.assignments.index') }}"
                 class="nav-link {{ request()->routeIs('admin.assignments.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tasks w-5 mr-3"></i>
                 <span class="font-medium">Assign Packages</span>
-            </a> 
+            </a>
 
             <a href="{{ route('admin.proof.index') }}"
                 class="nav-link {{ request()->routeIs('admin.proof.index') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-truck w-5 mr-3"></i>
                 <span class="font-medium">Delivery & Proof</span>
             </a>
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('notifications') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('admin.announcement.create') }}"
+                class="nav-link {{ request()->routeIs('admin.announcement.create') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-bell w-5 mr-3"></i>
-                <span class="font-medium">Notifications</span>
+                <span class="font-medium">Send Announcement</span>
             </a>
             <a href="{{ route('admin.search') }}"
                 class="nav-link {{ request()->routeIs('admin.search') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
@@ -103,12 +105,12 @@
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
-             <a href="{{ route('admin.refunds') }}"
+            <a href="{{ route('admin.refunds') }}"
                 class="nav-link {{ request()->routeIs('admin.feedback') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Request Refunds</span>
             </a>
-             <a href="{{ route('admin.payment') }}"
+            <a href="{{ route('admin.payment') }}"
                 class="nav-link {{ request()->routeIs('admin.feedback') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Manage Payments And Report</span>

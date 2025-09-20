@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\PackageController as ApiPackageController;
 use App\Http\Controllers\Api\WebServiceController;
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
+use App\Http\Controllers\Api\NotificationController;
 
 
     Route::prefix('delivery')->group(function () {
@@ -269,4 +270,19 @@ Route::prefix('v1')->group(function () {
     // Refund API
     Route::post('/refund/request', [RefundController::class, 'apiRequest']);
     Route::get('/refund/status/{refundId}', [RefundController::class, 'apiStatus']);
+});
+
+// -------------------
+// Notification
+// -------------------
+Route::prefix('notifications')->group(function () {
+    Route::get('/nextId', [NotificationController::class, 'nextId']);
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::post('/', [NotificationController::class, 'store']);
+    Route::get('/{notification_id}', [NotificationController::class, 'show']);
+    Route::put('/{notification_id}', [NotificationController::class, 'update']);
+    Route::patch('/{notification_id}', [NotificationController::class, 'update']);
+    Route::delete('/{notification_id}', [NotificationController::class, 'destroy']);
+    Route::get('/page/{pageNo}', [NotificationController::class, 'paginated']);
+
 });
