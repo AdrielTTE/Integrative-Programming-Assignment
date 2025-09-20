@@ -28,10 +28,22 @@ class PackageStateFactory
 
     public static function create(Package $package): PackageState
     {
-        $status = $package->package_status;
+        $status = strtolower(trim($package->package_status));
         
+        // Handle both uppercase and lowercase statuses from database
         if (!isset(self::$stateMap[$status])) {
-            throw new \InvalidArgumentException("Unknown package status: {$status}");
+            // Try to find a matching status by converting keys to lowercase
+            foreach (self::$stateMap as $key => $stateClass) {
+                if (strtolower($key) === $status) {
+                    return new $stateClass($package);
+                }
+            }
+            
+            // If still not found, throw exception with helpful message
+            throw new \InvalidArgumentException(
+                "Unknown package status: '{$package->package_status}'. " .
+                "Valid statuses are: " . implode(', ', array_keys(self::$stateMap))
+            );
         }
 
         $stateClass = self::$stateMap[$status];
@@ -40,8 +52,20 @@ class PackageStateFactory
 
     public static function createByStatus(string $status, Package $package): PackageState
     {
+        $status = strtolower(trim($status));
+        
         if (!isset(self::$stateMap[$status])) {
-            throw new \InvalidArgumentException("Unknown package status: {$status}");
+            // Try to find a matching status by converting keys to lowercase
+            foreach (self::$stateMap as $key => $stateClass) {
+                if (strtolower($key) === $status) {
+                    return new $stateClass($package);
+                }
+            }
+            
+            throw new \InvalidArgumentException(
+                "Unknown package status: '{$status}'. " .
+                "Valid statuses are: " . implode(', ', array_keys(self::$stateMap))
+            );
         }
 
         $stateClass = self::$stateMap[$status];
@@ -51,5 +75,13 @@ class PackageStateFactory
     public static function getAvailableStates(): array
     {
         return array_keys(self::$stateMap);
+    }
+    
+    /**
+     * Normalize status to lowercase for consistent handling
+     */
+    public static function normalizeStatus(string $status): string
+    {
+        return strtolower(trim($status));
     }
 }
