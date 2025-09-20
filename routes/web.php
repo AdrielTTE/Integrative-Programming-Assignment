@@ -91,6 +91,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
         Route::post('/feedback', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
+        Route::post('/notifications/updateReadAt/{notification_id}', [CustomerNotificationController::class, 'updateReadAt'])->name('notifications.updateReadAt');
     });
 });
 
@@ -148,6 +149,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/announcement', [AnnouncementController::class, 'create'])->name('announcement.create');
 Route::post('/announcement', [AnnouncementController::class, 'send'])->name('announcement.send');
     });
+
 });
 
 

@@ -34,6 +34,12 @@ class NotificationController extends Controller
         return response()->json($notification);
     }
 
+    public function getByCustomerId(string $customer_id)
+    {
+        $notifications = $this->notificationService->getByCustomerId($customer_id);
+        return response()->json($notifications);
+    }
+
 
     public function update(Request $request, string $notification_id)
     {
@@ -54,15 +60,17 @@ class NotificationController extends Controller
         return response()->json($paginated);
     }
 
-    /**
- * GET /api/notifications/next-id
- * Fetch the next notification_id that will be assigned.
- */
+
 public function nextId()
 {
     $nextId = $this->notificationService->generateNextNotificationId();
     return response()->json(['next_notification_id' => $nextId]);
 }
 
+public function markAsRead(string $notification_id)
+{
+    $notification = $this->notificationService->markAsRead($notification_id);
+    return response()->json($notification);
 
+}
 }

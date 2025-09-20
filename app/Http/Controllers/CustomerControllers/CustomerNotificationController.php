@@ -14,19 +14,26 @@ protected PackageService $packageService;
 protected DeliveryService $deliveryService;
 protected CustomerNotificationService $notificationService;
 
-public function __construct(DeliveryService $deliveryService, PackageService $packageService)
+public function __construct()
 {
-    $this->notificationService = new CustomerNotificationService(
-        $packageService,
-        $deliveryService
-    );
+    $this->notificationService = new CustomerNotificationService();
 }
     public function notification(){
-        $notifications = [];
+        $notifications = $this->notificationService->getNotifications(auth()->user()->user_id);
 
         //$notifications = $this->notificationService->getNotifications();
         return view('CustomerViews.Notifications.notification', compact('notifications'));
     }
+
+    public function updateReadAt(string $notification_id)
+{
+    $this->notificationService->updateReadAt($notification_id);
+
+    return redirect()->back();
+}
+
+
+
 
 
 

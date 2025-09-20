@@ -85,4 +85,22 @@ class NotificationService
 
         return 'N' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
     }
+
+    public function getByCustomerId(string $customerId)
+{
+    return Notification::where('customer_id', $customerId)
+        ->whereNull('read_at') // only unread notifications
+        ->orderByDesc('created_at')
+        ->get();
+}
+
+
+    public function markAsRead(string $notificationId)
+    {
+        $notification = Notification::where('notification_id', $notificationId)->firstOrFail();
+        $notification->read_at = now();
+        $notification->save();
+
+        return $notification;
+    }
 }

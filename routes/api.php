@@ -284,5 +284,9 @@ Route::prefix('notifications')->group(function () {
     Route::patch('/{notification_id}', [NotificationController::class, 'update']);
     Route::delete('/{notification_id}', [NotificationController::class, 'destroy']);
     Route::get('/page/{pageNo}', [NotificationController::class, 'paginated']);
+    Route::get('/getByCustomerId/{customer_id}', [NotificationController::class, 'getByCustomerId']);
+    Route::patch('/markAsRead/{notification_id}', [NotificationController::class,'markAsRead']);
+
+
 
 });
