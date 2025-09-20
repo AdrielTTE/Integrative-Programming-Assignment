@@ -23,9 +23,10 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Package ID</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Customer</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Recipient</th>
+                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Customer ID</th>
+                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Recipient Address</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Created</th>
+                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Priority Level</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Assign Driver</th>
                         </tr>
                     </thead>
@@ -33,10 +34,10 @@
                         @forelse($packages as $package)
                             <tr class="hover:bg-gray-50">
                                 <td class="p-4 font-mono">{{ $package->package_id }}</td>
-                                <td class="p-4">{{ $package->customer->first_name ?? 'N/A' }}
-                                    {{ $package->customer->last_name ?? '' }}</td>
+                                <td class="p-4">{{ $package->user_id}}</td>
                                 <td class="p-4 truncate max-w-xs">{{ $package->recipient_address }}</td>
                                 <td class="p-4">{{ $package->created_at->format('Y-m-d') }}</td>
+                                <td class="p-4">{{ $package->priority}}</td>
                                 <td class="p-4">
                                     {{-- Each row has its own form for direct assignment --}}
                                     <form action="{{ route('admin.assignments.assign', $package->package_id) }}" method="POST"

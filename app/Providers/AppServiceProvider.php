@@ -5,15 +5,19 @@ namespace App\Providers;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
+use App\Services\DriverPackageService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
      */
     public function register(): void
-    {
-        //
-    }
+{
+    $this->app->singleton(DriverPackageService::class, function ($app) {
+        return new DriverPackageService();
+    });
+}
 
     /**
      * Bootstrap any application services.

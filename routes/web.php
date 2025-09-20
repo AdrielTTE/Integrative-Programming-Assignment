@@ -31,8 +31,15 @@ use App\Http\Controllers\CustomerControllers\TemporaryController;
 use App\Http\Controllers\DriverControllers\DriverDashboardController;
 use App\Http\Controllers\DriverControllers\AssignedPackageController;
 
+use App\Http\Controllers\DriverControllers\DriverPackagesController;
+use App\Http\Controllers\Api\DeliveryController; 
+use App\Http\Controllers\DriverControllers\DeliveryHistoryController;
+
+
+
+
 // General Web Controllers
-use App\Http\Controllers\Web\PackageController as WebPackageController;
+use App\Http\Controllers\DriverControllers\DeliveryStatusController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 
@@ -149,6 +156,31 @@ Route::prefix('driver')->name('driver.')->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
     });
+
+    Route::middleware(['auth', 'driver'])->group(function () {
+        Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
+
+        Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
+    });
+
+    Route::get('/package/{packageId}', [DeliveryController::class, 'getDeliveryPackageDetails'])->middleware('auth:sanctum');
+
+    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
+
+    
+    Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
+
+    
+    Route::get('/update-status', [DeliveryStatusController::class, 'index'])->name('status.index');
+    Route::post('/update-status/{packageId}', [DeliveryStatusController::class, 'update'])->name('status.update');
+
+     Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
+        Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
+        Route::get('/update-status', [DeliveryStatusController::class, 'index'])->name('status.index');
+        Route::post('/update-status/{packageId}', [DeliveryStatusController::class, 'update'])->name('status.update');
+
+        // --- NEW DELIVERY HISTORY ROUTE ---
+        Route::get('/delivery-history', [DeliveryHistoryController::class, 'index'])->name('history.index');
 });
 
 

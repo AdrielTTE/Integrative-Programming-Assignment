@@ -8,6 +8,8 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+use Exception; // Import Exception class
+
 class DeliveryService
 {
     public function getAll()
@@ -97,5 +99,41 @@ class DeliveryService
     return collect([
         ['delivery_status' => $status, 'count' => $count]
     ]);
+    }
+
+
+    public function getPackageForDriver(string $packageId, string $driverId): Package
+    {
+        $package = Package::with('customer', 'delivery')
+            ->where('package_id', $packageId)
+            ->whereHas('delivery', function ($query) use ($driverId) {
+                $query->where('driver_id', $driverId);
+            })
+            ->first();
+
+        if (!$package) {
+            throw new Exception('Package not found or you are not authorized to view it.');
+        }
+        return $package;
+    }
+
+    // --- NEW SERVICE METHOD 2 ---
+    /**
+     * Updates the status of a delivery and its package within a transaction.
+     * Secure Coding: A transaction ensures that if one update fails, both are rolled back.
+     */
+    public function updateStatusForDriver(string $packageId, string $driverId, string $newStatus): void
+    {
+        DB::transaction(function () use ($packageId, $driverId, $newStatus) {
+            $package = $this->getPackageForDriver($packageId, $driverId); // Re-uses the security check
+
+            $package->delivery->update(['delivery_status' => $newStatus]);
+            $package->update(['package_status' => $newStatus]);
+
+            // If the delivery is final, free up the driver.
+            if (in_array($newStatus, ['DELIVERED', 'FAILED'])) {
+                $package->delivery->driver->update(['driver_status' => 'AVAILABLE']);
+            }
+        });
     }
 }

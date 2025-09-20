@@ -470,4 +470,5 @@ class Package extends Model
             'can_cancel' => $this->canBeCancelled()
         ];
     }
+    
 }

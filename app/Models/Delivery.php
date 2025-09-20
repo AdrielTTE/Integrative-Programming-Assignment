@@ -5,11 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Observers\Subject;
-use App\Observers\Observer;
-use Illuminate\Http\Request;
 
-class Delivery extends Model implements Subject
+class Delivery extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -17,25 +14,34 @@ class Delivery extends Model implements Subject
     protected $primaryKey = 'delivery_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    private array $observers = [];
 
+    // --- FIX #1: Tell Laravel your table does NOT have created_at/updated_at columns ---
+    public $timestamps = false;
+
+    /**
+     * --- FIX #2: The fillable properties MUST match your database table columns ---
+     */
     protected $fillable = [
         'delivery_id',
         'package_id',
         'driver_id',
-        'delivery_status',
+        'vehicle_id', // This was missing
+        'route_id',
         'pickup_time',
-        'delivery_time',
+        'estimated_delivery_time', // This name matches your controller
         'actual_delivery_time',
-        'notes'
+        'delivery_status',
+        'delivery_cost',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     */
     protected $casts = [
         'pickup_time' => 'datetime',
-        'delivery_time' => 'datetime',
+        'estimated_delivery_time' => 'datetime',
         'actual_delivery_time' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'delivery_cost' => 'decimal:2'
     ];
 
     public function package()
@@ -47,27 +53,4 @@ class Delivery extends Model implements Subject
     {
         return $this->belongsTo(DeliveryDriver::class, 'driver_id', 'driver_id');
     }
-
-
-    function addObserver(Observer $observer){
-        $this->observers()->attach($observer);
-    }
-    function removeObserver(Observer $observer){
-        $this->observers()->detach($observer);
-    }
-    function notifyObserver(){
-foreach ($this->observers as $observer) {
-            $observer->update($this);
-        }
-    }
-
-    public function updateStatus(string $status)
-    {
-        $this->delivery_status = $status;
-        $this->save();
-
-        $this->notifyObserver(); // 🔔 notify
-    }
-
-
 }

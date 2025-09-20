@@ -1,42 +1,47 @@
 @extends('layouts.driverLayout')
-@vite('resources/css/DriverSide/driverAssigned.css')
 
 @section('content')
-    <header class="text-2xl font-bold mb-4">Driver Dashboard</header>
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">My Assigned Packages</h1>
+    <p class="text-gray-600 mb-6">This is a list of all active delivery tasks assigned to you.</p>
 
-    <div class="dashboard-content">
-        <h2 class="text-xl font-semibold mb-4">Assigned Packages to You</h2>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-4 text-left">Tracking #</th>
+                        <th class="p-4 text-left">Customer Name</th>
+                        <th class="p-4 text-left">Recipient Address</th>
+                        <th class="p-4 text-left">Status</th>
+                        <th class="p-4 text-left">Est. Delivery</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($packages as $package)
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-4 font-mono">{{ $package->tracking_number }}</td>
+                        {{-- This now works because we manually selected the customer name --}}
+                        <td class="p-4">{{ $package->customer_first_name }} {{ $package->customer_last_name }}</td>
+                        <td class="p-4 truncate max-w-xs">{{ $package->recipient_address }}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 font-semibold text-xs rounded-full bg-blue-100 text-blue-800">
+                                {{ $package->package_status }}
+                            </span>
+                        </td>
+                        <td class="p-4">{{ \Carbon\Carbon::parse($package->estimated_delivery_time)->format('Y-m-d H:i') }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="5" class="text-center p-10 text-gray-500">You have no active packages assigned.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($packages->hasPages())
+            <div class="p-4 bg-white border-t">{{ $packages->links() }}</div>
+        @endif
+
         
-        <!-- Table for displaying assigned packages -->
-        <table class="min-w-full table-auto bg-white rounded-lg shadow-lg">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Package ID</th>
-                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Delivery Address</th>
-                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
-                    <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Sample rows, you can loop through actual data here -->
-                <tr>
-                    <td class="px-4 py-2 border-b text-sm">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm text-green-600">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm">
-                        <a href="#" class="text-blue-500 hover:underline">TRY ONLY</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="px-4 py-2 border-b text-sm">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm text-red-600">TRY ONLY</td>
-                    <td class="px-4 py-2 border-b text-sm">
-                        <a href="#" class="text-blue-500 hover:underline">TRY ONLY</a>
-                    </td>
-                </tr>
-                <!-- More rows can be added dynamically based on the data -->
-            </tbody>
-        </table>
     </div>
+</div>
 @endsection
