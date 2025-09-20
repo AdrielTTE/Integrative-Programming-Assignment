@@ -60,34 +60,5 @@ class DeliveryController extends Controller
     public function getCountByStatus($status){
         return response()->json($this->deliveryService->getCountByStatus($status));
     }
-
-    public function getDeliveryPackageDetails(string $packageId)
-    {
-        try {
-            $package = $this->deliveryService->getPackageForDriver($packageId, Auth::id());
-            return response()->json($package);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        }
-    }
-
-    // --- NEW API METHOD 2 ---
-    /**
-     * Update the status of a package and its delivery.
-     * Secure Coding: Ensures the logged-in driver is the one performing the update.
-     */
-    public function updatePackageStatus(Request $request, string $packageId)
-    {
-        $validated = $request->validate([
-            'status' => 'required|string|in:PICKED_UP,IN_TRANSIT,DELIVERED,FAILED',
-        ]);
-
-        try {
-            $this->deliveryService->updateStatusForDriver($packageId, Auth::id(), $validated['status']);
-            return response()->json(['message' => 'Status updated successfully.']);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to update status: ' . $e->getMessage()], 403);
-        }
-    }
 }
 

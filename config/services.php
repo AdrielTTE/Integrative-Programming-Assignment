@@ -13,6 +13,7 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
@@ -34,5 +35,21 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'modules' => [
+        'notification' => [
+            'api_key' => env('NOTIFICATION_MODULE_API_KEY'),
+            'base_url' => env('NOTIFICATION_MODULE_URL', 'http://localhost:8000/api/v1/notification'),
+        ],
+        'driver' => [
+            'api_key' => env('DRIVER_MODULE_API_KEY'),
+            'base_url' => env('DRIVER_MODULE_URL', 'http://localhost:8000/api/v1/driver'),
+        ],
+        'feedback' => [
+            'api_key' => env('FEEDBACK_MODULE_API_KEY'),
+            'base_url' => env('FEEDBACK_MODULE_URL', 'http://localhost:8000/api/v1/feedback'),
+        ],
 
+    ],
+        'internal_api_key' => env('INTERNAL_API_KEY'),
 ];

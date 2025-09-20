@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\Api\PackageService as ApiPackageService;
 use App\Services\PackageService;
-
+use App\Services\Api\PackageService as ApiPackageService;
 use App\Http\Requests\CreatePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Http\Requests\BulkUpdatePackageRequest;
@@ -17,8 +16,8 @@ use Illuminate\Http\Response;
 
 class PackageController extends Controller
 {
-    protected $packageService;
-    protected $apiPackageService;
+    protected PackageService $packageService;
+    protected ApiPackageService $apiPackageService;
 
     public function __construct(PackageService $packageService, ApiPackageService $apiPackageService)
     {
@@ -26,11 +25,10 @@ class PackageController extends Controller
         $this->apiPackageService = $apiPackageService;
     }
 
-    // Your existing methods...
     public function getAll()
     {
         try {
-            $packages = $this->packageService->getAllPackages();
+            $packages = $this->packageService->searchPackages([]);
             return response()->json([
                 'success' => true,
                 'data' => $packages
@@ -50,7 +48,7 @@ class PackageController extends Controller
             $package = $this->packageService->createPackage($request->validated());
             return response()->json([
                 'success' => true,
-                'data' => $package,
+                'data' => $package->getFormattedDetails(),
                 'message' => 'Package created successfully'
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
@@ -72,9 +70,10 @@ class PackageController extends Controller
                     'message' => 'Package not found'
                 ], Response::HTTP_NOT_FOUND);
             }
+
             return response()->json([
                 'success' => true,
-                'data' => $package
+                'data' => $package->getFormattedDetails()
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -85,7 +84,56 @@ class PackageController extends Controller
         }
     }
 
-    // Add the missing methods:
+    public function update(Request $request, string $packageId)
+{
+    try {
+        $package = $this->apiPackageService->update($packageId, $request->all());
+
+        return response()->json([
+            'success' => true,
+            'data'    => $package,
+            'message' => 'Package updated successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating package',
+            'error'   => $e->getMessage()
+        ], Response::HTTP_BAD_REQUEST);
+    }
+}
+
+
+public function updateIsRated(Request $request, string $packageId)
+{
+    \Log::info('updateIsRated request data:', $request->all());
+
+    $validated = $request->validate([
+        'is_rated' => 'required|boolean',
+    ]);
+
+    try {
+        $package = $this->apiPackageService->updateIsRated($packageId, $validated['is_rated']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $package,
+            'message' => 'Package rating status updated successfully.',
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update rating status.',
+            'error' => $e->getMessage(),
+        ], 400);
+    }
+}
+
+
+
+
+
+
     public function track($trackingNumber)
     {
         try {
@@ -98,10 +146,20 @@ class PackageController extends Controller
             }
 
             $history = $this->packageService->getPackageHistory($package->package_id);
+            $state = $package->getState();
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'package' => $package,
+                    'package' => $package->getFormattedDetails(),
+                    'current_state' => [
+                        'status' => $state->getStatusName(),
+                        'location' => $state->getCurrentLocation(),
+                        'color' => $state->getStatusColor(),
+                        'can_edit' => $state->canBeEdited(),
+                        'can_cancel' => $state->canBeCancelled(),
+                        'allowed_transitions' => $state->getAllowedTransitions()
+                    ],
                     'history' => $history
                 ]
             ]);
@@ -111,6 +169,86 @@ class PackageController extends Controller
                 'message' => 'Error tracking package',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function process($packageId)
+    {
+        try {
+            $package = $this->packageService->processPackage($packageId);
+            return response()->json([
+                'success' => true,
+                'data' => $package->getFormattedDetails(),
+                'message' => 'Package processed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing package',
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function cancel($packageId)
+    {
+        try {
+            $package = $this->packageService->cancelPackage($packageId);
+            return response()->json([
+                'success' => true,
+                'data' => $package->getFormattedDetails(),
+                'message' => 'Package cancelled successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error cancelling package',
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function assign($packageId, Request $request)
+    {
+        try {
+            $request->validate(['driver_id' => 'required|string|exists:user,user_id']);
+
+            $package = $this->packageService->assignPackage($packageId, $request->driver_id);
+            return response()->json([
+                'success' => true,
+                'data' => $package->getFormattedDetails(),
+                'message' => 'Package assigned successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error assigning package',
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function deliver($packageId, Request $request)
+    {
+        try {
+            $proofData = $request->validate([
+                'delivery_photo' => 'nullable|string',
+                'signature' => 'nullable|string',
+                'notes' => 'nullable|string'
+            ]);
+
+            $package = $this->packageService->deliverPackage($packageId, $proofData);
+            return response()->json([
+                'success' => true,
+                'data' => $package->getFormattedDetails(),
+                'message' => 'Package delivered successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error delivering package',
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -130,60 +268,6 @@ class PackageController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    /**
-     * Get a single package with all its related details (customer, delivery, driver).
-     *
-     * @param string $package_id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getWithDetails(string $package_id)
-    {
-        // Eager-load all the relationships the web controller needs
-        $package = Package::with(['user', 'delivery.driver'])->findOrFail($package_id);
-
-        return response()->json($package);
-    }
-
-    /**
-     * Get the proof of delivery for a specific package.
-     *
-     * @param string $package_id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getProof(string $package_id)
-    {
-        $package = Package::find($package_id);
-        if (!$package) {
-            return response()->json(['message' => 'Package not found.'], 404);
-        }
-        $proof = ProofOfDelivery::whereHas('delivery', function ($query) use ($package_id) {
-            $query->where('package_id', $package_id);
-        })->first();
-
-        if (!$proof) {
-            return response()->json(['message' => 'Proof of delivery not found for this package.'], 404);
-        }
-
-        return response()->json($proof);
-        
-    }
-
-    public function getStatistics($period = 'month')
-    {
-        try {
-            $statistics = $this->packageService->getStatistics($period);
-            return response()->json([
-                'success' => true,
-                'data' => $statistics
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving statistics',
-                'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
 
     public function bulkUpdate(BulkUpdatePackageRequest $request)
     {
@@ -191,7 +275,7 @@ class PackageController extends Controller
             $results = $this->packageService->bulkUpdate(
                 $request->validated()['package_ids'],
                 $request->validated()['action'],
-                $request->validated()['value']
+                $request->validated()['value'] ?? null
             );
             return response()->json([
                 'success' => true,
@@ -206,23 +290,43 @@ class PackageController extends Controller
         }
     }
 
-     public function getCountPackage(){
+    // Legacy API methods for backward compatibility
+    public function getCountPackage()
+    {
         return response()->json($this->apiPackageService->getCountPackage());
     }
 
-    public function getRecentPackages(int $noOfRecords){
+    public function getRecentPackages(int $noOfRecords)
+    {
         return response()->json($this->apiPackageService->getRecentPackages($noOfRecords));
     }
 
-    public function getCountByStatus(string $status){
+    public function getCountByStatus(string $status)
+    {
         return response()->json($this->apiPackageService->getCountByStatus($status));
     }
-    
-    // This is the new method to handle the request
+
     public function getUnassignedPackages()
     {
         $packages = $this->apiPackageService->getUnassignedPackages();
         return response()->json($packages);
     }
-    
+
+    public function getPackagesByStatus(string $status, int $page, int $pageSize, string $customerId)
+    {
+        try {
+            // normalize status (handle uppercase "DELIVERED")
+            $status = strtolower($status);
+
+            $packages = $this->apiPackageService->getPackagesByStatus($status, $page, $pageSize, $customerId);
+
+            return response()->json($packages, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch package data',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -127,6 +127,33 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'admin' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/admin.log'),
+        'level' => 'info',
+        'days' => 30,
+    ],
+    
+    'security' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/security.log'),
+        'level' => 'warning',
+        'days' => 90,
+    ],
+    
+    'database' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/database.log'),
+        'level' => 'info',
+        'days' => 7,
+    ],
+    
+    'api' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/api.log'),
+        'level' => 'info',
+        'days' => 14,
+    ],
     ],
 
 ];

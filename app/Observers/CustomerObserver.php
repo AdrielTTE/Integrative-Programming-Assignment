@@ -2,26 +2,49 @@
 
 namespace App\Observers;
 
-use App\Observers\Observer;
-use App\Observers\Subject;
-use App\Notifications\DeliveryStatusUpdatedNotification;
-use Illuminate\Support\Facades\Notification;
-
+use App\Models\Notification;
+use App\Models\Customer;
+use Illuminate\Support\Facades\Http;
 
 class CustomerObserver implements Observer
 {
+    protected $customer;
+    protected string $baseUrl;
+
+    public function __construct(Customer $customer)
+    {
+        $this->customer = $customer;
+         $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
+    }
+
     public function update(Subject $subject)
     {
-        // Make sure we only react to Delivery subjects
-        if ($subject instanceof \App\Models\Delivery) {
-            $customer = $subject->customer; // assumes Delivery has a customer() relation
+        $response = Http::get("{$this->baseUrl}/notifications/nextId");
 
-            if ($customer) {
-                Notification::send(
-                    $customer,
-                    new DeliveryStatusUpdatedNotification($subject)
-                );
-            }
+    if ($response->failed()) {
+        return 0;
+    }
+
+    $nextId = $response->json('next_notification_id');
+
+        if ($subject instanceof AnnouncementSubject) {
+            Notification::create([
+                'notification_id' => $nextId,
+                'customer_id' => $this->customer->customer_id,
+                'message' => $subject->getMessage(),
+            ]);
         }
+
+        if ($subject instanceof PackageSubject) {
+            // You could also pull data from $subject->getPackage()
+            Notification::create([
+                'notification_id' => $nextId,
+                'customer_id' => $this->customer->id,
+                'message' => 'Your package status was updated.',
+            ]);
+        }
+
+        // You could add handling for DeliverySubject here as well
     }
 }
+

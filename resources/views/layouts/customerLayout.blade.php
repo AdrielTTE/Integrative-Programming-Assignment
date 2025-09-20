@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <title>Package Tracking System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @vite('resources/css/app.css')
     <style>
         .gradient-bg {
@@ -52,8 +54,8 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-6 space-y-3">
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('customer.dashboard') }}"
+                class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-tachometer-alt w-5 mr-3"></i>
                 <span class="font-medium">Dashboard</span>
             </a>
@@ -78,8 +80,8 @@
                 <i class="fas fa-bell w-5 mr-3"></i>
                 <span class="font-medium">Notifications</span>
             </a>
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('feedback.rating') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+            <a href="{{ route('customer.feedback') }}"
+                class="nav-link {{ request()->routeIs('customer.feedback') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>

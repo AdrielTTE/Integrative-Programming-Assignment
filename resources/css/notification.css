@@ -1,27 +1,32 @@
 .notification {
     display: flex;
-    align-items: flex-start;
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    background-color: #fafafa;
-    margin-bottom: 1rem;
-    transition: background 0.3s;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
 }
 
-.notification:hover {
-    background-color: #f0f0f0;
+.notification .text {
+    max-width: 80%;
 }
 
-.notification .icon {
-    font-size: 1.8rem;
-    margin-right: 1rem;
+.notification .actions {
+    margin-left: 10px;
 }
 
-.notification .text p {
-    margin-bottom: 0.3rem;
+.btn-clear {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
 }
 
-.notification small {
-    color: #777;
+.btn-clear:hover {
+    background-color: #c0392b;
 }
