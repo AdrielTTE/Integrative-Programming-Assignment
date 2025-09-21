@@ -31,8 +31,13 @@ use App\Http\Controllers\DriverControllers\DriverDashboardController;
 use App\Http\Controllers\DriverControllers\AssignedPackageController;
 
 use App\Http\Controllers\DriverControllers\DriverPackagesController;
-use App\Http\Controllers\Api\DeliveryController; 
+use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\DriverControllers\DeliveryHistoryController;
+use App\Http\Controllers\DriverControllers\ProofOfDeliveryController;
+
+use App\Http\Controllers\DriverControllers\DriverProofController;
+
+
 
 
 
@@ -44,6 +49,7 @@ use App\Http\Controllers\Web\SearchController as WebSearchController;
 
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -80,10 +86,10 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         // --- Package Management Routes ---
         Route::resource('packages', CustomerPackageController::class)
-             ->parameters(['packages' => 'packageId']);
+            ->parameters(['packages' => 'packageId']);
 
         Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
-             ->name('packages.process');
+            ->name('packages.process');
 
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
@@ -154,7 +160,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Announcements and Notification
         Route::get('/announcement', [AnnouncementController::class, 'create'])->name('announcement.create');
-Route::post('/announcement', [AnnouncementController::class, 'send'])->name('announcement.send');
+        Route::post('/announcement', [AnnouncementController::class, 'send'])->name('announcement.send');
     });
 
 });
@@ -177,32 +183,34 @@ Route::prefix('driver')->name('driver.')->group(function () {
     Route::middleware(['auth', 'driver'])->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
-    });
 
-    Route::middleware(['auth', 'driver'])->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
 
+        // Package Management
+        Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
         Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
-    });
+        Route::get('/my-packages/{packageId}', [DriverPackagesController::class, 'show'])->name('packages.show');
+        Route::post('/my-packages/{packageId}/update-status', [DriverPackagesController::class, 'updateStatus'])->name('packages.updateStatus');
 
-    Route::get('/package/{packageId}', [DeliveryController::class, 'getDeliveryPackageDetails'])->middleware('auth:sanctum');
-
-    Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-
-    
-    Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
-
-    
-    Route::get('/update-status', [DeliveryStatusController::class, 'index'])->name('status.index');
-    Route::post('/update-status/{packageId}', [DeliveryStatusController::class, 'update'])->name('status.update');
-
-     Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-        Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
+        // Status Updates
         Route::get('/update-status', [DeliveryStatusController::class, 'index'])->name('status.index');
         Route::post('/update-status/{packageId}', [DeliveryStatusController::class, 'update'])->name('status.update');
 
-        // --- NEW DELIVERY HISTORY ROUTE ---
+        // Delivery History
         Route::get('/delivery-history', [DeliveryHistoryController::class, 'index'])->name('history.index');
+
+        // Proof of Delivery routes using Factory Pattern
+        Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
+        Route::post('/proof/{packageId}', [ProofOfDeliveryController::class, 'store'])->name('proof.store');
+        Route::get('/proof/{packageId}', [ProofOfDeliveryController::class, 'show'])->name('proof.show');
+
+        Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create'); // Or DriverProofController if using that
+                Route::post('proof/{package_id}', [ProofOfDeliveryController::class, 'store'])->name('driver.proof.store');
+
+                Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
+Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create');
+
+    });
 });
 
 

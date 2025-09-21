@@ -17,8 +17,8 @@
             <table class="min-w-full">
                 <thead class="bg-gray-100">
                     <tr>
-                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Packae ID</th>
-                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">User ID</th>
+                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Package ID</th>
+                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Tracking ID</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Current Status</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Update Action</th>
                     </tr>
@@ -28,7 +28,6 @@
                     <tr class="hover:bg-gray-50">
                         <td class="p-4 font-mono">
                             {{ $package->package_id }}
-                            <br>
                         </td>
                         <td class="p-4 font-mono">
                             {{ $package->tracking_number }}
@@ -36,27 +35,39 @@
                             <span class="text-xs text-gray-500">{{ $package->recipient_address }}</span>
                         </td>
                         <td class="p-4">
-                            <span class="px-2 py-1 font-semibold text-xs rounded-full bg-blue-100 text-blue-800">
+                            <span class="px-2 py-1 font-semibold text-xs rounded-full 
+                                @if($package->package_status === 'DELIVERED') bg-green-100 text-green-800
+                                @elseif($package->package_status === 'IN_TRANSIT') bg-blue-100 text-blue-800
+                                @elseif($package->package_status === 'FAILED') bg-red-100 text-red-800
+                                @else bg-gray-100 text-gray-800 @endif">
                                 {{ $package->package_status }}
                             </span>
                         </td>
                         <td class="p-4">
-                            <form action="{{ route('driver.status.update', $package->package_id) }}" method="POST" class="flex items-center space-x-2">
-                                @csrf
-                                <select name="status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" required>
-                                    <option value="">Select new status...</option>
-                                    <option value="PICKED_UP">Picked Up</option>
-                                    <option value="IN_TRANSIT">In Transit</option>
-                                    <option value="DELIVERED">Delivered</option>
-                                    <option value="FAILED">Failed</option>
-                                </select>
-                                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-md hover:bg-indigo-700">Update</button>
-                            </form>
+                            @if($package->package_status === 'DELIVERED')
+                                <a href="{{ route('driver.proof.show', $package->package_id) }}" 
+                                   class="px-4 py-2 bg-gray-600 text-white text-sm font-semibold rounded-md hover:bg-gray-700">
+                                    View Proof
+                                </a>
+                            @else
+                                <form action="{{ route('driver.status.update', $package->package_id) }}" method="POST" class="flex items-center space-x-2">
+                                    @csrf
+                                    <select name="status" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" required>
+                                        <option value="">Select new status...</option>
+                                        <option value="IN_TRANSIT">In Transit</option>
+                                        <option value="DELIVERED">Complete Delivery</option>
+                                        <option value="FAILED">Failed</option>
+                                    </select>
+                                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-md hover:bg-indigo-700 whitespace-nowrap">
+                                        Update
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="text-center p-10 text-gray-500">You have no active packages to update.</td>
+                        <td colspan="4" class="text-center p-10 text-gray-500">You have no active packages to update.</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\DriverControllers;
 
 use App\Http\Controllers\Controller;
-use App\Factories\Driver\UpdateStatusViewFactory;
 use App\Services\DriverPackageService;
+use App\Factories\Driver\UpdateStatusViewFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DeliveryStatusController extends Controller
 {
@@ -19,14 +18,11 @@ class DeliveryStatusController extends Controller
     }
 
     /**
-     * Display packages using Factory Method pattern
+     * Show the status update page
      */
     public function index()
     {
-        // Create factory instance
         $factory = new UpdateStatusViewFactory($this->packageService);
-        
-        // Use factory to render view
         return $factory->render();
     }
 
@@ -35,36 +31,30 @@ class DeliveryStatusController extends Controller
      */
     public function update(Request $request, string $packageId)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:PICKED_UP,IN_TRANSIT,DELIVERED,FAILED'
+        $request->validate([
+            'status' => 'required|string|in:IN_TRANSIT,DELIVERED,FAILED'
         ]);
 
         $driverId = Auth::user()->user_id;
+        $status = $request->input('status');
 
-        // Security check - verify driver owns package
-        $authorized = DB::table('delivery')
-            ->where('package_id', $packageId)
-            ->where('driver_id', $driverId)
-            ->exists();
-
-        if (!$authorized) {
-            return redirect()->route('driver.status.index')
-                ->with('error', 'You are not authorized to update this package.');
+        // If status is DELIVERED, redirect to proof form
+        if ($status === 'DELIVERED') {
+            return redirect()->route('driver.proof.create', $packageId);
         }
 
-        // Update using service
-        $success = $this->packageService->updatePackageStatus(
-            $packageId,
-            $validated['status'],
-            $driverId
-        );
+        // For other statuses, update directly
+        try {
+            $success = $this->packageService->updatePackageStatus($packageId, $status, $driverId);
 
-        if ($success) {
-            return redirect()->route('driver.status.index')
-                ->with('success', 'Package status updated successfully!');
+            if ($success) {
+                return redirect()->route('driver.status.index')
+                    ->with('success', "Package {$packageId} status updated to {$status}");
+            } else {
+                return back()->with('error', 'Failed to update package status');
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error: ' . $e->getMessage());
         }
-
-        return redirect()->route('driver.status.index')
-            ->with('error', 'Failed to update package status.');
     }
 }

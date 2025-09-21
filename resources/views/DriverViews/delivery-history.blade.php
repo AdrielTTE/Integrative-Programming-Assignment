@@ -10,7 +10,7 @@
             <table class="min-w-full">
                 <thead class="bg-gray-100">
                     <tr>
-                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Tracking #</th>
+                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Tracking ID</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Final Status</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Completed On</th>
                     </tr>

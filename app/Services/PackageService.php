@@ -26,22 +26,22 @@ class PackageService
     public function createPackage(array $data): Package
     {
         $user = Auth::user();
-        
+
         // Ensure user_id is from authenticated user (prevent privilege escalation)
         $data['user_id'] = $user->user_id;
-        
+
         // Rate limiting - prevent spam package creation
         $cacheKey = "package_creation_rate_limit_{$user->user_id}";
         $attempts = Cache::get($cacheKey, 0);
-        
+
         if ($attempts >= 10) { // Max 10 packages per hour
             throw new \Exception('Package creation rate limit exceeded. Please try again later.');
         }
-        
+
         Cache::put($cacheKey, $attempts + 1, 3600); // 1 hour
-        
+
         $package = $this->repository->create($data);
-        
+
         Log::info('Package created', [
             'package_id' => $package->package_id,
             'user_id' => $package->user_id,
@@ -59,7 +59,7 @@ class PackageService
     public function updatePackage(Package $package, array $data): Package
     {
         $user = Auth::user();
-        
+
         // Authorization check - ensure user owns the package
         if (!$this->canUserModifyPackage($user, $package)) {
             throw new \Exception('Unauthorized: You can only modify your own packages');
@@ -73,7 +73,7 @@ class PackageService
         // Sanitize and validate critical fields
         $data = $this->sanitizePackageData($data);
         $updated = $this->repository->update($package->package_id, $data);
-        
+
         Log::info('Package updated', [
             'package_id' => $package->package_id,
             'user_id' => $user->user_id,
@@ -91,17 +91,17 @@ class PackageService
     {
         $package = $this->repository->find($packageId);
         $user = Auth::user();
-        
+
         if (!$package) {
             throw new \Exception('Package not found');
         }
 
         // For now, allow any authenticated user to process packages
         // You can add more specific logic here if needed
-        
+
         // Update package status based on current status
         $this->updatePackageStatus($package, $data);
-        
+
         Log::info('Package processed', [
             'package_id' => $packageId,
             'old_status' => $package->getOriginal('package_status'),
@@ -119,7 +119,7 @@ class PackageService
     {
         $package = $this->repository->find($packageId);
         $user = $user ?? Auth::user();
-        
+
         if (!$package) {
             throw new \Exception('Package not found');
         }
@@ -136,7 +136,7 @@ class PackageService
 
         $package->package_status = 'cancelled';
         $package->save();
-        
+
         Log::info('Package cancelled', [
             'package_id' => $packageId,
             'cancelled_by' => $user->user_id,
@@ -152,7 +152,7 @@ class PackageService
     public function searchPackages(array $criteria)
     {
         $user = Auth::user();
-        
+
         // For now, users can only see their own packages
         $criteria['user_id'] = $user->user_id;
 
@@ -166,7 +166,7 @@ class PackageService
     {
         $package = $this->repository->findWithRelations($packageId);
         $user = Auth::user();
-        
+
         if (!$package) {
             return null;
         }
@@ -202,7 +202,7 @@ class PackageService
     private function sanitizePackageData(array $data): array
     {
         $sanitized = [];
-        
+
         foreach ($data as $key => $value) {
             if (is_string($value)) {
                 $sanitized[$key] = htmlspecialchars(strip_tags(trim($value)), ENT_QUOTES, 'UTF-8');
@@ -210,7 +210,7 @@ class PackageService
                 $sanitized[$key] = $value;
             }
         }
-        
+
         return $sanitized;
     }
 
@@ -221,7 +221,7 @@ class PackageService
     {
         $currentStatus = $package->package_status;
         $newStatus = $data['status'] ?? null;
-        
+
         // Define allowed status transitions
         $allowedTransitions = [
             'pending' => ['processing', 'cancelled'],
@@ -231,25 +231,25 @@ class PackageService
             'out_for_delivery' => ['delivered', 'failed'],
             'failed' => ['out_for_delivery', 'returned'],
         ];
-        
+
         if ($newStatus && isset($allowedTransitions[$currentStatus])) {
             if (in_array($newStatus, $allowedTransitions[$currentStatus])) {
                 $package->package_status = $newStatus;
-                
+
                 // Update delivery timestamp if delivered
                 if ($newStatus === 'delivered') {
                     $package->actual_delivery = now();
                 }
-                
+
                 $package->save();
             }
         }
     }
-    
+
     public function getStatistics(string $period = 'month'): array
     {
         $user = Auth::user();
-        
+
         // Return statistics for the current user's packages only
         return $this->repository->getUserStats($user->user_id)->mapWithKeys(function ($stat) {
             return [$stat->package_status => $stat->count];
@@ -260,12 +260,12 @@ class PackageService
     {
         $package = Package::where('package_id', $packageId)->firstOrFail();
         $user = Auth::user();
-        
+
         // SIMPLIFIED Authorization check - only check ownership
         if (!$this->canUserViewPackage($user, $package)) {
             throw new \Exception('Unauthorized: Access denied to package history');
         }
-        
+
         return $this->generateHistoryFromPackageData($package);
     }
 
@@ -283,7 +283,7 @@ class PackageService
         // Add progression based on current status
         if ($package->package_status !== 'pending') {
             $history[] = [
-                'status' => 'Processing Started', 
+                'status' => 'Processing Started',
                 'action' => 'Package accepted and being prepared for pickup',
                 'timestamp' => $this->estimateStatusChangeTime($package, 'processing'),
             ];
@@ -295,7 +295,7 @@ class PackageService
                 'action' => 'Package collected from pickup location',
                 'timestamp' => $this->estimateStatusChangeTime($package, 'picked_up'),
             ];
-            
+
             $history[] = [
                 'status' => 'In Transit',
                 'action' => 'Package en route to destination',
@@ -320,7 +320,7 @@ class PackageService
                     'timestamp' => $package->actual_delivery ?? $package->updated_at,
                 ];
                 break;
-                
+
             case 'cancelled':
                 $history[] = [
                     'status' => 'Cancelled',
@@ -328,7 +328,7 @@ class PackageService
                     'timestamp' => $package->updated_at,
                 ];
                 break;
-                
+
             case 'failed':
                 $history[] = [
                     'status' => 'Delivery Failed',
@@ -336,7 +336,7 @@ class PackageService
                     'timestamp' => $package->updated_at,
                 ];
                 break;
-                
+
             case 'returned':
                 $history[] = [
                     'status' => 'Returned to Sender',
@@ -358,14 +358,14 @@ class PackageService
     {
         // Since we don't have actual timestamps, estimate based on created_at
         $baseTime = $package->created_at;
-        
+
         $estimates = [
             'processing' => 2, // 2 hours after creation
             'picked_up' => 6,  // 6 hours after creation  
             'in_transit' => 12, // 12 hours after creation
             'out_for_delivery' => 24, // 24 hours after creation
         ];
-        
+
         $hoursToAdd = $estimates[$status] ?? 1;
         return $baseTime->copy()->addHours($hoursToAdd);
     }
