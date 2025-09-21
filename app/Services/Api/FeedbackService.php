@@ -17,7 +17,7 @@ class FeedbackService
     {
         $validator = Validator::make($data, [
             'feedback_id'  => 'required|string|unique:feedback,feedback_id|max:10',
-            'delivery_id'  => 'required|string|exists:delivery,delivery_id|max:10',
+            'package_id'  => 'required|string|exists:package,package_id|max:10',
             'customer_id'  => 'required|string|exists:customer,customer_id|max:10',
             'rating'       => 'required|integer|min:1|max:5',
             'comment'      => 'nullable|string|max:500',
@@ -58,7 +58,7 @@ class FeedbackService
         $feedback = Feedback::findOrFail($id);
 
         $validator = Validator::make($data, [
-            'delivery_id'  => 'required|string|exists:delivery,delivery_id|max:10',
+            'package_id'  => 'required|string|exists:package,package_id|max:10',
             'customer_id'  => 'required|string|exists:customer,customer_id|max:10',
             'rating'       => 'required|integer|min:1|max:5',
             'comment'      => 'nullable|string|max:500',

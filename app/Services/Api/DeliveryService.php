@@ -19,7 +19,6 @@ class DeliveryService
 
     public function create(array $data)
     {
-        // Corrected table names in 'exists' rules
         $validator = Validator::make($data, [
             'delivery_id' => 'required|string|unique:delivery,delivery_id',
             'package_id' => 'required|string|exists:package,package_id',

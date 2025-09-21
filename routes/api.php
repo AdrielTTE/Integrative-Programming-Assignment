@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\WebServiceController;
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\DriverController as ApiDriverController;
+
 
 
     Route::prefix('delivery')->group(function () {
@@ -516,4 +518,15 @@ Route::prefix('notifications')->group(function () {
 
 
 
+});
+
+Route::prefix('driver/{driverId}')->group(function () {
+// API route to get the total number of packages assigned to a driver
+Route::get('/packages/count', [ApiDriverController::class, 'getTotalPackageCount']);
+
+// API route to get the count of deliveries for a specific status
+Route::get('/deliveries/count/{status}', [ApiDriverController::class, 'getDeliveryCountByStatus']);
+
+// API route to get recent packages
+Route::get('/packages/recent/{limit?}', [ApiDriverController::class, 'getRecentPackages']);
 });
