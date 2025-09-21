@@ -153,7 +153,7 @@ class PackageService
     public function getPackagesByStatus(string $status, int $page, int $pageSize, string $customerId): LengthAwarePaginator
     {
         $query = Package::query()
-            ->where('customer_id', $customerId);
+            ->where('user_id', $customerId);
 
         if (strtolower($status) !== 'all') {
             $query->where('package_status', strtolower($status));

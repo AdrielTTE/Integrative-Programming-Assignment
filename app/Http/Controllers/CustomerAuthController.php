@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\Customer;
 
 class CustomerAuthController extends Controller
 {
@@ -75,6 +76,14 @@ do {
 
     ]);
 
+    $customer = Customer::create([
+            'customer_id' => $newId,
+            'first_name' => $request->username,
+            'last_name'=> $request->username,
+            'address' => ''
+        ]);
+
+
     if (!$user) {
         dd('User creation returned null');
     }
@@ -83,7 +92,6 @@ do {
 } catch (\Exception $e) {
     dd('DB error: ' . $e->getMessage());
 }
-
 
         event(new Registered($user));
 
