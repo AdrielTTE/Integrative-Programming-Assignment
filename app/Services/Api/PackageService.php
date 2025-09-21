@@ -66,16 +66,16 @@ class PackageService
     'tracking_number'    => "sometimes|string|unique:package,tracking_number,{$id},package_id",
     'package_weight'     => 'nullable|numeric|min:0',
     'package_dimensions' => 'nullable|string|max:100',
-    'package_contents'   => 'nullable|string',   // ✅ now truly optional
-    'sender_address'     => 'nullable|string|max:255', // ✅ no longer required
-    'recipient_address'  => 'nullable|string|max:255', // ✅ no longer required
+    'package_contents'   => 'nullable|string', 
+    'sender_address'     => 'nullable|string|max:255',
+    'recipient_address'  => 'nullable|string|max:255', 
     'package_status'     => 'sometimes|string|max:20',
     'priority'           => 'nullable|string|max:20',
     'shipping_cost'      => 'nullable|numeric|min:0',
     'estimated_delivery' => 'nullable|date',
     'actual_delivery'    => 'nullable|date',
     'notes'              => 'nullable|string',
-    'is_rated'           => 'boolean',          // ✅ this will now pass
+    'is_rated'           => 'boolean',
     'created_at'         => 'nullable|date',
 ]);
 
