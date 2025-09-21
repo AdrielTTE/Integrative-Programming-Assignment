@@ -126,6 +126,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
+        // Audit Log Routes
+        Route::get('/audit-logs', [AdminPackageController::class, 'auditLogs'])->name('audit.logs');
+        Route::get('/audit-logs/export', [AdminPackageController::class, 'exportAuditLogs'])->name('audit.export');
+        
         // Package Management
         Route::resource('packages', AdminPackageController::class)->parameters(['packages' => 'packageId']);
         Route::post('/packages/bulk-action', [AdminPackageController::class, 'bulkAction'])->name('packages.bulk');

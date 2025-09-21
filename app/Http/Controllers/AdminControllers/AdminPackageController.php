@@ -5,21 +5,19 @@ namespace App\Http\Controllers\AdminControllers;
 use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\User;
+use App\Models\AdminAuditLog;
 use App\Services\PackageService;
 use App\Services\Api\PackageService as ApiPackageService;
-use App\Http\Requests\AdminPackageUpdateRequest;
-use App\Factories\PackageStateFactory;
+use App\Traits\Auditable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Http;
-use App\Http\Controllers\AdminControllers\AdminPackageController;
 
 class AdminPackageController extends Controller
 {
+    use Auditable;  // Add the trait
+    
     protected PackageService $packageService;
     protected ApiPackageService $apiPackageService;
 
@@ -32,16 +30,25 @@ class AdminPackageController extends Controller
     }
 
     /**
-     * Display all packages with filtering and security
+     * Display all packages with filtering
      */
     public function index(Request $request)
     {
         try {
-            // Input validation and sanitization
+            // Log admin viewing packages list
+            $this->audit(
+                'view_list',
+                'packages',
+                'all',
+                'Admin viewed packages list with filters',
+                null,
+                ['filters' => $request->all()]
+            );
+
+            // Input validation
             $validated = $request->validate([
-                'search' => 'nullable|string|max:100|regex:/^[a-zA-Z0-9\s\-]+$/',
-                'status' => 'nullable|in:' . implode(',', array_keys(Package::getStatuses())),
-                'customer_id' => 'nullable|string|regex:/^C\d{3,}$/|exists:user,user_id',
+                'search' => 'nullable|string|max:100',
+                'status' => 'nullable|string',
                 'date_from' => 'nullable|date|before_or_equal:today',
                 'date_to' => 'nullable|date|after_or_equal:date_from',
                 'sort_by' => 'nullable|in:created_at,updated_at,package_id,package_status,priority',
@@ -49,10 +56,10 @@ class AdminPackageController extends Controller
                 'per_page' => 'nullable|integer|min:10|max:100'
             ]);
 
-            // Build query with eager loading
+            // Build query
             $query = Package::with(['user', 'delivery.driver', 'assignment']);
 
-            // Apply search filter
+            // Apply filters
             if (!empty($validated['search'])) {
                 $search = '%' . $validated['search'] . '%';
                 $query->where(function ($q) use ($search) {
@@ -65,13 +72,8 @@ class AdminPackageController extends Controller
                 });
             }
 
-            // Apply filters
             if (!empty($validated['status'])) {
                 $query->where('package_status', $validated['status']);
-            }
-
-            if (!empty($validated['customer_id'])) {
-                $query->where('user_id', $validated['customer_id']);
             }
 
             if (!empty($validated['date_from'])) {
@@ -96,20 +98,15 @@ class AdminPackageController extends Controller
             // Get statuses for filter dropdown
             $statuses = Package::getStatuses();
 
-            // Log admin access
-            Log::channel('admin')->info('Admin viewed packages list', [
-                'admin_id' => Auth::id(),
-                'filters' => $validated,
-                'results_count' => $packages->total()
-            ]);
-
             return view('admin.packages.index', compact('packages', 'statistics', 'statuses'));
 
         } catch (\Exception $e) {
-            Log::error('Error in admin package index', [
-                'error' => $e->getMessage(),
-                'admin_id' => Auth::id()
-            ]);
+            $this->auditError(
+                'view_list',
+                'packages',
+                'all',
+                $e->getMessage()
+            );
             
             return back()->with('error', 'An error occurred while loading packages.');
         }
@@ -129,11 +126,18 @@ class AdminPackageController extends Controller
             $package = Package::with([
                 'user',
                 'delivery.driver',
-                'assignment',
-                'delivery.proofOfDelivery'
+                'assignment'
             ])->findOrFail($packageId);
 
-            // Get package state information using State Pattern
+            // Log viewing package details
+            $this->audit(
+                'view',
+                'package',
+                $packageId,
+                "Admin viewed details of package {$packageId}"
+            );
+
+            // Get package state information
             $currentState = $package->getState();
             $stateInfo = [
                 'name' => $currentState->getStatusName(),
@@ -148,161 +152,196 @@ class AdminPackageController extends Controller
             // Get package history
             $history = $this->packageService->getPackageHistory($packageId);
 
-            // Get available drivers for assignment
+            // Get audit logs for this package
+            $auditLogs = $this->getAuditLogsFor('package', $packageId, 20);
+
+            // Get available drivers
             $availableDrivers = User::where('user_id', 'like', 'D%')->get();
 
             // Get all possible statuses
             $statuses = Package::getStatuses();
 
-            // Log viewing
-            Log::channel('admin')->info('Admin viewed package details', [
-                'admin_id' => Auth::id(),
-                'package_id' => $packageId,
-                'customer_id' => $package->user_id
-            ]);
-
             return view('admin.packages.show', compact(
                 'package', 
                 'stateInfo', 
                 'history', 
+                'auditLogs',
                 'availableDrivers',
                 'statuses'
             ));
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->auditError(
+                'view',
+                'package',
+                $packageId,
+                'Package not found'
+            );
+            
             return redirect()->route('admin.packages.index')
                            ->with('error', 'Package not found.');
         }
     }
 
     /**
-     * Update package with state validation
+     * Update package with audit logging
      */
-    public function update(AdminPackageUpdateRequest $request, string $packageId)
+    public function update(Request $request, string $packageId)
     {
         DB::beginTransaction();
         
         try {
-            $package = Package::findOrFail($packageId);
-            $validated = $request->validated();
+            // Find the package
+            $package = Package::where('package_id', $packageId)->firstOrFail();
             
-            // Rate limiting per admin
-            $rateLimitKey = 'admin_update_' . Auth::id();
-            if (!RateLimiter::attempt($rateLimitKey, 10, function() {}, 60)) {
-                throw new \Exception('Too many update attempts. Please wait before trying again.');
-            }
-
-            // Store original state for audit
+            // Store original values for audit
             $originalData = $package->toArray();
 
-            // Handle state transitions using State Pattern
-            if (isset($validated['action'])) {
-                $currentState = $package->getState();
-                
-                switch ($validated['action']) {
-                    case 'process':
-                        if ($currentState->canTransitionTo(Package::STATUS_PROCESSING)) {
-                            $package->process($validated);
-                        } else {
-                            throw new \Exception("Cannot process package in {$currentState->getStatusName()} state");
-                        }
-                        break;
-                        
-                    case 'cancel':
-                        if ($currentState->canBeCancelled()) {
-                            $package->cancel(Auth::user());
-                        } else {
-                            throw new \Exception("Cannot cancel package in {$currentState->getStatusName()} state");
-                        }
-                        break;
-                        
-                    case 'assign':
-                        if (!isset($validated['driver_id'])) {
-                            throw new \Exception('Driver ID required for assignment');
-                        }
-                        if ($currentState->canBeAssigned()) {
-                            $package->assign($validated['driver_id']);
-                        } else {
-                            throw new \Exception("Cannot assign package in {$currentState->getStatusName()} state");
-                        }
-                        break;
-                        
-                    case 'deliver':
-                        if ($currentState->canTransitionTo(Package::STATUS_DELIVERED)) {
-                            $package->deliver($validated['proof_data'] ?? []);
-                        } else {
-                            throw new \Exception("Cannot deliver package in {$currentState->getStatusName()} state");
-                        }
-                        break;
-                        
-                    case 'return':
-                        if ($currentState->canTransitionTo(Package::STATUS_RETURNED)) {
-                            $newState = PackageStateFactory::createByStatus(Package::STATUS_RETURNED, $package);
-                            $package->setState($newState);
-                            $package->save();
-                        } else {
-                            throw new \Exception("Cannot return package in {$currentState->getStatusName()} state");
-                        }
-                        break;
-                }
+            // Handle action-based updates
+            if ($request->has('action')) {
+                $result = $this->handlePackageAction($request->input('action'), $package, $originalData);
+                DB::commit();
+                return $result;
             }
 
-            // Direct status update
-            if (isset($validated['package_status']) && !isset($validated['action'])) {
-                $currentState = $package->getState();
-                if ($currentState->canTransitionTo($validated['package_status'])) {
-                    $newState = PackageStateFactory::createByStatus($validated['package_status'], $package);
-                    $package->setState($newState);
-                } else {
-                    throw new \Exception("Invalid status transition");
-                }
-            }
-
-            // Update other fields
-            $allowedFields = ['priority', 'notes', 'estimated_delivery', 'sender_address', 'recipient_address'];
-            foreach ($allowedFields as $field) {
-                if (isset($validated[$field])) {
-                    $package->$field = $validated[$field];
-                }
-            }
-
-            $package->save();
-
-            // Create audit log
-            DB::table('admin_audit_log')->insert([
-                'admin_id' => Auth::id(),
-                'action' => 'update_package',
-                'target_type' => 'package',
-                'target_id' => $packageId,
-                'old_values' => json_encode($originalData),
-                'new_values' => json_encode($package->toArray()),
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'created_at' => now()
+            // Validate the incoming data
+            $validated = $request->validate([
+                'package_status' => 'nullable|string',
+                'package_contents' => 'nullable|string|max:500',
+                'package_weight' => 'nullable|numeric|min:0.01|max:1000',
+                'package_dimensions' => 'nullable|string|max:50',
+                'priority' => 'nullable|in:standard,express,urgent',
+                'shipping_cost' => 'nullable|numeric|min:0|max:10000',
+                'estimated_delivery' => 'nullable|date',
+                'actual_delivery' => 'nullable|date',
+                'sender_address' => 'nullable|string|max:500',
+                'recipient_address' => 'nullable|string|max:500',
+                'notes' => 'nullable|string|max:1000'
             ]);
 
+            // Remove null values
+            $dataToUpdate = array_filter($validated, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // If status is being updated, normalize it
+            if (isset($dataToUpdate['package_status'])) {
+                $dataToUpdate['package_status'] = strtolower($dataToUpdate['package_status']);
+            }
+
+            // Update the package
+            if (!empty($dataToUpdate)) {
+                foreach ($dataToUpdate as $key => $value) {
+                    $package->{$key} = $value;
+                }
+                
+                $package->save();
+                
+                // Log successful update with changes
+                $this->auditPackageAction('update', $packageId, [
+                    'old' => array_intersect_key($originalData, $dataToUpdate),
+                    'new' => $dataToUpdate
+                ]);
+                
+                DB::commit();
+                
+                return redirect()->route('admin.packages.show', $packageId)
+                               ->with('success', 'Package updated successfully!');
+            }
+
             DB::commit();
-
-            Cache::tags(['packages', "package_{$packageId}"])->flush();
-
             return redirect()->route('admin.packages.show', $packageId)
-                           ->with('success', 'Package updated successfully.');
+                           ->with('info', 'No changes were made.');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollback();
+            
+            $this->auditError(
+                'update',
+                'package',
+                $packageId,
+                'Validation failed: ' . json_encode($e->errors()),
+                $request->all()
+            );
+            
+            return back()->withErrors($e->errors())->withInput();
+            
         } catch (\Exception $e) {
             DB::rollback();
             
-            Log::error('Error updating package', [
-                'package_id' => $packageId,
-                'admin_id' => Auth::id(),
-                'error' => $e->getMessage()
-            ]);
+            $this->auditError(
+                'update',
+                'package',
+                $packageId,
+                $e->getMessage(),
+                $request->all()
+            );
 
-            return back()->withInput()->with('error', $e->getMessage());
+            return back()->with('error', 'Failed to update package: ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Delete package with soft delete
+     * Handle special package actions with audit logging
+     */
+    private function handlePackageAction(string $action, Package $package, array $originalData)
+    {
+        try {
+            $oldStatus = $package->package_status;
+            
+            switch ($action) {
+                case 'process':
+                    $package->package_status = 'processing';
+                    $package->save();
+                    $message = 'Package marked as processing.';
+                    break;
+                    
+                case 'cancel':
+                    $package->package_status = 'cancelled';
+                    $package->save();
+                    $message = 'Package cancelled successfully.';
+                    break;
+                    
+                case 'deliver':
+                    $package->package_status = 'delivered';
+                    $package->actual_delivery = now();
+                    $package->save();
+                    $message = 'Package marked as delivered.';
+                    break;
+                    
+                case 'return':
+                    $package->package_status = 'returned';
+                    $package->save();
+                    $message = 'Package marked as returned.';
+                    break;
+                    
+                default:
+                    throw new \Exception("Unknown action: {$action}");
+            }
+            
+            // Log the action
+            $this->auditPackageAction($action, $package->package_id, [
+                'old' => ['package_status' => $oldStatus],
+                'new' => ['package_status' => $package->package_status]
+            ]);
+            
+            return redirect()->route('admin.packages.show', $package->package_id)
+                           ->with('success', $message);
+                           
+        } catch (\Exception $e) {
+            $this->auditError(
+                $action,
+                'package',
+                $package->package_id,
+                $e->getMessage()
+            );
+            
+            return back()->with('error', 'Action failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete package with audit logging
      */
     public function destroy(string $packageId)
     {
@@ -311,30 +350,24 @@ class AdminPackageController extends Controller
         try {
             $package = Package::findOrFail($packageId);
             
+            // Store package data before deletion
+            $packageData = $package->toArray();
+            
             // Check if package can be deleted
-            if (in_array($package->package_status, [Package::STATUS_DELIVERED, Package::STATUS_IN_TRANSIT])) {
+            $status = strtolower($package->package_status);
+            if (in_array($status, ['delivered', 'in_transit'])) {
                 throw new \Exception('Cannot delete packages that are delivered or in transit.');
             }
 
-            $packageData = $package->toArray();
             $package->delete();
-
-            // Create audit log
-            DB::table('admin_audit_log')->insert([
-                'admin_id' => Auth::id(),
-                'action' => 'delete_package',
-                'target_type' => 'package',
-                'target_id' => $packageId,
-                'old_values' => json_encode($packageData),
-                'new_values' => json_encode(['deleted_at' => now()]),
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'created_at' => now()
+            
+            // Log deletion
+            $this->auditPackageAction('delete', $packageId, [
+                'old' => $packageData,
+                'new' => null
             ]);
-
+            
             DB::commit();
-
-            Cache::tags(['packages', "package_{$packageId}"])->flush();
 
             return redirect()->route('admin.packages.index')
                            ->with('success', 'Package deleted successfully.');
@@ -342,264 +375,70 @@ class AdminPackageController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
-            Log::error('Error deleting package', [
-                'package_id' => $packageId,
-                'admin_id' => Auth::id(),
-                'error' => $e->getMessage()
-            ]);
+            $this->auditError(
+                'delete',
+                'package',
+                $packageId,
+                $e->getMessage()
+            );
 
             return back()->with('error', $e->getMessage());
         }
     }
 
     /**
-     * Bulk operations
+     * View audit logs
      */
-    public function bulkAction(Request $request)
+    public function auditLogs(Request $request)
     {
-        $validated = $request->validate([
-            'package_ids' => 'required|array|min:1|max:50',
-            'package_ids.*' => 'required|string|regex:/^P\d{3,}$/|exists:package,package_id',
-            'action' => 'required|in:delete,update_status,assign_driver',
-            'value' => 'nullable|string|max:255'
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $successCount = 0;
-            $failedCount = 0;
-            $errors = [];
-
-            foreach ($validated['package_ids'] as $packageId) {
-                try {
-                    $package = Package::findOrFail($packageId);
-                    $currentState = $package->getState();
-                    
-                    switch ($validated['action']) {
-                        case 'delete':
-                            if (!in_array($package->package_status, [Package::STATUS_DELIVERED, Package::STATUS_IN_TRANSIT])) {
-                                $package->delete();
-                                $successCount++;
-                            } else {
-                                $failedCount++;
-                                $errors[] = "Package {$packageId} cannot be deleted";
-                            }
-                            break;
-                            
-                        case 'update_status':
-                            if ($currentState->canTransitionTo($validated['value'])) {
-                                $newState = PackageStateFactory::createByStatus($validated['value'], $package);
-                                $package->setState($newState);
-                                $package->save();
-                                $successCount++;
-                            } else {
-                                $failedCount++;
-                                $errors[] = "Package {$packageId} invalid transition";
-                            }
-                            break;
-                            
-                        case 'assign_driver':
-                            if ($currentState->canBeAssigned()) {
-                                $package->assign($validated['value']);
-                                $successCount++;
-                            } else {
-                                $failedCount++;
-                                $errors[] = "Package {$packageId} cannot be assigned";
-                            }
-                            break;
-                    }
-                } catch (\Exception $e) {
-                    $failedCount++;
-                    $errors[] = "Error with {$packageId}: " . $e->getMessage();
-                }
-            }
-
-            // Log bulk operation
-            DB::table('admin_audit_log')->insert([
-                'admin_id' => Auth::id(),
-                'action' => 'bulk_' . $validated['action'],
-                'target_type' => 'packages',
-                'target_id' => json_encode($validated['package_ids']),
-                'old_values' => json_encode(['total' => count($validated['package_ids'])]),
-                'new_values' => json_encode([
-                    'success' => $successCount,
-                    'failed' => $failedCount,
-                    'errors' => $errors
-                ]),
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-                'created_at' => now()
-            ]);
-
-            DB::commit();
-
-            $message = "Bulk operation: {$successCount} successful, {$failedCount} failed.";
-            if (!empty($errors)) {
-                $message .= " " . implode('; ', array_slice($errors, 0, 3));
-            }
-
-            return back()->with($failedCount > 0 ? 'warning' : 'success', $message);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            
-            Log::error('Bulk operation error', [
-                'action' => $validated['action'],
-                'admin_id' => Auth::id(),
-                'error' => $e->getMessage()
-            ]);
-
-            return back()->with('error', 'Bulk operation failed: ' . $e->getMessage());
+        $query = AdminAuditLog::with('admin')->orderBy('created_at', 'desc');
+        
+        // Apply filters if provided
+        if ($request->has('admin_id')) {
+            $query->where('admin_id', $request->admin_id);
         }
-    }
-
-    /**
-     * Export packages data (Web Service Provider)
-     */
-    public function exportPackagesData(Request $request)
-    {
-        try {
-            // Validate API key
-            $apiKey = $request->header('X-Internal-API-Key');
-            if ($apiKey !== config('app.internal_api_key')) {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-
-            $validated = $request->validate([
-                'format' => 'nullable|in:json,csv,xml',
-                'status' => 'nullable|string',
-                'date_from' => 'nullable|date',
-                'date_to' => 'nullable|date'
-            ]);
-
-            $query = Package::with(['user']);
-
-            if (!empty($validated['status'])) {
-                $query->where('package_status', $validated['status']);
-            }
-
-            if (!empty($validated['date_from'])) {
-                $query->whereDate('created_at', '>=', $validated['date_from']);
-            }
-
-            if (!empty($validated['date_to'])) {
-                $query->whereDate('created_at', '<=', $validated['date_to']);
-            }
-
-            $packages = $query->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $packages->map(function ($package) {
-                    return [
-                        'package_id' => $package->package_id,
-                        'tracking_number' => $package->tracking_number,
-                        'status' => $package->package_status,
-                        'customer_id' => $package->user_id,
-                        'customer_email' => $package->user->email ?? null,
-                        'weight' => $package->package_weight,
-                        'cost' => $package->shipping_cost,
-                        'created_at' => $package->created_at->toIso8601String(),
-                        'estimated_delivery' => $package->estimated_delivery?->toIso8601String(),
-                        'actual_delivery' => $package->actual_delivery?->toIso8601String()
-                    ];
-                }),
-                'metadata' => [
-                    'total_count' => $packages->count(),
-                    'generated_at' => now()->toIso8601String(),
-                    'requested_by_module' => $request->header('X-Module-Name', 'unknown')
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Package data export error', [
-                'error' => $e->getMessage(),
-                'requested_by' => $request->header('X-Module-Name', 'unknown')
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Export failed'
-            ], 500);
+        
+        if ($request->has('action')) {
+            $query->where('action', $request->action);
         }
-    }
-
-    /**
-     * Import customer feedback (Web Service Consumer)
-     */
-    public function importCustomerFeedback()
-    {
-        try {
-            // Call Feedback module's web service
-            $response = Http::withHeaders([
-                'X-API-Key' => config('services.modules.feedback.api_key'),
-                'X-Module-ID' => 'package_module'
-            ])
-            ->timeout(10)
-            ->get(config('services.modules.feedback.base_url') . '/export-for-packages');
-
-            if (!$response->successful()) {
-                throw new \Exception('Failed to fetch feedback data');
-            }
-
-            $feedbackData = $response->json();
-
-            if (!$feedbackData['success']) {
-                throw new \Exception('Invalid feedback data');
-            }
-
-            // Process feedback data
-            foreach ($feedbackData['data'] as $feedback) {
-                if (!empty($feedback['package_id'])) {
-                    $this->apiPackageService->update($feedback['package_id'], [
-                        'is_rated' => true,
-                        'customer_rating' => $feedback['rating'] ?? null,
-                        'customer_feedback' => $feedback['comments'] ?? null
-                    ]);
-                }
-            }
-
-            Cache::tags(['packages', 'feedback'])->flush();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Feedback imported successfully',
-                'processed' => count($feedbackData['data'])
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Feedback import error', [
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to import feedback'
-            ], 500);
+        
+        if ($request->has('target_type')) {
+            $query->where('target_type', $request->target_type);
         }
+        
+        if ($request->has('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->has('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        $logs = $query->paginate(50);
+        
+        return view('admin.audit-logs', compact('logs'));
     }
-
-    /**
-     * Get package statistics
-     */
+    
     private function getPackageStatistics(): array
     {
-        return Cache::remember('admin_package_stats', 300, function () {
+        try {
             return [
                 'total' => Package::count(),
-                'pending' => Package::where('package_status', Package::STATUS_PENDING)->count(),
-                'processing' => Package::where('package_status', Package::STATUS_PROCESSING)->count(),
-                'in_transit' => Package::where('package_status', Package::STATUS_IN_TRANSIT)->count(),
-                'delivered' => Package::where('package_status', Package::STATUS_DELIVERED)->count(),
-                'cancelled' => Package::where('package_status', Package::STATUS_CANCELLED)->count(),
-                'failed' => Package::where('package_status', Package::STATUS_FAILED)->count(),
-                'returned' => Package::where('package_status', Package::STATUS_RETURNED)->count(),
+                'pending' => Package::whereRaw('LOWER(package_status) = ?', ['pending'])->count(),
+                'processing' => Package::whereRaw('LOWER(package_status) = ?', ['processing'])->count(),
+                'in_transit' => Package::whereRaw('LOWER(package_status) = ?', ['in_transit'])->count(),
+                'delivered' => Package::whereRaw('LOWER(package_status) = ?', ['delivered'])->count(),
+                'cancelled' => Package::whereRaw('LOWER(package_status) = ?', ['cancelled'])->count(),
+                'failed' => Package::whereRaw('LOWER(package_status) = ?', ['failed'])->count(),
+                'returned' => Package::whereRaw('LOWER(package_status) = ?', ['returned'])->count(),
                 'revenue_today' => Package::whereDate('created_at', today())
-                                         ->where('package_status', '!=', Package::STATUS_CANCELLED)
+                                         ->whereRaw('LOWER(package_status) != ?', ['cancelled'])
                                          ->sum('shipping_cost'),
                 'deliveries_today' => Package::whereDate('actual_delivery', today())->count()
             ];
-        });
+        } catch (\Exception $e) {
+            Log::error('Error getting statistics', ['error' => $e->getMessage()]);
+            return [];
+        }
     }
 }

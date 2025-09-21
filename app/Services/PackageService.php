@@ -54,12 +54,13 @@ class PackageService
     }
 
     /**
-     * Update package with ownership verification
+     * Process package
      */
-    public function updatePackage(Package $package, array $data): Package
+    public function processPackage(string $packageId): Package
     {
+        $package = Package::findOrFail($packageId);
         $user = Auth::user();
-
+        
         // Authorization check - ensure user owns the package
         if (!$this->canUserModifyPackage($user, $package)) {
             throw new \Exception('Unauthorized: You can only modify your own packages');
@@ -73,7 +74,7 @@ class PackageService
         // Sanitize and validate critical fields
         $data = $this->sanitizePackageData($data);
         $updated = $this->repository->update($package->package_id, $data);
-
+        
         Log::info('Package updated', [
             'package_id' => $package->package_id,
             'user_id' => $user->user_id,
@@ -91,17 +92,17 @@ class PackageService
     {
         $package = $this->repository->find($packageId);
         $user = Auth::user();
-
+        
         if (!$package) {
             throw new \Exception('Package not found');
         }
 
         // For now, allow any authenticated user to process packages
         // You can add more specific logic here if needed
-
+        
         // Update package status based on current status
         $this->updatePackageStatus($package, $data);
-
+        
         Log::info('Package processed', [
             'package_id' => $packageId,
             'old_status' => $package->getOriginal('package_status'),
@@ -115,11 +116,11 @@ class PackageService
     /**
      * Cancel package with ownership verification
      */
-    public function cancelPackage(string $packageId, ?User $user = null): Package
+    public function cancelPackage(string $packageId, User $user = null): Package
     {
-        $package = $this->repository->find($packageId);
+        $package = Package::findOrFail($packageId);
         $user = $user ?? Auth::user();
-
+        
         if (!$package) {
             throw new \Exception('Package not found');
         }
@@ -136,7 +137,7 @@ class PackageService
 
         $package->package_status = 'cancelled';
         $package->save();
-
+        
         Log::info('Package cancelled', [
             'package_id' => $packageId,
             'cancelled_by' => $user->user_id,
@@ -166,14 +167,16 @@ class PackageService
     {
         $package = $this->repository->findWithRelations($packageId);
         $user = Auth::user();
-
+        
         if (!$package) {
             return null;
         }
 
-        // Authorization check
-        if (!$this->canUserViewPackage($user, $package)) {
-            throw new \Exception('Unauthorized: Access denied to this package');
+        $user = Auth::user();
+        
+        // Check if user can view this package
+        if ($user && !$this->canUserViewPackage($user, $package)) {
+            return null;
         }
 
         return $package;
@@ -188,12 +191,28 @@ class PackageService
     }
 
     /**
-     * SIMPLIFIED: Check if user can view package (ownership only)
+     * Check if a user can view a package
      */
     private function canUserViewPackage(User $user, Package $package): bool
     {
-        // For now, users can only view their own packages
-        return $package->user_id === $user->user_id;
+        // Admins can view any package
+        if (str_starts_with($user->user_id, 'AD')) {
+            return true;
+        }
+
+        // Drivers can view packages assigned to them
+        if (str_starts_with($user->user_id, 'D')) {
+            // Check if the driver is assigned to this package
+            return $package->assignment && $package->assignment->driver_id === $user->user_id;
+        }
+
+        // Customers can only view their own packages
+        if (str_starts_with($user->user_id, 'C')) {
+            return $package->user_id === $user->user_id;
+        }
+
+        // Default deny for unknown user types
+        return false;
     }
 
     /**
@@ -215,13 +234,68 @@ class PackageService
     }
 
     /**
+     * Assign package to driver (admin only)
+     * 
+     * @param string $packageId
+     * @param string $driverId
+     * @return Package
+     * @throws \Exception
+     */
+    public function assignPackage(string $packageId, string $driverId): Package
+    {
+        $user = Auth::user();
+        
+        // Only admins can assign packages
+        if (!str_starts_with($user->user_id, 'AD')) {
+            throw new \Exception('Unauthorized: Only admins can assign packages to drivers');
+        }
+        
+        $package = Package::findOrFail($packageId);
+        
+        if (!$package->canBeAssigned()) {
+            throw new \Exception("Package cannot be assigned in its current status");
+        }
+        
+        $package->assign($driverId);
+        return $package->fresh();
+    }
+
+    /**
+     * Deliver package (driver operation)
+     * 
+     * @param string $packageId
+     * @param array $proofData
+     * @return Package
+     * @throws \Exception
+     */
+    public function deliverPackage(string $packageId, array $proofData = []): Package
+    {
+        $package = Package::findOrFail($packageId);
+        $user = Auth::user();
+        
+        // Check if user is authorized to mark as delivered
+        if (str_starts_with($user->user_id, 'D')) {
+            // Driver must be assigned to this package
+            if (!$package->assignment || $package->assignment->driver_id !== $user->user_id) {
+                throw new \Exception('Unauthorized: You are not assigned to this package');
+            }
+        } elseif (!str_starts_with($user->user_id, 'AD')) {
+            // Only drivers and admins can mark packages as delivered
+            throw new \Exception('Unauthorized: Only drivers and admins can mark packages as delivered');
+        }
+        
+        $package->deliver($proofData);
+        return $package->fresh();
+    }
+
+    /**
      * Update package status based on current state
      */
-    private function updatePackageStatus(Package $package, array $data): void
+     public function updatePackage(Package $package, array $data): Package
     {
         $currentStatus = $package->package_status;
         $newStatus = $data['status'] ?? null;
-
+        
         // Define allowed status transitions
         $allowedTransitions = [
             'pending' => ['processing', 'cancelled'],
@@ -231,16 +305,16 @@ class PackageService
             'out_for_delivery' => ['delivered', 'failed'],
             'failed' => ['out_for_delivery', 'returned'],
         ];
-
+        
         if ($newStatus && isset($allowedTransitions[$currentStatus])) {
             if (in_array($newStatus, $allowedTransitions[$currentStatus])) {
                 $package->package_status = $newStatus;
-
+                
                 // Update delivery timestamp if delivered
                 if ($newStatus === 'delivered') {
                     $package->actual_delivery = now();
                 }
-
+                
                 $package->save();
             }
         }
@@ -256,11 +330,14 @@ class PackageService
         })->toArray();
     }
 
+    /**
+     * Get package history with proper authorization
+     */
     public function getPackageHistory(string $packageId): array
     {
         $package = Package::where('package_id', $packageId)->firstOrFail();
         $user = Auth::user();
-
+        
         // SIMPLIFIED Authorization check - only check ownership
         if (!$this->canUserViewPackage($user, $package)) {
             throw new \Exception('Unauthorized: Access denied to package history');
