@@ -37,7 +37,9 @@ class Package extends Model
         'estimated_delivery',
         'actual_delivery',
         'notes',
-        'is_rated', // ✅ now fillable
+        'is_rated', 
+        'payment_status',
+        'payment_id',
     ];
 
     /**
@@ -50,7 +52,8 @@ class Package extends Model
         'updated_at'          => 'datetime',
         'estimated_delivery'  => 'datetime',
         'actual_delivery'     => 'datetime',
-        'is_rated'            => 'boolean', // ✅ always true/false
+        'is_rated'            => 'boolean', 
+        'payment_id'          => 'string',
     ];
 
     // Status constants
@@ -195,6 +198,11 @@ class Package extends Model
     {
         return $this->hasOne(Delivery::class, 'package_id', 'package_id');
     }
+    
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'package_id', 'package_id');
+    }
 
     public function assignment()
     {
@@ -254,6 +262,12 @@ class Package extends Model
         }
 
         return 'P' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function getIsPaymentRequiredAttribute(): bool
+    {
+        return $this->payment_status !== 'paid' && 
+            !in_array($this->package_status, ['cancelled', 'delivered']);
     }
 
     public static function generateTrackingNumber()

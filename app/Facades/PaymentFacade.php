@@ -107,6 +107,79 @@ class PaymentFacade
     }
 
     /**
+    * Integration with Package Service
+    */
+    public function integrateWithPackageService(string $packageId, string $paymentId): bool
+    {
+        try {
+            // Use PackageService to mark package as paid
+            $packageService = app(PackageService::class);
+            
+            return $packageService->markAsPaid($packageId, $paymentId);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to integrate payment with package service', [
+                'package_id' => $packageId,
+                'payment_id' => $paymentId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return false;
+        }
+    }
+
+    /**
+     * Get payment status for a package (consumed by Package Module)
+     */
+    public function getPackagePaymentStatus(string $packageId): array
+    {
+        $payment = Payment::where('package_id', $packageId)->first();
+        
+        if (!$payment) {
+            return [
+                'has_payment' => false,
+                'payment_status' => 'unpaid',
+                'payment_required' => true
+            ];
+        }
+        
+        return [
+            'has_payment' => true,
+            'payment_id' => $payment->payment_id,
+            'payment_status' => $payment->status,
+            'amount' => $payment->amount,
+            'payment_date' => $payment->payment_date,
+            'payment_method' => $payment->payment_method,
+            'can_refund' => $payment->is_refundable,
+            'payment_required' => false
+        ];
+    }
+
+    /**
+     * Generate payment URL for a package (consumed by Package Module)
+     */
+    public function generatePaymentUrl(string $packageId): string
+    {
+        return url("/customer/payment/package/{$packageId}");
+    }
+
+    /**
+     * Check if refund is available for package (consumed by Package Module)
+     */
+    public function isRefundAvailable(string $packageId): bool
+    {
+        $payment = Payment::where('package_id', $packageId)
+                        ->where('status', 'completed')
+                        ->first();
+        
+        if (!$payment) {
+            return false;
+        }
+        
+        return $this->refundManager->isRefundable($payment);
+    }
+
+    /**
      * Request a refund for a payment
      */
     public function requestRefund(string $paymentId, string $reason): array
@@ -167,10 +240,11 @@ class PaymentFacade
                     $payment = Payment::find($refund->payment_id);
                     $payment->status = 'refunded';
                     $payment->save();
-                    
-                    // Update package payment status
+
+                    // Update package status to cancelled
                     $package = Package::find($payment->package_id);
                     $package->payment_status = 'refunded';
+                    $package->package_status = 'cancelled';  // ADD THIS LINE
                     $package->save();
                 }
             } else {

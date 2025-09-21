@@ -43,20 +43,23 @@ class PackageController extends Controller
     }
 
     public function store(CreatePackageRequest $request)
-    {
-        try {
-            $package = $this->packageService->createPackage($request->validated());
+{
+    try {
+        // Create package without payment
+        $package = $this->packageService->createPackage($request->validated());
 
-            return redirect()
-                ->route('customer.packages.show', $package->package_id)
-                ->with('success', 'Delivery request created successfully! Tracking Number: ' . $package->tracking_number);
+        // Redirect to payment page instead of showing success
+        return redirect()
+            ->route('customer.payment.make', $package->package_id)
+            ->with('success', 'Package created successfully! Please complete payment to process your delivery request.')
+            ->with('package_created', true);
 
-        } catch (Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create delivery request: ' . $e->getMessage());
-        }
+    } catch (Exception $e) {
+        return back()
+            ->withInput()
+            ->with('error', 'Failed to create delivery request: ' . $e->getMessage());
     }
+}
 
     public function show(string $packageId)
     {
@@ -140,4 +143,30 @@ class PackageController extends Controller
             return back()->with('error', 'Failed to process package: ' . $e->getMessage());
         }
     }
+    public function showPayment(string $packageId)
+{
+    try {
+        $package = Package::where('package_id', $packageId)
+                         ->where('user_id', Auth::id())
+                         ->firstOrFail();
+
+        // Check if payment is required
+        if ($package->payment_status === 'paid') {
+            return redirect()->route('customer.packages.show', $packageId)
+                           ->with('info', 'This package has already been paid for.');
+        }
+
+        // Check if package can still be paid for
+        if (in_array($package->package_status, ['cancelled', 'delivered'])) {
+            return redirect()->route('customer.packages.show', $packageId)
+                           ->with('error', 'Payment is not available for this package status.');
+        }
+
+        return redirect()->route('customer.payment.make', $packageId);
+        
+    } catch (\Exception $e) {
+        return redirect()->route('customer.packages.index')
+                       ->with('error', 'Package not found or access denied.');
+    }
+}
 }

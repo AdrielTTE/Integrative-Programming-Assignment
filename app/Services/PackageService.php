@@ -85,7 +85,7 @@ class PackageService
     }
 
     /**
-     * Process package - simplified without role checks
+     * Process package
      */
     public function processPackage(string $packageId, array $data = []): Package
     {
@@ -95,9 +95,6 @@ class PackageService
         if (!$package) {
             throw new \Exception('Package not found');
         }
-
-        // For now, allow any authenticated user to process packages
-        // You can add more specific logic here if needed
 
         // Update package status based on current status
         $this->updatePackageStatus($package, $data);
@@ -184,6 +181,11 @@ class PackageService
      */
     private function canUserModifyPackage(User $user, Package $package): bool
     {
+
+        if (str_starts_with($user->user_id, 'AD')) {
+        return true;
+    }
+
         return $package->user_id === $user->user_id;
     }
 
@@ -192,9 +194,13 @@ class PackageService
      */
     private function canUserViewPackage(User $user, Package $package): bool
     {
-        // For now, users can only view their own packages
-        return $package->user_id === $user->user_id;
+        if (str_starts_with($user->user_id, 'AD')) {
+        return true;
     }
+    
+        // Regular users can only view their own packages
+        return $package->user_id === $user->user_id;
+}
 
     /**
      * Sanitize package data to prevent injection attacks
@@ -244,6 +250,112 @@ class PackageService
                 $package->save();
             }
         }
+    }
+
+    /**
+ * Calculate shipping cost for payment (consumed by Payment Module)
+ */
+public function calculateShippingCostForPayment(string $packageId): float
+{
+    $package = $this->repository->find($packageId);
+    
+    if (!$package) {
+        throw new \Exception('Package not found');
+    }
+    
+    if ($package->shipping_cost) {
+        return $package->shipping_cost;
+    }
+    
+    // Recalculate if not set
+    $cost = $package->calculateShippingCost();
+    $this->repository->update($packageId, ['shipping_cost' => $cost]);
+    
+    return $cost;
+}
+
+/**
+ * Mark package as paid (consumed by Payment Module)
+ */
+public function markAsPaid(string $packageId, string $paymentId): bool
+{
+    try {
+        $package = $this->repository->find($packageId);
+        
+        if (!$package) {
+            throw new \Exception('Package not found');
+        }
+        
+        $this->repository->update($packageId, [
+            'payment_status' => 'paid',
+            'payment_id' => $paymentId
+        ]);
+        
+        // Auto-process package after payment if still pending
+        if ($package->package_status === 'pending') {
+            $this->processPackage($packageId, ['status' => 'processing']);
+        }
+        
+        Log::info('Package marked as paid', [
+            'package_id' => $packageId,
+            'payment_id' => $paymentId
+        ]);
+        
+        return true;
+    } catch (\Exception $e) {
+        Log::error('Failed to mark package as paid', [
+            'package_id' => $packageId,
+            'payment_id' => $paymentId,
+            'error' => $e->getMessage()
+        ]);
+        return false;
+    }
+}
+
+    /**
+     * Check if package requires payment (consumed by Payment Module)
+     */
+    public function requiresPayment(string $packageId): bool
+    {
+        $package = $this->repository->find($packageId);
+        
+        if (!$package) {
+            return false;
+        }
+        
+        return $package->payment_status !== 'paid' && 
+            !in_array($package->package_status, ['cancelled', 'delivered']);
+    }
+
+    /**
+     * Get unpaid packages for a user (consumed by Payment Module)
+     */
+    public function getUnpaidPackages(string $userId): array
+    {
+        $criteria = [
+            'user_id' => $userId,
+            'payment_status' => 'unpaid'
+        ];
+        
+        $packages = $this->repository->search($criteria);
+        
+        return $packages->filter(function($package) {
+            return !in_array($package->package_status, ['cancelled', 'delivered']);
+        })->values()->toArray();
+    }
+
+    /**
+     * Validate package ownership (consumed by Payment Module)
+     */
+    public function validatePackageOwnership(string $packageId, string $userId): bool
+    {
+        $package = $this->repository->find($packageId);
+        
+        if (!$package) {
+            return false;
+        }
+        
+        return $package->user_id === $userId;
     }
 
     public function getStatistics(string $period = 'month'): array

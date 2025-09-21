@@ -37,8 +37,6 @@ use App\Http\Controllers\DriverControllers\ProofOfDeliveryController;
 
 use App\Http\Controllers\DriverControllers\DriverProofController;
 
-
-
 use App\Http\Controllers\CustomerControllers\CustomerPaymentController;
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
@@ -47,8 +45,6 @@ use App\Http\Controllers\AdminControllers\RefundController;
 use App\Http\Controllers\DriverControllers\DeliveryStatusController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -79,64 +75,73 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     // --- Authenticated Customer Routes ---
     Route::middleware(['auth', 'customer'])->group(function () {
-        Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [CustomerDashboardController::class, 'dashboard'])->name('dashboard');
 
-        Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
+    Route::get('/home', fn() => redirect()->route('customer.packages.index'))->name('home');
 
-        // --- Package Management Routes ---
-        Route::resource('packages', CustomerPackageController::class)
-            ->parameters(['packages' => 'packageId']);
+    // --- Package Management Routes ---
+    Route::resource('packages', CustomerPackageController::class)
+        ->parameters(['packages' => 'packageId']);
 
-        Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
-            ->name('packages.process');
+    Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
+        ->name('packages.process');
 
-             // Payment Routes
-        Route::prefix('payment')->name('payment.')->group(function () {
-            // Make payment for a package
-            Route::get('/package/{packageId}', [CustomerPaymentController::class, 'showPaymentPage'])
-                 ->name('make');
-            Route::post('/package/{packageId}', [CustomerPaymentController::class, 'processPayment'])
-                 ->name('process');
-            
-            // Payment success page
-            Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
-                 ->name('success');
-        });
-
-        // Billing History
-        Route::prefix('billing')->name('billing.')->group(function () {
-            Route::get('/history', [CustomerPaymentController::class, 'billingHistory'])
-                 ->name('history');
-            Route::get('/invoice/{paymentId}/download', [CustomerPaymentController::class, 'downloadInvoice'])
-                 ->name('invoice.download');
-            Route::get('/receipt/{paymentId}', [CustomerPaymentController::class, 'generateReceipt'])
-                 ->name('receipt');
-        });
+    // Payment Routes
+    Route::prefix('payment')->name('payment.')->group(function () {
+        // New payment-first flow (MOVED FROM ADMIN SECTION)
+        Route::post('/create-and-pay', [CustomerPaymentController::class, 'createAndPay'])
+            ->name('createAndPay');
+        Route::get('/session', [CustomerPaymentController::class, 'showSessionPayment'])
+            ->name('showSessionPayment');
+        Route::post('/session/process', [CustomerPaymentController::class, 'processSessionPayment'])
+            ->name('processSessionPayment');
         
-        // Refund Routes
-        Route::prefix('refund')->name('refund.')->group(function () {
-            Route::get('/request/{paymentId}', [CustomerPaymentController::class, 'showRefundRequest'])
-                 ->name('request');
-            Route::post('/request/{paymentId}', [CustomerPaymentController::class, 'submitRefund'])
-                 ->name('submit');
-            Route::get('/status/{refundId}', [CustomerPaymentController::class, 'refundStatus'])
-                 ->name('status');
-        });
-        // --- Other Custom Package Routes ---
-        Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
-
-        // --- Other Customer-Specific Routes ---
-        Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('search');
-        Route::get('/my-proofs', [WebProofController::class, 'history'])->name('proof.history');
-        Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('proof.report');
-        Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
-
-        Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
-
-        Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
-        Route::post('/feedback', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
-        Route::post('/notifications/updateReadAt/{notification_id}', [CustomerNotificationController::class, 'updateReadAt'])->name('notifications.updateReadAt');
+        // Make payment for an existing package
+        Route::get('/package/{packageId}', [CustomerPaymentController::class, 'showPaymentPage'])
+             ->name('make');
+        Route::post('/package/{packageId}', [CustomerPaymentController::class, 'processPayment'])
+             ->name('process');
+        
+        // Payment success page
+        Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
+             ->name('success');
     });
+
+    // Billing History
+    Route::prefix('billing')->name('billing.')->group(function () {
+        Route::get('/history', [CustomerPaymentController::class, 'billingHistory'])
+             ->name('history');
+        Route::get('/invoice/{paymentId}/download', [CustomerPaymentController::class, 'downloadInvoice'])
+             ->name('invoice.download');
+        Route::get('/receipt/{paymentId}', [CustomerPaymentController::class, 'generateReceipt'])
+             ->name('receipt');
+    });
+    
+    // Refund Routes
+    Route::prefix('refund')->name('refund.')->group(function () {
+        Route::get('/request/{paymentId}', [CustomerPaymentController::class, 'showRefundRequest'])
+             ->name('request');
+        Route::post('/request/{paymentId}', [CustomerPaymentController::class, 'submitRefund'])
+             ->name('submit');
+        Route::get('/status/{refundId}', [CustomerPaymentController::class, 'refundStatus'])
+             ->name('status');
+    });
+
+    // --- Other Custom Package Routes ---
+    Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
+
+    // --- Other Customer-Specific Routes ---
+    Route::get('/my-packages/search', [WebSearchController::class, 'search'])->name('search');
+    Route::get('/my-proofs', [WebProofController::class, 'history'])->name('proof.history');
+    Route::post('/proofs/{proofId}/report', [WebProofController::class, 'report'])->name('proof.report');
+    Route::get('notification', [CustomerNotificationController::class, 'notification'])->name('notification');
+
+    Route::get('/temporaryPage', [TemporaryController::class, 'temporaryPage'])->name('temporaryPage');
+
+    Route::get('/feedback', [CustomerFeedbackController::class, 'feedback'])->name('feedback');
+    Route::post('/feedback', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
+    Route::post('/notifications/updateReadAt/{notification_id}', [CustomerNotificationController::class, 'updateReadAt'])->name('notifications.updateReadAt');
+});
 });
 
 
@@ -183,46 +188,53 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
 
         // Payment Management
-        Route::get('/payment', [PaymentController::class, 'index'])
-             ->name('payment');
-        Route::get('/payment/{paymentId}', [PaymentController::class, 'show'])
-             ->name('payment.show');
-        Route::get('/payment/{paymentId}/invoice', [PaymentController::class, 'generateInvoice'])
-             ->name('payment.invoice');
-        Route::post('/payment/{paymentId}/verify', [PaymentController::class, 'verifyPayment'])
-             ->name('payment.verify');
-        Route::post('/invoice/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])
-             ->name('invoice.email');
+        Route::prefix('payment')->name('payment.')->group(function () {
+            // New payment-first flow
+            Route::post('/create-and-pay', [CustomerPaymentController::class, 'createAndPay'])
+                ->name('createAndPay');
+            Route::get('/pay', [CustomerPaymentController::class, 'showSessionPayment'])
+                ->name('showSessionPayment');
+            Route::post('/process', [CustomerPaymentController::class, 'processSessionPayment'])
+                ->name('processSessionPayment');
+            
+            // Payment success page
+            Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
+                ->name('success');
+        });
         
-        // Financial Reports
-        Route::post('/payment/report', [PaymentController::class, 'generateReport'])
-             ->name('payment.report');
-        
-        // Refund Management
-        Route::get('/refunds', [RefundController::class, 'index'])
-             ->name('refunds');
-        Route::get('/refunds/{refundId}', [RefundController::class, 'show'])
-             ->name('refunds.show');
-        Route::post('/refunds/{refundId}/approve', [RefundController::class, 'approve'])
-             ->name('refunds.approve');
-        Route::post('/refunds/{refundId}/reject', [RefundController::class, 'reject'])
-             ->name('refunds.reject');
-        Route::post('/refunds/bulk', [RefundController::class, 'bulkProcess'])
-             ->name('refunds.bulk');
-        Route::post('/refunds/report', [RefundController::class, 'generateReport'])
-             ->name('refunds.report');
+        // Payment Management Routes
+        Route::prefix('payment')->name('payment.')->group(function () {
+            Route::get('/', [PaymentController::class, 'index'])->name('index');
+            Route::get('/{paymentId}', [PaymentController::class, 'show'])->name('show');
+            Route::post('/{paymentId}/verify', [PaymentController::class, 'verifyPayment'])->name('verifyPayment');
+            Route::get('/{paymentId}/invoice', [PaymentController::class, 'generateInvoice'])->name('generateInvoice');
+            Route::post('/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])->name('emailInvoice');
+            Route::post('/generate-report', [PaymentController::class, 'generateReport'])->name('generateReport');
+            
+            // API endpoints for processing payments
+            Route::post('/process', [PaymentController::class, 'apiProcessPayment'])->name('apiProcess');
+            Route::get('/status/{paymentId}', [PaymentController::class, 'apiGetPaymentStatus'])->name('apiStatus');
+        });
 
+        // Invoice Management
+        Route::prefix('invoice')->name('invoice.')->group(function () {
+            Route::post('/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])->name('email');
+        });
+        
         // Refund Management
-        Route::get('/refunds', [RefundController::class, 'index'])->name('refunds');
-        Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('refunds.approve');
-        Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('refunds.reject');
-        Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('refunds.process');
+        Route::prefix('refunds')->name('refunds.')->group(function () {
+            Route::get('/', [RefundController::class, 'index'])->name('index');
+            Route::get('/{refundId}', [RefundController::class, 'show'])->name('show');
+            Route::post('/{refundId}/approve', [RefundController::class, 'approve'])->name('approve');
+            Route::post('/{refundId}/reject', [RefundController::class, 'reject'])->name('reject');
+            Route::post('/bulk', [RefundController::class, 'bulkProcess'])->name('bulk');
+            Route::post('/report', [RefundController::class, 'generateReport'])->name('report');
+        });
 
         // Announcements and Notification
         Route::get('/announcement', [AnnouncementController::class, 'create'])->name('announcement.create');
         Route::post('/announcement', [AnnouncementController::class, 'send'])->name('announcement.send');
     });
-
 });
 
 
@@ -244,10 +256,7 @@ Route::prefix('driver')->name('driver.')->group(function () {
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
 
-        Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-
         // Package Management
-        Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
         Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
         Route::get('/my-packages/{packageId}', [DriverPackagesController::class, 'show'])->name('packages.show');
         Route::post('/my-packages/{packageId}/update-status', [DriverPackagesController::class, 'updateStatus'])->name('packages.updateStatus');
@@ -263,13 +272,6 @@ Route::prefix('driver')->name('driver.')->group(function () {
         Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
         Route::post('/proof/{packageId}', [ProofOfDeliveryController::class, 'store'])->name('proof.store');
         Route::get('/proof/{packageId}', [ProofOfDeliveryController::class, 'show'])->name('proof.show');
-
-        Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create'); // Or DriverProofController if using that
-                Route::post('proof/{package_id}', [ProofOfDeliveryController::class, 'store'])->name('driver.proof.store');
-
-                Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
-Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create');
-
     });
 });
 
@@ -281,19 +283,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-Route::prefix('admin')->middleware(['auth'])->group(function () {
-    // Payment Management
-    Route::get('/payment', [PaymentController::class, 'index'])->name('admin.payment');
-    Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('admin.payment.report');
-    Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('admin.payment.invoice');
-
-    // Refund Management
-    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds');
-    Route::post('/refunds/{id}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
-    Route::post('/refunds/{id}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
-    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
 });
 
 // This file often contains the logout route and other authentication routes.

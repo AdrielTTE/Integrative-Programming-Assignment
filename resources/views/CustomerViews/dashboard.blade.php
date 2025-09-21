@@ -245,9 +245,18 @@
                                 </div>
                             </div>
                             <div class="package-status">
-                                <span class="status-pill {{ e($statusColor) }}">
-                                    {{ e(ucwords(str_replace('_', ' ', $package->package_status))) }}
-                                </span>
+                            @php
+                            $displayStatus = $package->payment && $package->payment->status === 'refunded' 
+                                ? 'refunded' 
+                                : $package->package_status;
+                            $displayColor = $package->payment && $package->payment->status === 'refunded' 
+                                ? 'secondary' 
+                                : $statusColor;
+                            @endphp
+
+                            <span class="status-pill {{ e($displayColor) }}">
+                                {{ e(ucwords(str_replace('_', ' ', $displayStatus))) }}
+                            </span>
                             </div>
                         </div>
                     @empty
