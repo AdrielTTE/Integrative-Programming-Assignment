@@ -74,23 +74,23 @@ class PackageService
     {
         $pkg = Package::findOrFail($id);
 
-        $validator = Validator::make($data, [
-            'user_id' => 'sometimes|string|exists:user,user_id',
-            'tracking_number' => "sometimes|string|unique:package,tracking_number,{$id},package_id",
-            'package_weight' => 'nullable|numeric|min:0',
-            'package_dimensions' => 'nullable|string|max:100',
-            'package_contents' => 'nullable|string',   // ✅ now truly optional
-            'sender_address' => 'nullable|string|max:255', // ✅ no longer required
-            'recipient_address' => 'nullable|string|max:255', // ✅ no longer required
-            'package_status' => 'sometimes|string|max:20',
-            'priority' => 'nullable|string|max:20',
-            'shipping_cost' => 'nullable|numeric|min:0',
-            'estimated_delivery' => 'nullable|date',
-            'actual_delivery' => 'nullable|date',
-            'notes' => 'nullable|string',
-            'is_rated' => 'boolean',          // ✅ this will now pass
-            'created_at' => 'nullable|date',
-        ]);
+      $validator = Validator::make($data, [
+    'user_id'            => 'sometimes|string|exists:user,user_id',
+    'tracking_number'    => "sometimes|string|unique:package,tracking_number,{$id},package_id",
+    'package_weight'     => 'nullable|numeric|min:0',
+    'package_dimensions' => 'nullable|string|max:100',
+    'package_contents'   => 'nullable|string',   // ✅ now truly optional
+    'sender_address'     => 'nullable|string|max:255', // ✅ no longer required
+    'recipient_address'  => 'nullable|string|max:255', // ✅ no longer required
+    'package_status'     => 'sometimes|string|max:20',
+    'priority'           => 'nullable|string|max:20',
+    'shipping_cost'      => 'nullable|numeric|min:0',
+    'estimated_delivery' => 'nullable|date',
+    'actual_delivery'    => 'nullable|date',
+    'notes'              => 'nullable|string',
+    'is_rated'           => 'boolean',          // ✅ this will now pass
+    'created_at'         => 'nullable|date',
+]);
 
 
 
@@ -166,7 +166,7 @@ class PackageService
     public function getPackagesByStatus(string $status, int $page, int $pageSize, string $customerId): LengthAwarePaginator
     {
         $query = Package::query()
-            ->where('customer_id', $customerId);
+            ->where('user_id', $customerId);
 
         if (strtolower($status) !== 'all') {
             $query->where('package_status', strtolower($status));

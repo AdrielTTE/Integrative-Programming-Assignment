@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Customer;
-use App\Models\Delivery;
+use App\Models\Package;
 
 class Feedback extends Model
 {
@@ -29,7 +29,7 @@ class Feedback extends Model
     // Mass assignable attributes
     protected $fillable = [
         'feedback_id',
-        'delivery_id',
+        'package_id',
         'customer_id',
         'rating',
         'category',
@@ -44,8 +44,8 @@ class Feedback extends Model
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    public function delivery(): BelongsTo
+    public function package(): BelongsTo
     {
-        return $this->belongsTo(Delivery::class, 'delivery_id');
+        return $this->belongsTo(Package::class, 'package_id');
     }
 }

@@ -6,7 +6,6 @@
                 @csrf
                 <input type="hidden" name="package_id" id="package_id">
 
-
                 <div class="modal-header">
                     <h5 class="modal-title" id="feedbackModalLabel">
                         Submit Feedback For Package: <b><span id="modalPackageIdLabel"></span></b>

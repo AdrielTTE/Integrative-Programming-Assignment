@@ -22,24 +22,26 @@ class Customer extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+     public $timestamps = false;
+
     /**
      * Mass assignable attributes
      */
     protected $fillable = [
         'customer_id',
-        'name',
-        'email',
-        'phone',
+        'first_name',
+        'last_name',
         'address',
-        'status',
+        'date_of_birth',
+        'customer_status',
     ];
 
     /**
      * Attribute casting
      */
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+        //'updated_at' => 'datetime',
     ];
 
     /**

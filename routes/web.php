@@ -42,16 +42,15 @@ use App\Http\Controllers\DriverControllers\DriverProofController;
 
 
 
-
-
+use App\Http\Controllers\CustomerControllers\CustomerPaymentController;
+use App\Http\Controllers\AdminControllers\PaymentController;
+use App\Http\Controllers\AdminControllers\RefundController;
 
 // General Web Controllers
 use App\Http\Controllers\DriverControllers\DeliveryStatusController;
 use App\Http\Controllers\Web\ProofController as WebProofController;
 use App\Http\Controllers\Web\SearchController as WebSearchController;
 
-use App\Http\Controllers\AdminControllers\PaymentController;
-use App\Http\Controllers\AdminControllers\RefundController;
 
 
 /*
@@ -94,6 +93,38 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::post('/packages/{packageId}/process', [CustomerPackageController::class, 'process'])
             ->name('packages.process');
 
+             // Payment Routes
+        Route::prefix('payment')->name('payment.')->group(function () {
+            // Make payment for a package
+            Route::get('/package/{packageId}', [CustomerPaymentController::class, 'showPaymentPage'])
+                 ->name('make');
+            Route::post('/package/{packageId}', [CustomerPaymentController::class, 'processPayment'])
+                 ->name('process');
+            
+            // Payment success page
+            Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
+                 ->name('success');
+        });
+
+        // Billing History
+        Route::prefix('billing')->name('billing.')->group(function () {
+            Route::get('/history', [CustomerPaymentController::class, 'billingHistory'])
+                 ->name('history');
+            Route::get('/invoice/{paymentId}/download', [CustomerPaymentController::class, 'downloadInvoice'])
+                 ->name('invoice.download');
+            Route::get('/receipt/{paymentId}', [CustomerPaymentController::class, 'generateReceipt'])
+                 ->name('receipt');
+        });
+        
+        // Refund Routes
+        Route::prefix('refund')->name('refund.')->group(function () {
+            Route::get('/request/{paymentId}', [CustomerPaymentController::class, 'showRefundRequest'])
+                 ->name('request');
+            Route::post('/request/{paymentId}', [CustomerPaymentController::class, 'submitRefund'])
+                 ->name('submit');
+            Route::get('/status/{refundId}', [CustomerPaymentController::class, 'refundStatus'])
+                 ->name('status');
+        });
         // --- Other Custom Package Routes ---
         Route::post('/packages/undo', [CustomerPackageController::class, 'undo'])->name('packages.undo');
 
@@ -155,9 +186,34 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/feedback', [FeedbackController::class, 'feedback'])->name('feedback');
 
         // Payment Management
-        Route::get('/payment', [PaymentController::class, 'index'])->name('payment');
-        Route::post('/payment/report', [PaymentController::class, 'generateReport'])->name('payment.report');
-        Route::get('/payment/{id}/invoice', [PaymentController::class, 'generateInvoice'])->name('payment.invoice');
+        Route::get('/payment', [PaymentController::class, 'index'])
+             ->name('payment');
+        Route::get('/payment/{paymentId}', [PaymentController::class, 'show'])
+             ->name('payment.show');
+        Route::get('/payment/{paymentId}/invoice', [PaymentController::class, 'generateInvoice'])
+             ->name('payment.invoice');
+        Route::post('/payment/{paymentId}/verify', [PaymentController::class, 'verifyPayment'])
+             ->name('payment.verify');
+        Route::post('/invoice/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])
+             ->name('invoice.email');
+        
+        // Financial Reports
+        Route::post('/payment/report', [PaymentController::class, 'generateReport'])
+             ->name('payment.report');
+        
+        // Refund Management
+        Route::get('/refunds', [RefundController::class, 'index'])
+             ->name('refunds');
+        Route::get('/refunds/{refundId}', [RefundController::class, 'show'])
+             ->name('refunds.show');
+        Route::post('/refunds/{refundId}/approve', [RefundController::class, 'approve'])
+             ->name('refunds.approve');
+        Route::post('/refunds/{refundId}/reject', [RefundController::class, 'reject'])
+             ->name('refunds.reject');
+        Route::post('/refunds/bulk', [RefundController::class, 'bulkProcess'])
+             ->name('refunds.bulk');
+        Route::post('/refunds/report', [RefundController::class, 'generateReport'])
+             ->name('refunds.report');
 
         // Refund Management
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds');
