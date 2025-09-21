@@ -60,8 +60,7 @@ class AdminAssignmentController extends Controller
                 // Update the package status from 'PENDING' to 'PROCESSING'.
                 $package->update(['package_status' => 'PROCESSING']);
 
-                // Update the driver's status to 'BUSY'.
-                $driver->update(['driver_status' => 'BUSY']);
+                // Update the driver's status to 'BUSY'.  $driver->update(['driver_status' => 'BUSY']);
             });
 
         } catch (\Exception $e) {

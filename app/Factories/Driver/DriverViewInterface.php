@@ -5,9 +5,14 @@ namespace App\Factories\Driver;
 use Illuminate\View\View;
 
 /**
- * Product Interface - defines the interface for all driver views
+ * Interface for all driver views in the Factory Pattern
  */
 interface DriverViewInterface
 {
+    /**
+     * Render the view
+     * 
+     * @return View
+     */
     public function render(): View;
 }

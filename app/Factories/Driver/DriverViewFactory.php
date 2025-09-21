@@ -5,17 +5,21 @@ namespace App\Factories\Driver;
 use Illuminate\View\View;
 
 /**
- * Abstract Creator - defines the factory method
+ * Abstract Factory class for creating driver views
  */
 abstract class DriverViewFactory
 {
     /**
-     * Factory Method - subclasses will implement this to create specific views
+     * Factory method to create views
+     * 
+     * @return DriverViewInterface
      */
     abstract public function createView(): DriverViewInterface;
-
+    
     /**
-     * Template method that uses the factory method
+     * Render the view created by the factory
+     * 
+     * @return View
      */
     public function render(): View
     {

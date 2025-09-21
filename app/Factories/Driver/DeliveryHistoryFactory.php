@@ -4,9 +4,6 @@ namespace App\Factories\Driver;
 
 use App\Services\DriverPackageService;
 
-/**
- * Concrete Creator - its job is to create the DeliveryHistoryView
- */
 class DeliveryHistoryFactory extends DriverViewFactory
 {
     protected DriverPackageService $packageService;

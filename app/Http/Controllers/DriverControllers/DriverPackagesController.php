@@ -9,16 +9,31 @@ use App\Factories\Driver\UpdateStatusViewFactory; // Import the factory
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\RequestException;
+use App\Factories\Driver\PackageDetailsFactory; // Import the new factory
+use App\Factories\Driver\AssignedPackagesFactory;
+
 
 class DriverPackagesController extends Controller
 {
     protected DriverPackageService $packageService;
 
+    public function show(string $packageId)
+    {
+        try {
+            $package = $this->packageService->getPackageDetails($packageId);
+            // This now points to a new, dedicated details view.
+            return view('DriverViews.package-details', compact('package'));
+        } catch (\Exception $e) {
+            return redirect()->route('driver.packages.index')->with('error', $e->getMessage());
+        }
+    }
+
+
     public function __construct(DriverPackageService $packageService)
     {
         $this->packageService = $packageService;
     }
-    
+
     /**
      * Display the list of packages assigned to the driver.
      */
@@ -47,19 +62,17 @@ class DriverPackagesController extends Controller
      */
     public function updateStatus(Request $request, string $packageId)
     {
-        $request->validate(['status' => 'required|string']);
+        $validated = $request->validate([
+            'status' => 'required|string|in:IN_TRANSIT,DELIVERED,FAILED',
+            'proof_type' => 'required_if:status,DELIVERED|string|in:SIGNATURE,PHOTO',
+            'recipient_signature_name' => 'required_if:proof_type,SIGNATURE|string|max:100',
+        ]);
 
         try {
-            Http::withToken(session('api_token')) // Secure Coding Practice
-                ->post(config('services.api.base_url')."/delivery/package/{$packageId}/update-status", [
-                    'status' => $request->input('status'),
-                ])
-                ->throw(); // Throw an exception if the API returns an error
-
-            return redirect()->route('driver.packages.index')->with('success', "Status for package {$packageId} updated successfully.");
-
-        } catch (RequestException $e) {
-            return back()->with('error', 'API Error: ' . $e->response->json('message', 'An unknown error occurred.'))->withInput();
+            $this->packageService->updateStatusWithProof($packageId, $validated);
+            return redirect()->route('driver.packages.index')->with('success', "Package {$packageId} status updated successfully.");
+        } catch (\Exception $e) {
+            return back()->with('error', 'Update failed: ' . $e->getMessage())->withInput();
         }
     }
 }
