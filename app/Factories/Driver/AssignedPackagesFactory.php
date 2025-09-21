@@ -4,7 +4,6 @@ namespace App\Factories\Driver;
 
 use App\Services\DriverPackageService;
 
-// This is a "Concrete Creator"
 class AssignedPackagesFactory extends DriverViewFactory
 {
     protected DriverPackageService $packageService;

@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class DeliveryHistoryView implements DriverViewInterface
 {
     protected LengthAwarePaginator $packages;
-    protected string $viewName = 'DriverViews.delivery-history'; // Points to our new view
+    protected string $viewName = 'DriverViews.delivery-history';
 
     public function __construct(LengthAwarePaginator $packages)
     {
