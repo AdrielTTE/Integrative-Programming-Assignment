@@ -22,7 +22,7 @@ use App\Http\Controllers\AdminControllers\RefundController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DriverController as ApiDriverController;
 use App\Http\Controllers\WebServices\PackageWebServiceController;
-
+use App\Http\Controllers\WebServices\PaymentWebServiceController;
 
 
     Route::prefix('delivery')->group(function () {
@@ -144,6 +144,7 @@ Route::prefix('package')->group(function () {
     Route::get('/{package_id}/proof', [PackageController::class, 'getProof']);
     Route::get('/getPackagesByStatus/{status}/{page}/{pageSize}/{customerId}',[PackageController::class, 'getPackagesByStatus']);
     Route::put('/{package_id}/is-rated', [PackageController::class, 'updateIsRated']);
+    Route::get('/getPackageStatistics', [PaymentWebServiceController::class, 'getPackageStatistics']);
 
 });
 
@@ -546,3 +547,16 @@ Route::get('/deliveries/count/{status}', [ApiDriverController::class, 'getDelive
 // API route to get recent packages
 Route::get('/packages/recent/{limit?}', [ApiDriverController::class, 'getRecentPackages']);
 });
+
+// -------------------
+// Payment
+// -------------------
+Route::prefix('payment')->group(function () {
+    Route::get('/getPaymentStatistics', [PaymentWebServiceController::class, 'getPaymentStatistics']);
+
+
+
+
+});
+
+
