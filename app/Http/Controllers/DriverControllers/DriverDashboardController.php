@@ -23,7 +23,7 @@ class DriverDashboardController extends Controller
     {
         $stats = $this->dashboardService->getDeliveryStats();
         $recentPackages = $this->dashboardService->getRecentPackages(5);
-        
+        $failedPackages = $this->dashboardService->getPackageCountByStatus('FAILED');
         // --- NEW: Fetch the driver's own details ---
         $driver = $this->dashboardService->getDriverDetails();
 
@@ -35,7 +35,7 @@ class DriverDashboardController extends Controller
             'failed' => $stats['failed'] ?? 0,
             'recentPackages' => $recentPackages,
             'driver' => $driver, // Pass the driver's details to the view
-        ]);
+        ], compact('failedPackages'));
     }
 
     // --- NEW METHOD TO ADD ---
@@ -45,13 +45,13 @@ class DriverDashboardController extends Controller
     public function updateStatus(Request $request)
     {
         $currentStatus = $request->input('current_status');
-        
+
         // Determine what the new status should be.
         $newStatus = ($currentStatus === 'AVAILABLE') ? 'BUSY' : 'AVAILABLE';
-        
+
         // Use the service to update the status in the database.
         $this->dashboardService->updateDriverStatus($newStatus);
-        
+
         return redirect()->route('driver.dashboard')->with('success', 'Your status has been updated to ' . $newStatus);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services\DriverServices;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 
 class DriverDashboardService
 {
@@ -69,5 +70,23 @@ class DriverDashboardService
             ->update(['driver_status' => $newStatus]);
 
         return $affectedRows > 0;
+    }
+
+    public function getPackageCountByStatus(string $status): int
+    {
+         $response = Http::get("http://localhost:8001/api/delivery/getCountByStatus/{$status}");
+
+    if ($response->failed()) {
+        return 0;
+    }
+
+    $data = $response->json();
+
+
+    if (!empty($data) && isset($data[0]['count'])) {
+        return (int) $data[0]['count'];
+    }
+
+    return 0;
     }
 }

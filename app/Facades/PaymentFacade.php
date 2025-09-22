@@ -41,19 +41,19 @@ class PaymentFacade
     public function processPayment(string $packageId, array $paymentData): array
 {
     DB::beginTransaction();
-    
+
     try {
         // Step 1: Get package details via web service
         $packageClient = new PackageWebServiceClient();
         $packageDetails = $packageClient->getPackageDetails($packageId, 3);
-        
+
         if ($packageDetails['status'] !== 'SUCCESS') {
             throw new \Exception('Failed to retrieve package details');
         }
-        
+
         // Step 2: Calculate total cost
         $amount = $packageDetails['shipping_cost'] ?? 0;
-        
+
         // Step 3: Process payment
         $paymentResult = $this->paymentProcessor->process([
             'amount' => $amount,
@@ -62,11 +62,11 @@ class PaymentFacade
             'customer_id' => $packageDetails['customer_details']['user_id'],
             'package_id' => $packageId
         ]);
-        
+
         if (!$paymentResult['success']) {
             throw new \Exception($paymentResult['message']);
         }
-        
+
         // Step 4: Create payment record
         $payment = Payment::create([
             'payment_id' => $this->generatePaymentId(),
@@ -78,7 +78,7 @@ class PaymentFacade
             'status' => 'completed',
             'payment_date' => now()
         ]);
-        
+
         // Step 5: Update package status via web service
         $updateResult = $packageClient->updatePaymentStatus(
             $packageId,
@@ -86,19 +86,19 @@ class PaymentFacade
             'paid',
             $paymentData['payment_method']
         );
-        
+
         if ($updateResult['status'] !== 'SUCCESS') {
             throw new \Exception('Failed to update package payment status');
         }
-        
+
         // Step 6: Generate invoice
         $invoice = $this->invoiceGenerator->generate($payment);
-        
+
         // Step 7: Record in billing history
         $this->billingHistory->record($payment, $invoice);
-        
+
         DB::commit();
-        
+
         return [
             'success' => true,
             'payment_id' => $payment->payment_id,
@@ -106,14 +106,14 @@ class PaymentFacade
             'amount' => $amount,
             'message' => 'Payment processed successfully'
         ];
-        
+
     } catch (\Exception $e) {
         DB::rollback();
         Log::error('Payment processing failed', [
             'package_id' => $packageId,
             'error' => $e->getMessage()
         ]);
-        
+
         return [
             'success' => false,
             'message' => 'Payment failed: ' . $e->getMessage()
@@ -129,16 +129,16 @@ class PaymentFacade
         try {
             // Use PackageService to mark package as paid
             $packageService = app(PackageService::class);
-            
+
             return $packageService->markAsPaid($packageId, $paymentId);
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to integrate payment with package service', [
                 'package_id' => $packageId,
                 'payment_id' => $paymentId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return false;
         }
     }
@@ -149,7 +149,7 @@ class PaymentFacade
     public function getPackagePaymentStatus(string $packageId): array
     {
         $payment = Payment::where('package_id', $packageId)->first();
-        
+
         if (!$payment) {
             return [
                 'has_payment' => false,
@@ -157,7 +157,7 @@ class PaymentFacade
                 'payment_required' => true
             ];
         }
-        
+
         return [
             'has_payment' => true,
             'payment_id' => $payment->payment_id,
@@ -186,11 +186,11 @@ class PaymentFacade
         $payment = Payment::where('package_id', $packageId)
                         ->where('status', 'completed')
                         ->first();
-        
+
         if (!$payment) {
             return false;
         }
-        
+
         return $this->refundManager->isRefundable($payment);
     }
 
@@ -201,7 +201,7 @@ class PaymentFacade
     {
         try {
             $payment = Payment::findOrFail($paymentId);
-            
+
             // Check if refund is allowed
             if (!$this->refundManager->isRefundable($payment)) {
                 return [
@@ -209,23 +209,23 @@ class PaymentFacade
                     'message' => 'This payment is not eligible for refund'
                 ];
             }
-            
+
             // Create refund request
             $refund = $this->refundManager->createRefundRequest($payment, $reason);
-            
+
             return [
                 'success' => true,
                 'refund_id' => $refund->refund_id,
                 'status' => $refund->status,
                 'message' => 'Refund request submitted successfully'
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Refund request failed', [
                 'payment_id' => $paymentId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Refund request failed: ' . $e->getMessage()
@@ -239,18 +239,18 @@ class PaymentFacade
     public function processRefund(string $refundId, string $action, string $adminId): array
     {
         DB::beginTransaction();
-        
+
         try {
             $refund = Refund::findOrFail($refundId);
-            
+
             if ($action === 'approve') {
                 // Process the actual refund
                 $result = $this->refundManager->approveRefund($refund, $adminId);
-                
+
                 // Reverse the payment
                 if ($result['success']) {
                     $this->paymentProcessor->reverse($refund->payment_id);
-                    
+
                     // Update payment status
                     $payment = Payment::find($refund->payment_id);
                     $payment->status = 'refunded';
@@ -265,18 +265,18 @@ class PaymentFacade
             } else {
                 $result = $this->refundManager->rejectRefund($refund, $adminId);
             }
-            
+
             DB::commit();
-            
+
             return $result;
-            
+
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Refund processing failed', [
                 'refund_id' => $refundId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Refund processing failed: ' . $e->getMessage()
@@ -298,28 +298,28 @@ class PaymentFacade
     public function getAllPayments(array $filters = []): \Illuminate\Pagination\LengthAwarePaginator
     {
         $query = Payment::with(['user', 'package']);
-        
+
         // Apply filters
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        
+
         if (!empty($filters['customer_id'])) {
             $query->where('user_id', $filters['customer_id']);
         }
-        
+
         if (!empty($filters['payment_method'])) {
             $query->where('payment_method', $filters['payment_method']);
         }
-        
+
         if (!empty($filters['date_from'])) {
             $query->whereDate('payment_date', '>=', $filters['date_from']);
         }
-        
+
         if (!empty($filters['date_to'])) {
             $query->whereDate('payment_date', '<=', $filters['date_to']);
         }
-        
+
         return $query->orderBy('payment_date', 'desc')->paginate(20);
     }
 
@@ -331,19 +331,19 @@ class PaymentFacade
         switch ($type) {
             case 'revenue_summary':
                 return $this->reportService->getRevenueSummary($params);
-                
+
             case 'payment_methods':
                 return $this->reportService->getPaymentMethodsBreakdown($params);
-                
+
             case 'refund_analysis':
                 return $this->reportService->getRefundAnalysis($params);
-                
+
             case 'unpaid_transactions':
                 return $this->reportService->getUnpaidTransactions();
-                
+
             case 'customer_spending':
                 return $this->reportService->getCustomerSpendingReport($params);
-                
+
             default:
                 return $this->reportService->getGeneralReport($params);
         }
@@ -356,30 +356,30 @@ class PaymentFacade
     {
         try {
             $payment = Payment::with(['user', 'package'])->findOrFail($paymentId);
-            
+
             // Check if invoice already exists
             $invoice = Invoice::where('payment_id', $paymentId)->first();
-            
+
             if (!$invoice) {
                 $invoice = $this->invoiceGenerator->generate($payment);
             }
-            
+
             // Generate PDF
             $pdfPath = $this->invoiceGenerator->generatePDF($invoice);
-            
+
             return [
                 'success' => true,
                 'invoice_id' => $invoice->invoice_id,
                 'pdf_path' => $pdfPath,
                 'invoice_data' => $invoice
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Invoice generation failed', [
                 'payment_id' => $paymentId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Invoice generation failed: ' . $e->getMessage()
@@ -412,7 +412,7 @@ class PaymentFacade
         $baseCost = $package->shipping_cost;
         $tax = $baseCost * 0.06; // 6% tax
         $serviceFee = 2.00; // Fixed service fee
-        
+
         return round($baseCost + $tax + $serviceFee, 2);
     }
 
@@ -424,7 +424,7 @@ class PaymentFacade
         do {
             $id = 'PAY' . date('Ymd') . rand(1000, 9999);
         } while (Payment::where('payment_id', $id)->exists());
-        
+
         return $id;
     }
 
@@ -434,18 +434,7 @@ class PaymentFacade
     public function getPaymentStatistics(): array
     {
         return [
-            'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
-            'pending_payments' => Payment::where('status', 'pending')->count(),
-            'completed_today' => Payment::whereDate('payment_date', today())
-                                       ->where('status', 'completed')
-                                       ->sum('amount'),
-            'refunds_pending' => Refund::where('status', 'pending')->count(),
-            'average_transaction' => Payment::where('status', 'completed')->avg('amount'),
-            'most_used_method' => Payment::select('payment_method')
-                                        ->selectRaw('count(*) as count')
-                                        ->groupBy('payment_method')
-                                        ->orderByDesc('count')
-                                        ->first()
+            //End here
         ];
     }
 }

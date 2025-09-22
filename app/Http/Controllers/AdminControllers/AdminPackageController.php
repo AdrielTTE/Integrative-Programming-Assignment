@@ -15,10 +15,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Observers\PackageSubject;
 use App\Observers\CustomerObserver;
+use Illuminate\Support\Facades\Http;
 
 class AdminPackageController extends Controller
 {
     use Auditable;  // Add the trait
+
+    protected string $baseUrl;
 
     protected PackageService $packageService;
     protected ApiPackageService $apiPackageService;
@@ -29,6 +32,7 @@ class AdminPackageController extends Controller
     ) {
         $this->packageService = $packageService;
         $this->apiPackageService = $apiPackageService;
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
     /**
@@ -93,9 +97,9 @@ class AdminPackageController extends Controller
 
             // Paginate results
             $packages = $query->paginate($validated['per_page'] ?? 20);
-
-            // Get statistics
             $statistics = $this->getPackageStatistics();
+            // Get statistics
+
             $totalPackages = $this->packageService->getTotalPackages();
 
             // Get statuses for filter dropdown
@@ -354,6 +358,16 @@ if ($package->wasChanged('package_status')) {
             return back()->with('error', 'Action failed: ' . $e->getMessage());
         }
     }
+    private function getPackageStatistics(){
+        $response = Http::get("{$this->baseUrl}/package/getPackageStatistics");
+
+    if ($response->failed()) {
+        return 0;
+    }
+
+    return $response->json();
+
+    }
 
     /**
      * Delete package with audit logging
@@ -585,26 +599,5 @@ if ($package->wasChanged('package_status')) {
 }
 
 
-    private function getPackageStatistics(): array
-    {
-        try {
-            return [
-                'total' => Package::count(),
-                'pending' => Package::whereRaw('LOWER(package_status) = ?', ['pending'])->count(),
-                'processing' => Package::whereRaw('LOWER(package_status) = ?', ['processing'])->count(),
-                'in_transit' => Package::whereRaw('LOWER(package_status) = ?', ['in_transit'])->count(),
-                'delivered' => Package::whereRaw('LOWER(package_status) = ?', ['delivered'])->count(),
-                'cancelled' => Package::whereRaw('LOWER(package_status) = ?', ['cancelled'])->count(),
-                'failed' => Package::whereRaw('LOWER(package_status) = ?', ['failed'])->count(),
-                'returned' => Package::whereRaw('LOWER(package_status) = ?', ['returned'])->count(),
-                'revenue_today' => Package::whereDate('created_at', today())
-                                         ->whereRaw('LOWER(package_status) != ?', ['cancelled'])
-                                         ->sum('shipping_cost'),
-                'deliveries_today' => Package::whereDate('actual_delivery', today())->count()
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error getting statistics', ['error' => $e->getMessage()]);
-            return [];
-        }
-    }
+
 }
