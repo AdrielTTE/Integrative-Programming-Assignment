@@ -21,6 +21,7 @@ use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\DriverController as ApiDriverController;
+use App\Http\Controllers\WebServices\PackageWebServiceController;
 
 
 
@@ -151,19 +152,19 @@ Route::prefix('package')->group(function () {
 // ===============================================
 
 Route::prefix('v1/payment')->group(function () {
-    
+
     // Payment Module consuming Package Module functions
     Route::post('/package/calculate-cost', function(Request $request) {
         $packageService = app(PackageService::class);
-        
+
         try {
             $validated = $request->validate([
                 'package_id' => 'required|string|exists:package,package_id'
             ]);
-            
+
             $cost = $packageService->calculateShippingCostForPayment($validated['package_id']);
             $totalCost = $cost * 1.06 + 2.00; // with 6% tax and RM2 service fee
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $validated['package_id'],
@@ -179,21 +180,21 @@ Route::prefix('v1/payment')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::post('/package/mark-paid', function(Request $request) {
         $packageService = app(PackageService::class);
-        
+
         try {
             $validated = $request->validate([
                 'package_id' => 'required|string|exists:package,package_id',
                 'payment_id' => 'required|string'
             ]);
-            
+
             $success = $packageService->markAsPaid(
-                $validated['package_id'], 
+                $validated['package_id'],
                 $validated['payment_id']
             );
-            
+
             return response()->json([
                 'success' => $success,
                 'message' => $success ? 'Package marked as paid' : 'Failed to mark package as paid',
@@ -207,13 +208,13 @@ Route::prefix('v1/payment')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::get('/package/{packageId}/requires-payment', function($packageId) {
         $packageService = app(PackageService::class);
-        
+
         try {
             $requiresPayment = $packageService->requiresPayment($packageId);
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $packageId,
@@ -226,13 +227,13 @@ Route::prefix('v1/payment')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::get('/user/{userId}/unpaid-packages', function($userId) {
         $packageService = app(PackageService::class);
-        
+
         try {
             $unpaidPackages = $packageService->getUnpaidPackages($userId);
-            
+
             return response()->json([
                 'success' => true,
                 'user_id' => $userId,
@@ -246,21 +247,21 @@ Route::prefix('v1/payment')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::post('/package/validate-ownership', function(Request $request) {
         $packageService = app(PackageService::class);
-        
+
         try {
             $validated = $request->validate([
                 'package_id' => 'required|string|exists:package,package_id',
                 'user_id' => 'required|string|exists:user,user_id'
             ]);
-            
+
             $isOwner = $packageService->validatePackageOwnership(
-                $validated['package_id'], 
+                $validated['package_id'],
                 $validated['user_id']
             );
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $validated['package_id'],
@@ -277,33 +278,33 @@ Route::prefix('v1/payment')->group(function () {
 });
 
 Route::prefix('ws')->middleware(['api'])->group(function () {
-    
+
     // Package Module Web Services
     Route::prefix('package')->group(function () {
         Route::post('/details', [PackageWebServiceController::class, 'getPackageDetailsForPayment']);
         Route::put('/payment-status', [PackageWebServiceController::class, 'updatePackagePaymentStatus']);
     });
-    
+
     // Payment Module Web Services (for Package Module to consume)
-    Route::prefix('payment')->group(function () {
+    /*Route::prefix('payment')->group(function () {
         Route::post('/validate-payment', [PaymentWebServiceController::class, 'validatePayment']);
         Route::get('/refund-status/{packageId}', [PaymentWebServiceController::class, 'getRefundStatus']);
-    });
+    });*/
 });
 
 // ===============================================
-// PACKAGE MODULE API ENDPOINTS  
+// PACKAGE MODULE API ENDPOINTS
 // ===============================================
 
 Route::prefix('v1/package')->group(function () {
-    
+
     // Package Module consuming Payment Module functions
     Route::get('/{packageId}/payment-status', function($packageId) {
         $paymentFacade = app(\App\Facades\PaymentFacade::class);
-        
+
         try {
             $paymentStatus = $paymentFacade->getPackagePaymentStatus($packageId);
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $packageId,
@@ -316,16 +317,16 @@ Route::prefix('v1/package')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::post('/{packageId}/require-payment', function($packageId) {
         $paymentFacade = app(\App\Facades\PaymentFacade::class);
-        
+
         try {
             $package = Package::findOrFail($packageId);
-            
+
             if ($package->payment_status !== 'paid') {
                 $paymentUrl = $paymentFacade->generatePaymentUrl($packageId);
-                
+
                 return response()->json([
                     'success' => true,
                     'payment_required' => true,
@@ -334,7 +335,7 @@ Route::prefix('v1/package')->group(function () {
                     'amount' => $package->shipping_cost ?? 0
                 ]);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'payment_required' => false,
@@ -348,13 +349,13 @@ Route::prefix('v1/package')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::get('/{packageId}/refund-available', function($packageId) {
         $paymentFacade = app(\App\Facades\PaymentFacade::class);
-        
+
         try {
             $refundAvailable = $paymentFacade->isRefundAvailable($packageId);
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $packageId,
@@ -367,13 +368,13 @@ Route::prefix('v1/package')->group(function () {
             ], 400);
         }
     });
-    
+
     Route::get('/{packageId}/payment-url', function($packageId) {
         $paymentFacade = app(\App\Facades\PaymentFacade::class);
-        
+
         try {
             $paymentUrl = $paymentFacade->generatePaymentUrl($packageId);
-            
+
             return response()->json([
                 'success' => true,
                 'package_id' => $packageId,
