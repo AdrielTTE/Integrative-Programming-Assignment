@@ -39,72 +39,87 @@ class PaymentFacade
      * Facade method that coordinates multiple subsystems
      */
     public function processPayment(string $packageId, array $paymentData): array
-    {
-        DB::beginTransaction();
+{
+    DB::beginTransaction();
+    
+    try {
+        // Step 1: Get package details via web service
+        $packageClient = new PackageWebServiceClient();
+        $packageDetails = $packageClient->getPackageDetails($packageId, 3);
         
-        try {
-            // Step 1: Validate package and calculate cost
-            $package = Package::findOrFail($packageId);
-            $amount = $this->calculateTotalCost($package);
-            
-            // Step 2: Process payment through payment processor
-            $paymentResult = $this->paymentProcessor->process([
-                'amount' => $amount,
-                'method' => $paymentData['payment_method'],
-                'card_number' => $paymentData['card_number'] ?? null,
-                'customer_id' => $package->user_id,
-                'package_id' => $packageId
-            ]);
-            
-            if (!$paymentResult['success']) {
-                throw new \Exception($paymentResult['message']);
-            }
-            
-            // Step 3: Create payment record
-            $payment = Payment::create([
-                'payment_id' => $this->generatePaymentId(),
-                'package_id' => $packageId,
-                'user_id' => $package->user_id,
-                'amount' => $amount,
-                'payment_method' => $paymentData['payment_method'],
-                'transaction_id' => $paymentResult['transaction_id'],
-                'status' => 'completed',
-                'payment_date' => now()
-            ]);
-            
-            // Step 4: Generate invoice automatically
-            $invoice = $this->invoiceGenerator->generate($payment);
-            
-            // Step 5: Update package payment status
-            $package->payment_status = 'paid';
-            $package->save();
-            
-            // Step 6: Record in billing history
-            $this->billingHistory->record($payment, $invoice);
-            
-            DB::commit();
-            
-            return [
-                'success' => true,
-                'payment_id' => $payment->payment_id,
-                'invoice_id' => $invoice->invoice_id,
-                'amount' => $amount,
-                'message' => 'Payment processed successfully'
-            ];
-            
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Payment processing failed', [
-                'package_id' => $packageId,
-                'error' => $e->getMessage()
-            ]);
-            
-            return [
-                'success' => false,
-                'message' => 'Payment failed: ' . $e->getMessage()
-            ];
+        if ($packageDetails['status'] !== 'SUCCESS') {
+            throw new \Exception('Failed to retrieve package details');
         }
+        
+        // Step 2: Calculate total cost
+        $amount = $packageDetails['shipping_cost'] ?? 0;
+        
+        // Step 3: Process payment
+        $paymentResult = $this->paymentProcessor->process([
+            'amount' => $amount,
+            'method' => $paymentData['payment_method'],
+            'card_number' => $paymentData['card_number'] ?? null,
+            'customer_id' => $packageDetails['customer_details']['user_id'],
+            'package_id' => $packageId
+        ]);
+        
+        if (!$paymentResult['success']) {
+            throw new \Exception($paymentResult['message']);
+        }
+        
+        // Step 4: Create payment record
+        $payment = Payment::create([
+            'payment_id' => $this->generatePaymentId(),
+            'package_id' => $packageId,
+            'user_id' => $packageDetails['customer_details']['user_id'],
+            'amount' => $amount,
+            'payment_method' => $paymentData['payment_method'],
+            'transaction_id' => $paymentResult['transaction_id'],
+            'status' => 'completed',
+            'payment_date' => now()
+        ]);
+        
+        // Step 5: Update package status via web service
+        $updateResult = $packageClient->updatePaymentStatus(
+            $packageId,
+            $payment->payment_id,
+            'paid',
+            $paymentData['payment_method']
+        );
+        
+        if ($updateResult['status'] !== 'SUCCESS') {
+            throw new \Exception('Failed to update package payment status');
+        }
+        
+        // Step 6: Generate invoice
+        $invoice = $this->invoiceGenerator->generate($payment);
+        
+        // Step 7: Record in billing history
+        $this->billingHistory->record($payment, $invoice);
+        
+        DB::commit();
+        
+        return [
+            'success' => true,
+            'payment_id' => $payment->payment_id,
+            'invoice_id' => $invoice->invoice_id,
+            'amount' => $amount,
+            'message' => 'Payment processed successfully'
+        ];
+        
+    } catch (\Exception $e) {
+        DB::rollback();
+        Log::error('Payment processing failed', [
+            'package_id' => $packageId,
+            'error' => $e->getMessage()
+        ]);
+        
+        return [
+            'success' => false,
+            'message' => 'Payment failed: ' . $e->getMessage()
+        ];
     }
+}
 
     /**
     * Integration with Package Service

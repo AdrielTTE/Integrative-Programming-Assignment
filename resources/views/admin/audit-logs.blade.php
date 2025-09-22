@@ -12,11 +12,13 @@
     <!-- Filters -->
     <div class="bg-white shadow rounded-lg p-4 mb-6">
         <form method="GET" action="{{ route('admin.audit.logs') }}" class="flex flex-wrap gap-4">
-            <input type="text" name="admin_id" placeholder="Admin ID (e.g., AD001)"
-                value="{{ request('admin_id') }}"
-                class="rounded-md border-gray-300 shadow-sm text-sm">
+            <input type="text" 
+                   name="admin_id" 
+                   placeholder="Admin ID (e.g., AD001)"
+                   value="{{ request('admin_id') }}"
+                   class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
             
-            <select name="action" class="rounded-md border-gray-300 shadow-sm text-sm">
+            <select name="action" class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
                 <option value="">All Actions</option>
                 <option value="create" {{ request('action') == 'create' ? 'selected' : '' }}>Create</option>
                 <option value="update" {{ request('action') == 'update' ? 'selected' : '' }}>Update</option>
@@ -25,28 +27,127 @@
                 <option value="process" {{ request('action') == 'process' ? 'selected' : '' }}>Process</option>
                 <option value="cancel" {{ request('action') == 'cancel' ? 'selected' : '' }}>Cancel</option>
                 <option value="deliver" {{ request('action') == 'deliver' ? 'selected' : '' }}>Deliver</option>
+                <option value="assign" {{ request('action') == 'assign' ? 'selected' : '' }}>Assign</option>
+                <option value="return" {{ request('action') == 'return' ? 'selected' : '' }}>Return</option>
             </select>
 
-            <select name="target_type" class="rounded-md border-gray-300 shadow-sm text-sm">
+            <select name="target_type" class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
                 <option value="">All Types</option>
                 <option value="package" {{ request('target_type') == 'package' ? 'selected' : '' }}>Package</option>
                 <option value="user" {{ request('target_type') == 'user' ? 'selected' : '' }}>User</option>
                 <option value="delivery" {{ request('target_type') == 'delivery' ? 'selected' : '' }}>Delivery</option>
             </select>
 
-            <input type="date" name="date_from" value="{{ request('date_from') }}"
-                class="rounded-md border-gray-300 shadow-sm text-sm">
+            <select name="status" class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
+                <option value="">All Status</option>
+                <option value="success" {{ request('status') == 'success' ? 'selected' : '' }}>Success</option>
+                <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+            </select>
+
+            <input type="date" 
+                   name="date_from" 
+                   value="{{ request('date_from') }}"
+                   max="{{ date('Y-m-d') }}"
+                   class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
             
-            <input type="date" name="date_to" value="{{ request('date_to') }}"
-                class="rounded-md border-gray-300 shadow-sm text-sm">
+            <input type="date" 
+                   name="date_to" 
+                   value="{{ request('date_to') }}"
+                   max="{{ date('Y-m-d') }}"
+                   class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
+
+            <input type="text" 
+                   name="search" 
+                   placeholder="Search in descriptions..."
+                   value="{{ request('search') }}"
+                   class="rounded-md border-gray-300 shadow-sm text-sm px-3 py-2">
 
             <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
                 Filter
             </button>
             <a href="{{ route('admin.audit.logs') }}" class="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-400">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
                 Reset
             </a>
         </form>
+
+        @if(request()->hasAny(['admin_id', 'action', 'target_type', 'status', 'date_from', 'date_to', 'search']))
+            <div class="mt-3 text-sm text-gray-600">
+                Active filters: 
+                @if(request('admin_id'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Admin: {{ request('admin_id') }}
+                        <a href="{{ route('admin.audit.logs', request()->except('admin_id')) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+                @if(request('action'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Action: {{ request('action') }}
+                        <a href="{{ route('admin.audit.logs', request()->except('action')) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+                @if(request('target_type'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Type: {{ request('target_type') }}
+                        <a href="{{ route('admin.audit.logs', request()->except('target_type')) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+                @if(request('status'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Status: {{ request('status') }}
+                        <a href="{{ route('admin.audit.logs', request()->except('status')) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+                @if(request('date_from') || request('date_to'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Date: {{ request('date_from') }} - {{ request('date_to') ?? 'Today' }}
+                        <a href="{{ route('admin.audit.logs', request()->except(['date_from', 'date_to'])) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+                @if(request('search'))
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded mr-1">
+                        Search: {{ request('search') }}
+                        <a href="{{ route('admin.audit.logs', request()->except('search')) }}" class="ml-1 text-red-500">×</a>
+                    </span>
+                @endif
+            </div>
+        @endif
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-sm text-gray-500">Total Logs</div>
+            <div class="text-2xl font-bold text-gray-800">{{ $logs->total() }}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-sm text-gray-500">This Page</div>
+            <div class="text-2xl font-bold text-gray-800">{{ $logs->count() }}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-sm text-gray-500">Success Rate</div>
+            <div class="text-2xl font-bold text-green-600">
+                @php
+                    $successCount = 0;
+                    $totalCount = 0;
+                    foreach($logs as $log) {
+                        $totalCount++;
+                        if($log->status == 'success') $successCount++;
+                    }
+                    $rate = $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 0;
+                @endphp
+                {{ $rate }}%
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-sm text-gray-500">Current Page</div>
+            <div class="text-2xl font-bold text-gray-800">{{ $logs->currentPage() }}/{{ $logs->lastPage() }}</div>
+        </div>
     </div>
 
     <!-- Audit Logs Table -->
@@ -63,7 +164,6 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Details</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -99,7 +199,7 @@
                                 <td class="px-4 py-2 text-sm text-gray-600">
                                     {{ $log->description ?: 'No description' }}
                                     @if($log->error_message)
-                                        <br><span class="text-red-500 text-xs">Error: {{ Str::limit($log->error_message, 50) }}</span>
+                                        <br><span class="text-red-500 text-xs">Error: {{ \Illuminate\Support\Str::limit($log->error_message, 50) }}</span>
                                     @endif
                                 </td>
                                 <td class="px-4 py-2">
@@ -110,12 +210,6 @@
                                 </td>
                                 <td class="px-4 py-2 text-xs text-gray-500">
                                     {{ $log->ip_address }}
-                                </td>
-                                <td class="px-4 py-2 text-center">
-                                    <button onclick="showLogDetails({{ $log->id }})" 
-                                            class="text-indigo-600 hover:text-indigo-900 text-sm">
-                                        View
-                                    </button>
                                 </td>
                             </tr>
                         @endforeach
@@ -133,108 +227,24 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900">No audit logs found</h3>
-                <p class="mt-1 text-sm text-gray-500">Activity logs will appear here once admins perform actions.</p>
+                <p class="mt-1 text-sm text-gray-500">
+                    @if(request()->hasAny(['admin_id', 'action', 'target_type', 'status', 'date_from', 'date_to', 'search']))
+                        Try adjusting your filters to see more results.
+                    @else
+                        Activity logs will appear here once admins perform actions.
+                    @endif
+                </p>
             </div>
         @endif
     </div>
 </div>
 
-<!-- Log Details Modal -->
-<div id="logDetailsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-3xl shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Log Details</h3>
-            <div id="logDetailsContent" class="mt-2 space-y-3 text-sm">
-                <!-- Content will be loaded here -->
-            </div>
-            <div class="mt-6">
-                <button onclick="closeLogDetails()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
 <script>
-// Store logs data for modal display
-const logsData = @json($logs->items());
-
-function showLogDetails(logId) {
-    const log = logsData.find(l => l.id === logId);
-    if (log) {
-        const content = document.getElementById('logDetailsContent');
-        content.innerHTML = `
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="font-semibold">Admin:</p>
-                    <p>${log.admin_id} (${log.admin_username || 'N/A'})</p>
-                </div>
-                <div>
-                    <p class="font-semibold">Timestamp:</p>
-                    <p>${new Date(log.created_at).toLocaleString()}</p>
-                </div>
-                <div>
-                    <p class="font-semibold">Action:</p>
-                    <p>${log.action}</p>
-                </div>
-                <div>
-                    <p class="font-semibold">Target:</p>
-                    <p>${log.target_type}: ${log.target_id}</p>
-                </div>
-                <div>
-                    <p class="font-semibold">IP Address:</p>
-                    <p>${log.ip_address || 'N/A'}</p>
-                </div>
-                <div>
-                    <p class="font-semibold">Method:</p>
-                    <p>${log.method || 'N/A'}</p>
-                </div>
-            </div>
-            
-            ${log.description ? `
-                <div class="mt-3">
-                    <p class="font-semibold">Description:</p>
-                    <p>${log.description}</p>
-                </div>
-            ` : ''}
-            
-            ${log.old_values ? `
-                <div class="mt-3">
-                    <p class="font-semibold">Original Values:</p>
-                    <pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto">${JSON.stringify(log.old_values, null, 2)}</pre>
-                </div>
-            ` : ''}
-            
-            ${log.new_values ? `
-                <div class="mt-3">
-                    <p class="font-semibold">New Values:</p>
-                    <pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto">${JSON.stringify(log.new_values, null, 2)}</pre>
-                </div>
-            ` : ''}
-            
-            ${log.error_message ? `
-                <div class="mt-3">
-                    <p class="font-semibold text-red-600">Error:</p>
-                    <p class="text-red-600">${log.error_message}</p>
-                </div>
-            ` : ''}
-            
-            <div class="mt-3">
-                <p class="font-semibold">URL:</p>
-                <p class="text-xs break-all">${log.url || 'N/A'}</p>
-            </div>
-        `;
-        document.getElementById('logDetailsModal').classList.remove('hidden');
-    }
-}
-
-function closeLogDetails() {
-    document.getElementById('logDetailsModal').classList.add('hidden');
-}
+// Auto-refresh page every 30 seconds if no filters are active
+@if(!request()->hasAny(['admin_id', 'action', 'target_type', 'status', 'date_from', 'date_to', 'search']))
+    setTimeout(function() {
+        window.location.reload();
+    }, 30000);
+@endif
 </script>
-@endpush
-
 @endsection

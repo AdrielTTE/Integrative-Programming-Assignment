@@ -43,16 +43,26 @@
                     </div>
                     <div class="text-right">
                         <p class="text-sm text-gray-500 mb-1">Status</p>
-                        @if($payment->status == 'completed')
-                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">Completed</span>
-                        @elseif($payment->status == 'pending')
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">Pending</span>
-                        @elseif($payment->status == 'failed')
-                            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">Failed</span>
-                        @elseif($payment->status == 'refunded')
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">Refunded</span>
+                        @if($payment->refund)
+                            {{-- If there's a refund, prioritize showing refund status --}}
+                            @if($payment->refund->status == 'approved')
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">Refunded</span>
+                            @elseif($payment->refund->status == 'pending')
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">Refund Pending</span>
+                            @elseif($payment->refund->status == 'rejected')
+                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">Refund Rejected</span>
+                            @endif
                         @else
-                            <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-semibold">{{ ucfirst($payment->status) }}</span>
+                            {{-- No refund, show payment status --}}
+                            @if($payment->status == 'completed')
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">Completed</span>
+                            @elseif($payment->status == 'pending')
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">Pending</span>
+                            @elseif($payment->status == 'failed')
+                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">Failed</span>
+                            @else
+                                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-semibold">{{ ucfirst($payment->status) }}</span>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -171,7 +181,15 @@
                         </div>
                         <div class="flex justify-between py-2 border-b">
                             <span class="text-gray-600">Status:</span>
-                            <span class="capitalize">{{ $payment->refund->status }}</span>
+                            <span>
+                                @if($payment->refund->status == 'approved')
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-semibold">Approved</span>
+                                @elseif($payment->refund->status == 'pending')
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm font-semibold">Pending</span>
+                                @elseif($payment->refund->status == 'rejected')
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-semibold">Rejected</span>
+                                @endif
+                            </span>
                         </div>
                         <div class="flex justify-between py-2 border-b">
                             <span class="text-gray-600">Requested:</span>

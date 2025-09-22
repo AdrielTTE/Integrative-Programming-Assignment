@@ -276,6 +276,21 @@ Route::prefix('v1/payment')->group(function () {
     });
 });
 
+Route::prefix('ws')->middleware(['api'])->group(function () {
+    
+    // Package Module Web Services
+    Route::prefix('package')->group(function () {
+        Route::post('/details', [PackageWebServiceController::class, 'getPackageDetailsForPayment']);
+        Route::put('/payment-status', [PackageWebServiceController::class, 'updatePackagePaymentStatus']);
+    });
+    
+    // Payment Module Web Services (for Package Module to consume)
+    Route::prefix('payment')->group(function () {
+        Route::post('/validate-payment', [PaymentWebServiceController::class, 'validatePayment']);
+        Route::get('/refund-status/{packageId}', [PaymentWebServiceController::class, 'getRefundStatus']);
+    });
+});
+
 // ===============================================
 // PACKAGE MODULE API ENDPOINTS  
 // ===============================================

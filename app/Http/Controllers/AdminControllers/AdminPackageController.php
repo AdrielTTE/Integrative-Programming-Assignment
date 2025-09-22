@@ -391,33 +391,188 @@ class AdminPackageController extends Controller
      */
     public function auditLogs(Request $request)
     {
-        $query = AdminAuditLog::with('admin')->orderBy('created_at', 'desc');
+        // Start with base query
+        $query = AdminAuditLog::query();
         
-        // Apply filters if provided
-        if ($request->has('admin_id')) {
+        // Apply admin_id filter - check if not null AND not empty
+        if ($request->has('admin_id') && !empty($request->admin_id)) {
             $query->where('admin_id', $request->admin_id);
         }
         
-        if ($request->has('action')) {
+        // Apply action filter - check if not null AND not empty
+        if ($request->has('action') && !empty($request->action)) {
             $query->where('action', $request->action);
         }
         
-        if ($request->has('target_type')) {
+        // Apply target_type filter - check if not null AND not empty
+        if ($request->has('target_type') && !empty($request->target_type)) {
             $query->where('target_type', $request->target_type);
         }
         
-        if ($request->has('date_from')) {
+        // Apply date_from filter - check if not null AND not empty
+        if ($request->has('date_from') && !empty($request->date_from)) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
         
-        if ($request->has('date_to')) {
+        // Apply date_to filter - check if not null AND not empty
+        if ($request->has('date_to') && !empty($request->date_to)) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
-        $logs = $query->paginate(50);
+        // Apply status filter if present
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+        
+        // Apply search filter if present
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('target_id', 'like', "%{$search}%")
+                  ->orWhere('admin_username', 'like', "%{$search}%");
+            });
+        }
+        
+        // Order by created_at descending and paginate
+        $logs = $query->orderBy('created_at', 'desc')
+                     ->paginate(20);
         
         return view('admin.audit-logs', compact('logs'));
     }
+
+    // Alternative safer implementation using Laravel's when() method
+    public function auditLogsAlternative(Request $request)
+    {
+        $logs = AdminAuditLog::query()
+            ->when($request->filled('admin_id'), function ($query) use ($request) {
+                return $query->where('admin_id', $request->admin_id);
+            })
+            ->when($request->filled('action'), function ($query) use ($request) {
+                return $query->where('action', $request->action);
+            })
+            ->when($request->filled('target_type'), function ($query) use ($request) {
+                return $query->where('target_type', $request->target_type);
+            })  
+            ->when($request->filled('date_from'), function ($query) use ($request) {
+                return $query->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->filled('date_to'), function ($query) use ($request) {
+                return $query->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                return $query->where(function ($q) use ($search) {
+                    $q->where('description', 'like', "%{$search}%")
+                      ->orWhere('target_id', 'like', "%{$search}%")
+                      ->orWhere('admin_username', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+        
+        return view('admin.audit-logs', compact('logs'));
+    }
+
+    public function exportAuditLogs(Request $request)
+{
+    // Build query with same filters as the main listing
+    $query = AdminAuditLog::query();
+    
+    // Apply filters
+    if ($request->filled('admin_id')) {
+        $query->where('admin_id', $request->admin_id);
+    }
+    
+    if ($request->filled('action')) {
+        $query->where('action', $request->action);
+    }
+    
+    if ($request->filled('target_type')) {
+        $query->where('target_type', $request->target_type);
+    }
+    
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+    
+    if ($request->filled('date_from')) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+    
+    if ($request->filled('date_to')) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+    
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('target_id', 'like', "%{$search}%")
+              ->orWhere('admin_username', 'like', "%{$search}%");
+        });
+    }
+    
+    // Get all filtered logs
+    $logs = $query->orderBy('created_at', 'desc')->get();
+    
+    // Generate CSV filename
+    $filename = 'audit_logs_' . date('Y-m-d_H-i-s') . '.csv';
+    
+    // Set headers for CSV download
+    $headers = [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => "attachment; filename=\"$filename\"",
+        'Pragma' => 'no-cache',
+        'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+        'Expires' => '0'
+    ];
+    
+    // Create CSV callback
+    $callback = function() use ($logs) {
+        $file = fopen('php://output', 'w');
+        
+        // Add UTF-8 BOM for Excel compatibility
+        fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+        
+        // Add CSV headers
+        fputcsv($file, [
+            'Timestamp',
+            'Admin ID',
+            'Admin Username',
+            'Action',
+            'Target Type',
+            'Target ID',
+            'Description',
+            'Status',
+            'IP Address'
+        ]);
+        
+        // Add data rows
+        foreach ($logs as $log) {
+            fputcsv($file, [
+                $log->created_at->format('Y-m-d H:i:s'),
+                $log->admin_id,
+                $log->admin_username,
+                $log->action,
+                $log->target_type,
+                $log->target_id,
+                $log->description ?: 'N/A',
+                $log->status,
+                $log->ip_address
+            ]);
+        }
+        
+        fclose($file);
+    };
+    
+    return response()->stream($callback, 200, $headers);
+}
+
     
     private function getPackageStatistics(): array
     {

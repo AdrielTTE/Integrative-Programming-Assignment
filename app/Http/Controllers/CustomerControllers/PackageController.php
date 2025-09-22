@@ -9,6 +9,7 @@ use App\Services\PackageService;
 use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Facades\PaymentFacade;
 use Exception;
 
 class PackageController extends Controller
@@ -23,18 +24,50 @@ class PackageController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $packages = Package::where('user_id', Auth::id())->get();
-        
-        // CONSUME Payment Module - get payment status for each package
-        $packagesWithPayment = $packages->map(function($package) {
-            $paymentStatus = $this->paymentFacade->getPackagePaymentStatus($package->package_id);
-            $package->payment_details = $paymentStatus;
-            return $package;
+{
+    // Build the query with filters
+    $query = Package::where('user_id', Auth::id());
+    
+    // Apply search filter if provided
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('tracking_number', 'like', "%{$search}%")
+              ->orWhere('package_contents', 'like', "%{$search}%")
+              ->orWhere('sender_address', 'like', "%{$search}%")
+              ->orWhere('recipient_address', 'like', "%{$search}%");
         });
-
-        return view('customer.packages.index', compact('packagesWithPayment'));
     }
+    
+    // Apply status filter if provided
+    if ($request->filled('status')) {
+        $query->where('package_status', $request->status);
+    }
+    
+    // Get paginated results
+    $packages = $query->orderBy('created_at', 'desc')->paginate(10);
+    
+    // CONSUME Payment Module - get payment status for each package
+    $packages->getCollection()->transform(function($package) {
+        $paymentStatus = $this->paymentFacade->getPackagePaymentStatus($package->package_id);
+        $package->payment_details = $paymentStatus;
+        return $package;
+    });
+    
+    // Define the statuses array
+    $statuses = [
+        'pending' => 'Pending',
+        'processing' => 'Processing',
+        'in_transit' => 'In Transit',
+        'out_for_delivery' => 'Out for Delivery',
+        'delivered' => 'Delivered',
+        'cancelled' => 'Cancelled',
+        'returned' => 'Returned',
+        'failed' => 'Failed'
+    ];
+    
+    return view('customer.packages.index', compact('packages', 'statuses'));
+}
 
     public function create()
     {
