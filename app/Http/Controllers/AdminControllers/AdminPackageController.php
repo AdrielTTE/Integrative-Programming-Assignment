@@ -404,72 +404,51 @@ if ($package->wasChanged('package_status')) {
     /**
      * View audit logs
      */
-    public function auditLogs(Request $request)
-    {
-        $query = AdminAuditLog::with('admin')->orderBy('created_at', 'desc');
+   public function auditLogs(Request $request)
+{
+    $query = AdminAuditLog::with('admin')->orderBy('created_at', 'desc');
 
-        // Apply filters if provided
-        if ($request->has('admin_id')) {
-        // Start with base query
-        $query = AdminAuditLog::query();
-
-        // Apply admin_id filter - check if not null AND not empty
-        if ($request->has('admin_id') && !empty($request->admin_id)) {
-            $query->where('admin_id', $request->admin_id);
-        }
-
-        if ($request->has('action')) {
-
-        // Apply action filter - check if not null AND not empty
-        if ($request->has('action') && !empty($request->action)) {
-            $query->where('action', $request->action);
-        }
-
-        if ($request->has('target_type')) {
-
-        // Apply target_type filter - check if not null AND not empty
-        if ($request->has('target_type') && !empty($request->target_type)) {
-            $query->where('target_type', $request->target_type);
-        }
-
-        if ($request->has('date_from')) {
-
-        // Apply date_from filter - check if not null AND not empty
-        if ($request->has('date_from') && !empty($request->date_from)) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to')) {
-
-        // Apply date_to filter - check if not null AND not empty
-        if ($request->has('date_to') && !empty($request->date_to)) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $logs = $query->paginate(50);
-
-
-        // Apply status filter if present
-        if ($request->has('status') && !empty($request->status)) {
-            $query->where('status', $request->status);
-        }
-
-        // Apply search filter if present
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('target_id', 'like', "%{$search}%")
-                  ->orWhere('admin_username', 'like', "%{$search}%");
-            });
-        }
-
-        // Order by created_at descending and paginate
-        $logs = $query->orderBy('created_at', 'desc')
-                     ->paginate(20);
-
-        return view('admin.audit-logs', compact('logs'));
+    // Apply filters if provided
+    if ($request->has('admin_id') && !empty($request->admin_id)) {
+        $query->where('admin_id', $request->admin_id);
     }
+
+    if ($request->has('action') && !empty($request->action)) {
+        $query->where('action', $request->action);
+    }
+
+    if ($request->has('target_type') && !empty($request->target_type)) {
+        $query->where('target_type', $request->target_type);
+    }
+
+    if ($request->has('date_from') && !empty($request->date_from)) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+
+    if ($request->has('date_to') && !empty($request->date_to)) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+
+    if ($request->has('status') && !empty($request->status)) {
+        $query->where('status', $request->status);
+    }
+
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('target_id', 'like', "%{$search}%")
+              ->orWhere('admin_username', 'like', "%{$search}%");
+        });
+    }
+
+    // Order by created_at descending and paginate
+    $logs = $query->orderBy('created_at', 'desc')->paginate(20);
+
+    return view('admin.audit-logs', compact('logs'));
+}
+
+
 
     // Alternative safer implementation using Laravel's when() method
     public function auditLogsAlternative(Request $request)
@@ -507,6 +486,7 @@ if ($package->wasChanged('package_status')) {
 
         return view('admin.audit-logs', compact('logs'));
     }
+
 
 
     public function exportAuditLogs(Request $request)

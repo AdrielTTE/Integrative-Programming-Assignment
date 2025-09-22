@@ -9,17 +9,20 @@ use App\Observers\CustomerObserver;
 
 class AnnouncementService
 {
-    public function broadcast(string $message): void
-    {
-        $subject = new AnnouncementSubject($message);
+    public function broadcast(string $message, array $customerIds = []): void
+{
+    $subject = new AnnouncementSubject($message);
 
-        // You can filter customers here if needed (e.g., only active ones)
-        $customers = Customer::all();
+    // If no IDs given, fallback to all
+    $customers = empty($customerIds)
+        ? Customer::all()
+        : Customer::whereIn('customer_id', $customerIds)->get();
 
-        foreach ($customers as $customer) {
-            $subject->addObserver(new CustomerObserver($customer));
-        }
-
-        $subject->notifyObserver();
+    foreach ($customers as $customer) {
+        $subject->addObserver(new CustomerObserver($customer));
     }
+
+    $subject->notifyObserver();
+}
+
 }
