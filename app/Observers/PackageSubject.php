@@ -38,4 +38,10 @@ class PackageSubject implements Subject
     {
         return $this->package;
     }
+
+    public function setPackage(Package $package)
+{
+    $this->package = $package;
+}
+
 }

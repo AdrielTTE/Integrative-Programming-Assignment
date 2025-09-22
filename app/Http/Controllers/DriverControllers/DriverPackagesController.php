@@ -62,6 +62,7 @@ class DriverPackagesController extends Controller
      */
     public function updateStatus(Request $request, string $packageId)
     {
+       
         $validated = $request->validate([
             'status' => 'required|string|in:IN_TRANSIT,DELIVERED,FAILED',
             'proof_type' => 'required_if:status,DELIVERED|string|in:SIGNATURE,PHOTO',

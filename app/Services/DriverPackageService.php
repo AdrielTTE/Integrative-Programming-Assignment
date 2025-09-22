@@ -11,6 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProofOfDelivery;
 use Illuminate\Support\Str;
+use App\Observers\PackageSubject;
+use App\Observers\CustomerObserver;
 
 /**
  * Service class that handles package operations for drivers.
@@ -54,7 +56,26 @@ class DriverPackageService
      */
     public function updatePackageStatus(string $packageId, string $status, string $driverId): bool
     {
-        return $this->updateViaDatabase($packageId, $status, $driverId);
+         $success = $this->updateViaDatabase($packageId, $status, $driverId);
+
+    if (!$success) {
+        return false;
+    }
+
+    // Re-fetch the updated package
+    $package = Package::with('customer')->where('package_id', $packageId)->first();
+
+if (!$package || !$package->customer) {
+    Log::warning("Customer missing on package {$packageId}");
+    return false;
+}
+    // Always notify since we know status was updated via raw DB
+    $subject = new PackageSubject($package);
+    $observer = new CustomerObserver($package->customer);
+    $subject->addObserver($observer);
+    $observer->forceUpdate($subject);
+
+    return true;
     }
 
     /**
@@ -81,6 +102,7 @@ class DriverPackageService
      */
     protected function updateViaDatabase(string $packageId, string $status, string $driverId): bool
     {
+
         DB::beginTransaction();
 
         try {

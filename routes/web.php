@@ -98,13 +98,13 @@ Route::prefix('customer')->name('customer.')->group(function () {
             ->name('showSessionPayment');
         Route::post('/session/process', [CustomerPaymentController::class, 'processSessionPayment'])
             ->name('processSessionPayment');
-        
+
         // Make payment for an existing package
         Route::get('/package/{packageId}', [CustomerPaymentController::class, 'showPaymentPage'])
              ->name('make');
         Route::post('/package/{packageId}', [CustomerPaymentController::class, 'processPayment'])
              ->name('process');
-        
+
         // Payment success page
         Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
              ->name('success');
@@ -119,7 +119,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/receipt/{paymentId}', [CustomerPaymentController::class, 'generateReceipt'])
              ->name('receipt');
     });
-    
+
     // Refund Routes
     Route::prefix('refund')->name('refund.')->group(function () {
         Route::get('/request/{paymentId}', [CustomerPaymentController::class, 'showRefundRequest'])
@@ -199,12 +199,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->name('showSessionPayment');
             Route::post('/process', [CustomerPaymentController::class, 'processSessionPayment'])
                 ->name('processSessionPayment');
-            
+
             // Payment success page
             Route::get('/success/{paymentId}', [CustomerPaymentController::class, 'paymentSuccess'])
                 ->name('success');
         });
-        
+
         // Payment Management Routes
         Route::prefix('payment')->name('payment.')->group(function () {
             Route::get('/', [PaymentController::class, 'index'])->name('index');
@@ -213,7 +213,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{paymentId}/invoice', [PaymentController::class, 'generateInvoice'])->name('generateInvoice');
             Route::post('/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])->name('emailInvoice');
             Route::post('/generate-report', [PaymentController::class, 'generateReport'])->name('generateReport');
-            
+
             // API endpoints for processing payments
             Route::post('/process', [PaymentController::class, 'apiProcessPayment'])->name('apiProcess');
             Route::get('/status/{paymentId}', [PaymentController::class, 'apiGetPaymentStatus'])->name('apiStatus');
@@ -223,7 +223,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('invoice')->name('invoice.')->group(function () {
             Route::post('/{invoiceId}/email', [PaymentController::class, 'emailInvoice'])->name('email');
         });
-        
+
         // Refund Management
         Route::prefix('refunds')->name('refunds.')->group(function () {
             Route::get('/', [RefundController::class, 'index'])->name('index');
@@ -260,11 +260,11 @@ Route::prefix('driver')->name('driver.')->group(function () {
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
 
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-
+Route::post('/dashboard/update-status', [DriverDashboardController::class, 'updateStatus'])->name('dashboard.update-status');
         // Package Management
         Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
         Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
-        
+
         // Page to view details and update status of a single package
         Route::get('/my-packages/{packageId}', [DriverPackagesController::class, 'show'])->name('packages.show');
         Route::post('/my-packages/{packageId}/update', [DriverPackagesController::class, 'updateStatus'])->name('packages.updateStatus');

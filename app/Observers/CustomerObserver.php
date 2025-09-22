@@ -35,16 +35,40 @@ class CustomerObserver implements Observer
             ]);
         }
 
-        if ($subject instanceof PackageSubject) {
-            // You could also pull data from $subject->getPackage()
+         if ($subject instanceof PackageSubject) {
+        $package = $subject->getPackage();
+
+        if ($package->wasChanged('package_status')) {
             Notification::create([
                 'notification_id' => $nextId,
-                'customer_id' => $this->customer->id,
-                'message' => 'Your package status was updated.',
+                'customer_id' => $this->customer->customer_id,
+                'message' => ('Your package '. $package->package_id. ' status was updated to: ' ). $package->package_status,
             ]);
         }
-
-        // You could add handling for DeliverySubject here as well
     }
+
+    }
+
+    public function forceUpdate(Subject $subject)
+{
+    $response = Http::get("{$this->baseUrl}/notifications/nextId");
+
+    if ($response->failed()) {
+        return 0;
+    }
+
+    $nextId = $response->json('next_notification_id');
+
+    if ($subject instanceof PackageSubject) {
+        $package = $subject->getPackage();
+
+        Notification::create([
+            'notification_id' => $nextId,
+            'customer_id' => $this->customer->customer_id,
+            'message' => 'Your package ' . $package->package_id . ' status was updated to: ' . $package->package_status,
+        ]);
+    }
+}
+
 }
 
