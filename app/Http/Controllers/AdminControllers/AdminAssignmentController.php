@@ -19,7 +19,7 @@ class AdminAssignmentController extends Controller
     {
         // Fetches all packages with the status 'PENDING' that don't have a delivery record yet.
         $packages = Package::with('user') // Changed from 'customer' to 'user'
-            ->where('package_status', 'PENDING')
+            ->where('package_status', 'processing')
             ->whereDoesntHave('delivery')
             ->orderBy('created_at', 'asc')
             ->paginate(15);

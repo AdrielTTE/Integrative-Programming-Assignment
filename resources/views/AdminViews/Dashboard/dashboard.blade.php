@@ -6,7 +6,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const dataForGraph = @json($dataForGraph);
 
             const labels = Object.keys(dataForGraph);
@@ -128,19 +128,19 @@
                 @foreach ($driverList as $driver)
                     @if ($driver['driver_status'] === 'AVAILABLE')
                         <div class="driver available">
-                            {{ $driver['first_name'] }} — {{ $driver['driver_status'] }}
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
                         </div>
                     @elseif ($driver['driver_status'] === 'BUSY')
-                        <div class="driver busy">
-                            {{ $driver['first_name'] }} — {{ $driver['driver_status'] }}
+                        <div class="driver available">
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
                         </div>
                     @elseif ($driver['driver_status'] === 'UNAVAILABLE')
-                        <div class="driver unavailable">
-                            {{ $driver['first_name'] }} — {{ $driver['driver_status'] }}
+                        <div class="driver available">
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
                         </div>
                     @else
-                        <div class="driver neutral">
-                            {{ $driver['first_name'] }} — {{ $driver['driver_status'] }}
+                        <div class="driver available">
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
                         </div>
                     @endif
                 @endforeach

@@ -47,8 +47,11 @@
                                             class="block w-full rounded-md border-gray-300 shadow-sm text-sm" required>
                                             <option value="">Select Driver...</option>
                                             @foreach($drivers as $driver)
-                                                <option value="{{ $driver->driver_id }}">{{ $driver->first_name }}
-                                                    ({{$driver->driver_id}})</option>
+                                                <option value="{{ $driver->driver_id }}">
+                                                    {{ trim($driver->first_name . ' ' . ($driver->last_name ?? '')) }}
+                                                    ({{ $driver->driver_id }})
+                                                </option>
+
                                             @endforeach
                                         </select>
                                         <button type="submit"
