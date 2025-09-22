@@ -29,7 +29,7 @@
                                 <td>{{ $package['tracking_number'] }}</td>
                                 <td>{{ $package['package_status'] }}</td>
                                 <td>
-                                    {{ $package['actual_delivery'] ? \Carbon\Carbon::parse($package['actual_delivery'])->format('Y-m-d') : 'N/A' }}
+                                    {{ $package['updated_at'] ? \Carbon\Carbon::parse($package['updated_at'])->format('Y-m-d') : 'N/A' }}
                                 </td>
 
                                 @if ($package['is_rated'])
