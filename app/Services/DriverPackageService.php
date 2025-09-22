@@ -13,9 +13,10 @@ use App\Models\ProofOfDelivery;
 use Illuminate\Support\Str;
 use App\Observers\PackageSubject;
 use App\Observers\CustomerObserver;
+use Illuminate\Support\Facades\Crypt; // FOR DATA ENCRYPTION
 
 /**
- * Service class that handles package operations for drivers.
+ * Service class that handles package operations for drivers with DATA PROTECTION.
  */
 class DriverPackageService
 {
@@ -42,7 +43,8 @@ class DriverPackageService
             ->select(
                 'package.package_id',
                 'package.tracking_number',
-                'package.recipient_address',
+                // SECURITY: Mask sensitive address data for list view
+                DB::raw("CONCAT(SUBSTRING(package.recipient_address, 1, 20), '...') as recipient_address"),
                 'package.package_status',
                 'delivery.estimated_delivery_time'
             )
@@ -58,24 +60,25 @@ class DriverPackageService
     {
          $success = $this->updateViaDatabase($packageId, $status, $driverId);
 
-    if (!$success) {
-        return false;
-    }
+        if (!$success) {
+            return false;
+        }
 
-    // Re-fetch the updated package
-    $package = Package::with('customer')->where('package_id', $packageId)->first();
+        // Re-fetch the updated package
+        $package = Package::with('customer')->where('package_id', $packageId)->first();
 
-if (!$package || !$package->customer) {
-    Log::warning("Customer missing on package {$packageId}");
-    return false;
-}
-    // Always notify since we know status was updated via raw DB
-    $subject = new PackageSubject($package);
-    $observer = new CustomerObserver($package->customer);
-    $subject->addObserver($observer);
-    $observer->forceUpdate($subject);
+        if (!$package || !$package->customer) {
+            Log::warning("Customer missing on package {$packageId}");
+            return false;
+        }
+        
+        // Always notify since we know status was updated via raw DB
+        $subject = new PackageSubject($package);
+        $observer = new CustomerObserver($package->customer);
+        $subject->addObserver($observer);
+        $observer->forceUpdate($subject);
 
-    return true;
+        return true;
     }
 
     /**
@@ -90,7 +93,8 @@ if (!$package || !$package->customer) {
             ->select(
                 'package.package_id',
                 'package.tracking_number',
-                'package.recipient_address',
+                // SECURITY: Truncate address for security
+                DB::raw("SUBSTRING(package.recipient_address, 1, 50) as recipient_address"),
                 'package.package_status'
             )
             ->get()
@@ -102,10 +106,17 @@ if (!$package || !$package->customer) {
      */
     protected function updateViaDatabase(string $packageId, string $status, string $driverId): bool
     {
-
         DB::beginTransaction();
 
         try {
+            // SECURITY: Log sensitive operations
+            Log::info('Package status update attempt', [
+                'package_id' => $this->hashSensitiveData($packageId),
+                'driver_id' => $this->hashSensitiveData($driverId),
+                'new_status' => $status,
+                'timestamp' => now()
+            ]);
+
             // Step 1: Update the package's status.
             DB::table('package')
                 ->where('package_id', $packageId)
@@ -179,30 +190,45 @@ if (!$package || !$package->customer) {
 
     /**
      * Get package details for a specific package
-     * FIXED: Works with user table structure where user_id has prefixes (C for customers, D for drivers)
+     * ENHANCED: With data protection for sensitive information
      */
-    // --- NEW METHOD 1: Get details for the proof page ---
     public function getPackageDetails(string $packageId): object
     {
         $driverId = Auth::id();
 
-        // --- THIS IS THE CORRECTED QUERY ---
+        // SECURITY: Log access to sensitive package details
+        Log::info('Package details accessed', [
+            'package_id' => $this->hashSensitiveData($packageId),
+            'driver_id' => $this->hashSensitiveData($driverId),
+            'ip' => request()->ip(),
+            'timestamp' => now()
+        ]);
+
         $package = DB::table('package')
             ->join('delivery', 'package.package_id', '=', 'delivery.package_id')
-            // The fix is to join 'user' on 'user.user_id'
             ->leftJoin('user', 'package.user_id', '=', 'user.user_id')
             ->where('package.package_id', $packageId)
             ->where('delivery.driver_id', $driverId) // Security check
             ->select(
-                'package.*', // Select all columns from package
+                'package.*',
                 'delivery.delivery_id',
-                'user.username as recipient_name' // Get the name from the user table
+                'user.username as recipient_name'
             )
             ->first();
-        // --- END OF CORRECTION ---
 
         if (!$package) {
             throw new \Exception('Package not found or you are not authorized to view it.');
+        }
+
+        // SECURITY: Decrypt sensitive data if it was encrypted
+        if (isset($package->recipient_address)) {
+            try {
+                // Try to decrypt if data was encrypted
+                $package->recipient_address = $this->decryptSensitiveData($package->recipient_address);
+            } catch (\Exception $e) {
+                // If decryption fails, assume it's not encrypted
+                // Keep original data
+            }
         }
 
         return $package;
@@ -210,6 +236,7 @@ if (!$package || !$package->customer) {
 
     /**
      * Complete the delivery and save the proof.
+     * ENHANCED: With data encryption for sensitive proof information
      */
     public function updateStatusWithProof(string $packageId, array $data): void
     {
@@ -244,29 +271,91 @@ if (!$package || !$package->customer) {
                     'actual_delivery_time' => now()
                 ]);
 
-            // 4. Create proof of delivery record
+            // 4. SECURITY: Encrypt sensitive proof data before storing
+            $encryptedRecipientName = null;
+            $encryptedNotes = null;
+            
+            if (!empty($data['recipient_signature_name'])) {
+                $encryptedRecipientName = $this->encryptSensitiveData($data['recipient_signature_name']);
+            }
+            
+            if (!empty($data['notes'])) {
+                $encryptedNotes = $this->encryptSensitiveData($data['notes']);
+            }
+
+            // 5. Create proof of delivery record with encrypted data
             DB::table('proofofdelivery')->insert([
                 'proof_id' => 'PD' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT),
                 'delivery_id' => $delivery->delivery_id,
                 'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
-                'recipient_signature_name' => $data['recipient_signature_name'] ?? null,
+                'recipient_signature_name' => $encryptedRecipientName, // ENCRYPTED
                 'timestamp_created' => now(),
                 'verification_status' => 'PENDING',
-                'notes' => $data['notes'] ?? null,
+                'notes' => $encryptedNotes, // ENCRYPTED
             ]);
 
-            // 5. Update driver status to AVAILABLE
+            // 6. Update driver status to AVAILABLE
             DB::table('deliverydriver')
                 ->where('driver_id', $driverId)
                 ->update(['driver_status' => 'AVAILABLE']);
 
+            // 7. SECURITY: Log proof submission (with hashed IDs)
+            Log::info("Proof of delivery submitted", [
+                'package_id' => $this->hashSensitiveData($packageId),
+                'driver_id' => $this->hashSensitiveData($driverId),
+                'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
+                'ip' => request()->ip(),
+                'timestamp' => now()
+            ]);
+
             DB::commit();
-            Log::info("Successfully updated package {$packageId} to DELIVERED with proof");
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Failed to update package status with proof: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * SECURITY METHOD: Encrypt sensitive data
+     */
+    private function encryptSensitiveData(?string $data): ?string
+    {
+        if ($data === null || trim($data) === '') {
+            return null;
+        }
+        
+        try {
+            return Crypt::encryptString($data);
+        } catch (\Exception $e) {
+            Log::error('Failed to encrypt sensitive data', ['error' => $e->getMessage()]);
+            return $data; // Return original if encryption fails
+        }
+    }
+
+    /**
+     * SECURITY METHOD: Decrypt sensitive data
+     */
+    private function decryptSensitiveData(?string $encryptedData): ?string
+    {
+        if ($encryptedData === null || trim($encryptedData) === '') {
+            return null;
+        }
+        
+        try {
+            return Crypt::decryptString($encryptedData);
+        } catch (\Exception $e) {
+            // If decryption fails, assume data is not encrypted
+            return $encryptedData;
+        }
+    }
+
+    /**
+     * SECURITY METHOD: Hash sensitive data for logging (one-way)
+     */
+    private function hashSensitiveData(string $data): string
+    {
+        return 'HASH_' . substr(hash('sha256', $data), 0, 8);
     }
 }
