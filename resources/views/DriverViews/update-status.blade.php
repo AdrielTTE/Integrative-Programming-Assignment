@@ -19,6 +19,7 @@
                     <tr>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Package ID</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Tracking ID</th>
+                        <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Recipient Address</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Current Status</th>
                         <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Update Action</th>
                     </tr>
@@ -28,11 +29,16 @@
                     <tr class="hover:bg-gray-50">
                         <td class="p-4 font-mono">
                             {{ $package->package_id }}
+                            <br>
                         </td>
                         <td class="p-4 font-mono">
                             {{ $package->tracking_number }}
                             <br>
-                            <span class="text-xs text-gray-500">{{ $package->recipient_address }}</span>
+                        </td>
+
+                        <td class="p-4 font-mono">
+                            {{ $package->recipient_address }}
+                            <br>
                         </td>
                         <td class="p-4">
                             <span class="px-2 py-1 font-semibold text-xs rounded-full 

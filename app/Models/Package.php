@@ -92,7 +92,7 @@ class Package extends Model
                 $package->shipping_cost = $package->calculateShippingCost();
             }
             if (!isset($package->is_rated)) {
-                $package->is_rated = false; // ✅ default to not rated
+                $package->is_rated = false; 
             }
         });
 

@@ -78,14 +78,24 @@
                         </span>
                     </td>
                     <td class="px-6 py-4">
-                        @if($payment->status == 'completed')
-                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Completed</span>
-                        @elseif($payment->status == 'pending')
-                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">Pending</span>
-                        @elseif($payment->status == 'failed')
-                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">Failed</span>
+                        @if($payment->refund)
+                            {{-- If there's a refund, show refund status --}}
+                            @if($payment->refund->status == 'approved')
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">Refunded</span>
+                            @elseif($payment->refund->status == 'pending')
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">Refund Pending</span>
+                            @elseif($payment->refund->status == 'rejected')
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">Refund Rejected</span>
+                            @endif
                         @else
-                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">Refunded</span>
+                            {{-- No refund, show payment status --}}
+                            @if($payment->status == 'completed')
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Completed</span>
+                            @elseif($payment->status == 'pending')
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">Pending</span>
+                            @elseif($payment->status == 'failed')
+                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-sm">Failed</span>
+                            @endif
                         @endif
                     </td>
                     <td class="px-6 py-4 text-sm">{{ $payment->payment_date->format('M d, Y') }}</td>

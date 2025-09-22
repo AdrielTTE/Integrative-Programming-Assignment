@@ -25,7 +25,7 @@
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Package ID</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Customer ID</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Recipient Address</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Created</th>
+                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Created at</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Priority Level</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Assign Driver</th>
                         </tr>
@@ -47,8 +47,11 @@
                                             class="block w-full rounded-md border-gray-300 shadow-sm text-sm" required>
                                             <option value="">Select Driver...</option>
                                             @foreach($drivers as $driver)
-                                                <option value="{{ $driver->driver_id }}">{{ $driver->first_name }}
-                                                    ({{$driver->driver_id}})</option>
+                                                <option value="{{ $driver->driver_id }}">
+                                                    {{ trim($driver->first_name . ' ' . ($driver->last_name ?? '')) }}
+                                                    ({{ $driver->driver_id }})
+                                                </option>
+
                                             @endforeach
                                         </select>
                                         <button type="submit"

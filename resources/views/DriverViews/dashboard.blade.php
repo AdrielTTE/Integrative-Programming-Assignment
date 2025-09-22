@@ -7,7 +7,7 @@
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-2xl font-semibold text-gray-800">Welcome, {{ $driver->first_name ?? Auth::user()->username }}!</h2>
+                    <h2 class="text-2xl font-semibold text-gray-800">Welcome, {{ trim(($driver->first_name ?? '') . ' ' . ($driver->last_name ?? Auth::user()->username)) }}!</h2>
                     <p class="text-gray-600 mt-1">Your current status is: 
                         @if($driver->driver_status === 'AVAILABLE')
                             <span class="font-bold text-green-600">AVAILABLE</span>
@@ -73,7 +73,7 @@
                             <th class="p-4 text-left">Package ID</th>
                             <th class="p-4 text-left">Recipient</th>
                             <th class="p-4 text-left">Status</th>
-                            <th class="p-4 text-left">Est. Delivery</th>
+                            <th class="p-4 text-left">Recipient Address</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -84,7 +84,7 @@
                                 <td class="p-4 font-mono">{{ $package->package_id }}</td>
                                 <td class="p-4 truncate max-w-xs">{{ $package->recipient_address }}</td>
                                 <td class="p-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{{ $package->package_status }}</span></td>
-                                <td class="p-4">{{ \Carbon\Carbon::parse($package->estimated_delivery_time)->format('Y-m-d H:i') }}</td>
+                                <td class="p-4">{{ $package->recipient_address}}</td>
                             </tr>
                         @empty
                             <tr><td colspan="4" class="text-center p-10 text-gray-500">You have no active deliveries.</td></tr>

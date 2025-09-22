@@ -255,38 +255,35 @@ Route::prefix('driver')->name('driver.')->group(function () {
     });
 
     // --- Authenticated Driver Routes ---
-    Route::middleware(['auth', 'driver'])->group(function () {
-        Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-        Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
+     Route::middleware(['auth', 'driver'])->group(function () {
 
+        // Main dashboard page
         Route::get('/dashboard', [DriverDashboardController::class, 'dashboard'])->name('dashboard');
-Route::post('/dashboard/update-status', [DriverDashboardController::class, 'updateStatus'])->name('dashboard.update-status');
-        // Package Management
-        Route::get('/packages', [AssignedPackageController::class, 'assignedPackages'])->name('assignedPackages');
+
+        // Route for handling the status toggle button on the dashboard
+        Route::post('/dashboard/update-status', [DriverDashboardController::class, 'updateStatus'])->name('dashboard.update-status');
+
+        // Page to view the list of assigned packages
         Route::get('/my-packages', [DriverPackagesController::class, 'index'])->name('packages.index');
 
         // Page to view details and update status of a single package
         Route::get('/my-packages/{packageId}', [DriverPackagesController::class, 'show'])->name('packages.show');
-        Route::post('/my-packages/{packageId}/update', [DriverPackagesController::class, 'updateStatus'])->name('packages.updateStatus');
 
         // Page to show the list of packages for status updates
         Route::get('/update-status', [DeliveryStatusController::class, 'index'])->name('status.index');
+
+        // Handles the form submission from the status update page
         Route::post('/update-status/{packageId}', [DeliveryStatusController::class, 'update'])->name('status.update');
 
         // Page for delivery history
         Route::get('/delivery-history', [DeliveryHistoryController::class, 'index'])->name('history.index');
 
-        // Proof of Delivery routes using Factory Pattern
-        Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
-        Route::post('/proof/{packageId}', [ProofOfDeliveryController::class, 'store'])->name('proof.store');
+        // Pages for creating and storing proof of delivery
+        Route::get('/delivery/{packageId}/complete', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
+        Route::post('/delivery/{packageId}/complete', [ProofOfDeliveryController::class, 'store'])->name('proof.store');
+
+        // (Optional) Route to view an already submitted proof
         Route::get('/proof/{packageId}', [ProofOfDeliveryController::class, 'show'])->name('proof.show');
-
-        Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create'); // Or DriverProofController if using that
-                Route::post('proof/{package_id}', [ProofOfDeliveryController::class, 'store'])->name('driver.proof.store');
-
-                Route::get('/proof/{packageId}/create', [ProofOfDeliveryController::class, 'create'])->name('proof.create');
-Route::get('proof/{package_id}', [ProofOfDeliveryController::class, 'create'])->name('driver.proof.create');
-
     });
 });
 

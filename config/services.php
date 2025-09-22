@@ -35,7 +35,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'package_module' => [
+        'base_url' => env('PACKAGE_MODULE_URL', 'http://localhost:8000/api/ws'),
+        'api_key' => env('PACKAGE_MODULE_API_KEY', 'your-api-key-here'),
+    ],
     
+    'payment_module' => [
+        'base_url' => env('PAYMENT_MODULE_URL', 'http://localhost:8000/api/ws'),
+        'api_key' => env('PAYMENT_MODULE_API_KEY', 'your-api-key-here'),
+    ],
     'modules' => [
         'notification' => [
             'api_key' => env('NOTIFICATION_MODULE_API_KEY'),

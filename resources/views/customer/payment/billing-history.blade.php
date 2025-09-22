@@ -68,50 +68,57 @@
                                     <div class="text-xs text-gray-600">{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                @if($payment->refund)
+                                    {{-- If there's a refund, show the refund status --}}
+                                    @if($payment->refund->status == 'approved')
+                                        <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Refunded</span>
+                                    @elseif($payment->refund->status == 'pending')
+                                        <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">Refund Pending</span>
+                                    @elseif($payment->refund->status == 'rejected')
+                                        <span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Refund Rejected</span>
+                                    @endif
+                                @else
+                                    {{-- If no refund, show payment status --}}
                                     @if($payment->status == 'completed')
                                         <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Completed</span>
                                     @elseif($payment->status == 'pending')
                                         <span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">Pending</span>
-                                    @elseif($payment->status == 'refunded')
-                                        <span class="px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-800 rounded-full">Refunded</span>
-                                    @else
+                                    @elseif($payment->status == 'failed')
                                         <span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Failed</span>
                                     @endif
-                                </td>
+                                @endif
+                            </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $payment->payment_date->format('M d, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div class="flex gap-2">
-                                        @if($payment->invoice)
-                                            <a href="{{ route('customer.billing.invoice.download', $payment->payment_id) }}" 
-                                               class="text-indigo-600 hover:text-indigo-800 text-xs">
-                                                <i class="fas fa-download"></i> Invoice
-                                            </a>
-                                        @endif
-                                        
                                         <a href="{{ route('customer.billing.receipt', $payment->payment_id) }}" 
-                                           class="text-green-600 hover:text-green-800 text-xs">
+                                        class="text-blue-600 hover:text-blue-800 text-xs">
                                             <i class="fas fa-receipt"></i> Receipt
                                         </a>
                                         
                                         @if($payment->is_refundable && !$payment->refund)
                                             <a href="{{ route('customer.refund.request', $payment->payment_id) }}" 
-                                               class="text-orange-600 hover:text-orange-800 text-xs">
+                                            class="text-orange-600 hover:text-orange-800 text-xs">
                                                 <i class="fas fa-undo"></i> Request Refund
                                             </a>
                                         @endif
                                         
                                         @if($payment->refund)
                                             <a href="{{ route('customer.refund.status', $payment->refund->refund_id) }}" 
-                                               class="text-purple-600 hover:text-purple-800 text-xs">
-                                                <i class="fas fa-clock"></i> 
+                                            class="text-xs">
                                                 @if($payment->refund->status == 'pending')
-                                                    Refund Pending
+                                                    <span class="text-yellow-600 hover:text-yellow-800">
+                                                        <i class="fas fa-clock"></i> Refund Pending
+                                                    </span>
                                                 @elseif($payment->refund->status == 'approved')
-                                                    Refund Approved
-                                                @else
-                                                    Refund Rejected
+                                                    <span class="text-green-600 hover:text-green-800">
+                                                        <i class="fas fa-check-circle"></i> Refund Approved
+                                                    </span>
+                                                @elseif($payment->refund->status == 'rejected')
+                                                    <span class="text-red-600 hover:text-red-800">
+                                                        <i class="fas fa-times-circle"></i> Refund Rejected
+                                                    </span>
                                                 @endif
                                             </a>
                                         @endif
