@@ -58,7 +58,6 @@ public function __construct()
         'comment'   => $validated['comment'] ?? null,
     ]);
 
-
 } else {
     $latestId = Feedback::max('feedback_id');
 

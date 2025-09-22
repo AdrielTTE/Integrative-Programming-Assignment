@@ -154,6 +154,7 @@
             <h3>Status Summary</h3>
             </br>
             <form method="GET" action="{{ route('admin.dashboard') }}">
+                @csrf
                 <label for="statusFilter">Show:</label>
                 <select name="displayData" id="statusFilter" onchange="this.form.submit()">
                     <option value="packages" {{ $displayData === 'packages' ? 'selected' : '' }}>Packages</option>
