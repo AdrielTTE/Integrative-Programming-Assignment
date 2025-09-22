@@ -13,16 +13,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Observers\PackageSubject;
+use App\Observers\CustomerObserver;
 
 class AdminPackageController extends Controller
 {
     use Auditable;  // Add the trait
-    
+
     protected PackageService $packageService;
     protected ApiPackageService $apiPackageService;
 
     public function __construct(
-        PackageService $packageService, 
+        PackageService $packageService,
         ApiPackageService $apiPackageService
     ) {
         $this->packageService = $packageService;
@@ -94,11 +96,12 @@ class AdminPackageController extends Controller
 
             // Get statistics
             $statistics = $this->getPackageStatistics();
+            $totalPackages = $this->packageService->getTotalPackages();
 
             // Get statuses for filter dropdown
             $statuses = Package::getStatuses();
 
-            return view('admin.packages.index', compact('packages', 'statistics', 'statuses'));
+            return view('admin.packages.index', compact('packages', 'statistics', 'totalPackages','statuses'));
 
         } catch (\Exception $e) {
             $this->auditError(
@@ -107,7 +110,7 @@ class AdminPackageController extends Controller
                 'all',
                 $e->getMessage()
             );
-            
+
             return back()->with('error', 'An error occurred while loading packages.');
         }
     }
@@ -162,9 +165,9 @@ class AdminPackageController extends Controller
             $statuses = Package::getStatuses();
 
             return view('admin.packages.show', compact(
-                'package', 
-                'stateInfo', 
-                'history', 
+                'package',
+                'stateInfo',
+                'history',
                 'auditLogs',
                 'availableDrivers',
                 'statuses'
@@ -177,7 +180,7 @@ class AdminPackageController extends Controller
                 $packageId,
                 'Package not found'
             );
-            
+
             return redirect()->route('admin.packages.index')
                            ->with('error', 'Package not found.');
         }
@@ -189,11 +192,11 @@ class AdminPackageController extends Controller
     public function update(Request $request, string $packageId)
     {
         DB::beginTransaction();
-        
+
         try {
             // Find the package
             $package = Package::where('package_id', $packageId)->firstOrFail();
-            
+
             // Store original values for audit
             $originalData = $package->toArray();
 
@@ -234,17 +237,29 @@ class AdminPackageController extends Controller
                 foreach ($dataToUpdate as $key => $value) {
                     $package->{$key} = $value;
                 }
-                
+
                 $package->save();
-                
+
+                //For Observer
+if ($package->wasChanged('package_status')) {
+    $package->load('customer'); // ensure customer is available
+
+    $subject = new PackageSubject($package);
+    $observer = new CustomerObserver($package->customer);
+    $subject->addObserver($observer);
+    $subject->notifyObserver();
+
+}
+
+
                 // Log successful update with changes
                 $this->auditPackageAction('update', $packageId, [
                     'old' => array_intersect_key($originalData, $dataToUpdate),
                     'new' => $dataToUpdate
                 ]);
-                
+
                 DB::commit();
-                
+
                 return redirect()->route('admin.packages.show', $packageId)
                                ->with('success', 'Package updated successfully!');
             }
@@ -255,7 +270,7 @@ class AdminPackageController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollback();
-            
+
             $this->auditError(
                 'update',
                 'package',
@@ -263,12 +278,12 @@ class AdminPackageController extends Controller
                 'Validation failed: ' . json_encode($e->errors()),
                 $request->all()
             );
-            
+
             return back()->withErrors($e->errors())->withInput();
-            
+
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             $this->auditError(
                 'update',
                 'package',
@@ -288,46 +303,46 @@ class AdminPackageController extends Controller
     {
         try {
             $oldStatus = $package->package_status;
-            
+
             switch ($action) {
                 case 'process':
                     $package->package_status = 'processing';
                     $package->save();
                     $message = 'Package marked as processing.';
                     break;
-                    
+
                 case 'cancel':
                     $package->package_status = 'cancelled';
                     $package->save();
                     $message = 'Package cancelled successfully.';
                     break;
-                    
+
                 case 'deliver':
                     $package->package_status = 'delivered';
                     $package->actual_delivery = now();
                     $package->save();
                     $message = 'Package marked as delivered.';
                     break;
-                    
+
                 case 'return':
                     $package->package_status = 'returned';
                     $package->save();
                     $message = 'Package marked as returned.';
                     break;
-                    
+
                 default:
                     throw new \Exception("Unknown action: {$action}");
             }
-            
+
             // Log the action
             $this->auditPackageAction($action, $package->package_id, [
                 'old' => ['package_status' => $oldStatus],
                 'new' => ['package_status' => $package->package_status]
             ]);
-            
+
             return redirect()->route('admin.packages.show', $package->package_id)
                            ->with('success', $message);
-                           
+
         } catch (\Exception $e) {
             $this->auditError(
                 $action,
@@ -335,7 +350,7 @@ class AdminPackageController extends Controller
                 $package->package_id,
                 $e->getMessage()
             );
-            
+
             return back()->with('error', 'Action failed: ' . $e->getMessage());
         }
     }
@@ -346,13 +361,13 @@ class AdminPackageController extends Controller
     public function destroy(string $packageId)
     {
         DB::beginTransaction();
-        
+
         try {
             $package = Package::findOrFail($packageId);
-            
+
             // Store package data before deletion
             $packageData = $package->toArray();
-            
+
             // Check if package can be deleted
             $status = strtolower($package->package_status);
             if (in_array($status, ['delivered', 'in_transit'])) {
@@ -360,13 +375,13 @@ class AdminPackageController extends Controller
             }
 
             $package->delete();
-            
+
             // Log deletion
             $this->auditPackageAction('delete', $packageId, [
                 'old' => $packageData,
                 'new' => null
             ]);
-            
+
             DB::commit();
 
             return redirect()->route('admin.packages.index')
@@ -374,7 +389,7 @@ class AdminPackageController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             $this->auditError(
                 'delete',
                 'package',
@@ -389,57 +404,51 @@ class AdminPackageController extends Controller
     /**
      * View audit logs
      */
-    public function auditLogs(Request $request)
-    {
-        // Start with base query
-        $query = AdminAuditLog::query();
-        
-        // Apply admin_id filter - check if not null AND not empty
-        if ($request->has('admin_id') && !empty($request->admin_id)) {
-            $query->where('admin_id', $request->admin_id);
-        }
-        
-        // Apply action filter - check if not null AND not empty
-        if ($request->has('action') && !empty($request->action)) {
-            $query->where('action', $request->action);
-        }
-        
-        // Apply target_type filter - check if not null AND not empty
-        if ($request->has('target_type') && !empty($request->target_type)) {
-            $query->where('target_type', $request->target_type);
-        }
-        
-        // Apply date_from filter - check if not null AND not empty
-        if ($request->has('date_from') && !empty($request->date_from)) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        
-        // Apply date_to filter - check if not null AND not empty
-        if ($request->has('date_to') && !empty($request->date_to)) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-        
-        // Apply status filter if present
-        if ($request->has('status') && !empty($request->status)) {
-            $query->where('status', $request->status);
-        }
-        
-        // Apply search filter if present
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('target_id', 'like', "%{$search}%")
-                  ->orWhere('admin_username', 'like', "%{$search}%");
-            });
-        }
-        
-        // Order by created_at descending and paginate
-        $logs = $query->orderBy('created_at', 'desc')
-                     ->paginate(20);
-        
-        return view('admin.audit-logs', compact('logs'));
+   public function auditLogs(Request $request)
+{
+    $query = AdminAuditLog::with('admin')->orderBy('created_at', 'desc');
+
+    // Apply filters if provided
+    if ($request->has('admin_id') && !empty($request->admin_id)) {
+        $query->where('admin_id', $request->admin_id);
     }
+
+    if ($request->has('action') && !empty($request->action)) {
+        $query->where('action', $request->action);
+    }
+
+    if ($request->has('target_type') && !empty($request->target_type)) {
+        $query->where('target_type', $request->target_type);
+    }
+
+    if ($request->has('date_from') && !empty($request->date_from)) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+
+    if ($request->has('date_to') && !empty($request->date_to)) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+
+    if ($request->has('status') && !empty($request->status)) {
+        $query->where('status', $request->status);
+    }
+
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('target_id', 'like', "%{$search}%")
+              ->orWhere('admin_username', 'like', "%{$search}%");
+        });
+    }
+
+    // Order by created_at descending and paginate
+    $logs = $query->orderBy('created_at', 'desc')->paginate(20);
+
+    return view('admin.audit-logs', compact('logs'));
+}
+
+
 
     // Alternative safer implementation using Laravel's when() method
     public function auditLogsAlternative(Request $request)
@@ -453,7 +462,7 @@ class AdminPackageController extends Controller
             })
             ->when($request->filled('target_type'), function ($query) use ($request) {
                 return $query->where('target_type', $request->target_type);
-            })  
+            })
             ->when($request->filled('date_from'), function ($query) use ($request) {
                 return $query->whereDate('created_at', '>=', $request->date_from);
             })
@@ -474,40 +483,42 @@ class AdminPackageController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20)
             ->withQueryString();
-        
+
         return view('admin.audit-logs', compact('logs'));
     }
+
+
 
     public function exportAuditLogs(Request $request)
 {
     // Build query with same filters as the main listing
     $query = AdminAuditLog::query();
-    
+
     // Apply filters
     if ($request->filled('admin_id')) {
         $query->where('admin_id', $request->admin_id);
     }
-    
+
     if ($request->filled('action')) {
         $query->where('action', $request->action);
     }
-    
+
     if ($request->filled('target_type')) {
         $query->where('target_type', $request->target_type);
     }
-    
+
     if ($request->filled('status')) {
         $query->where('status', $request->status);
     }
-    
+
     if ($request->filled('date_from')) {
         $query->whereDate('created_at', '>=', $request->date_from);
     }
-    
+
     if ($request->filled('date_to')) {
         $query->whereDate('created_at', '<=', $request->date_to);
     }
-    
+
     if ($request->filled('search')) {
         $search = $request->search;
         $query->where(function ($q) use ($search) {
@@ -516,13 +527,13 @@ class AdminPackageController extends Controller
               ->orWhere('admin_username', 'like', "%{$search}%");
         });
     }
-    
+
     // Get all filtered logs
     $logs = $query->orderBy('created_at', 'desc')->get();
-    
+
     // Generate CSV filename
     $filename = 'audit_logs_' . date('Y-m-d_H-i-s') . '.csv';
-    
+
     // Set headers for CSV download
     $headers = [
         'Content-Type' => 'text/csv',
@@ -531,14 +542,14 @@ class AdminPackageController extends Controller
         'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
         'Expires' => '0'
     ];
-    
+
     // Create CSV callback
     $callback = function() use ($logs) {
         $file = fopen('php://output', 'w');
-        
+
         // Add UTF-8 BOM for Excel compatibility
         fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-        
+
         // Add CSV headers
         fputcsv($file, [
             'Timestamp',
@@ -551,7 +562,7 @@ class AdminPackageController extends Controller
             'Status',
             'IP Address'
         ]);
-        
+
         // Add data rows
         foreach ($logs as $log) {
             fputcsv($file, [
@@ -566,14 +577,14 @@ class AdminPackageController extends Controller
                 $log->ip_address
             ]);
         }
-        
+
         fclose($file);
     };
-    
+
     return response()->stream($callback, 200, $headers);
 }
 
-    
+
     private function getPackageStatistics(): array
     {
         try {

@@ -37,7 +37,7 @@ class Package extends Model
         'estimated_delivery',
         'actual_delivery',
         'notes',
-        'is_rated', 
+        'is_rated',
         'payment_status',
         'payment_id',
     ];
@@ -52,7 +52,7 @@ class Package extends Model
         'updated_at'          => 'datetime',
         'estimated_delivery'  => 'datetime',
         'actual_delivery'     => 'datetime',
-        'is_rated'            => 'boolean', 
+        'is_rated'            => 'boolean',
         'payment_id'          => 'string',
     ];
 
@@ -266,7 +266,7 @@ class Package extends Model
 
     public function getIsPaymentRequiredAttribute(): bool
     {
-        return $this->payment_status !== 'paid' && 
+        return $this->payment_status !== 'paid' &&
             !in_array($this->package_status, ['cancelled', 'delivered']);
     }
 
@@ -349,6 +349,11 @@ class Package extends Model
             'allowed_transitions' => $this->getState()->getAllowedTransitions()
         ];
     }
-    
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'user_id', 'customer_id');
+    }
+
 }
 

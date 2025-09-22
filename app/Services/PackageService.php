@@ -10,14 +10,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use App\Observers\PackageSubject;
+use App\Observers\CustomerObserver;
 
 class PackageService
 {
     protected PackageRepository $repository;
+protected string $baseUrl;
 
     public function __construct(PackageRepository $repository)
     {
+
         $this->repository = $repository;
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
     /**
@@ -89,6 +95,7 @@ class PackageService
      */
     public function processPackage(string $packageId, array $data = []): Package
     {
+        dd("This method is being called");
         $package = $this->repository->find($packageId);
         $user = Auth::user();
 
@@ -197,7 +204,7 @@ class PackageService
         if (str_starts_with($user->user_id, 'AD')) {
         return true;
     }
-    
+
         // Regular users can only view their own packages
         return $package->user_id === $user->user_id;
 }
@@ -224,33 +231,40 @@ class PackageService
      * Update package status based on current state
      */
     private function updatePackageStatus(Package $package, array $data): void
-    {
-        $currentStatus = $package->package_status;
-        $newStatus = $data['status'] ?? null;
+{
 
-        // Define allowed status transitions
-        $allowedTransitions = [
-            'pending' => ['processing', 'cancelled'],
-            'processing' => ['picked_up', 'cancelled'],
-            'picked_up' => ['in_transit'],
-            'in_transit' => ['out_for_delivery', 'failed'],
-            'out_for_delivery' => ['delivered', 'failed'],
-            'failed' => ['out_for_delivery', 'returned'],
-        ];
+    $currentStatus = $package->package_status;
+    $newStatus = $data['status'] ?? null;
 
-        if ($newStatus && isset($allowedTransitions[$currentStatus])) {
-            if (in_array($newStatus, $allowedTransitions[$currentStatus])) {
-                $package->package_status = $newStatus;
+    // Define allowed status transitions
+    $allowedTransitions = [
+        'pending' => ['processing', 'cancelled'],
+        'processing' => ['picked_up', 'cancelled'],
+        'picked_up' => ['in_transit'],
+        'in_transit' => ['out_for_delivery', 'failed'],
+        'out_for_delivery' => ['delivered', 'failed'],
+        'failed' => ['out_for_delivery', 'returned'],
+    ];
 
-                // Update delivery timestamp if delivered
-                if ($newStatus === 'delivered') {
-                    $package->actual_delivery = now();
-                }
+    if ($newStatus && isset($allowedTransitions[$currentStatus])) {
+        if (in_array($newStatus, $allowedTransitions[$currentStatus])) {
+            $package->package_status = $newStatus;
 
-                $package->save();
+            if ($newStatus === 'delivered') {
+                $package->actual_delivery = now();
             }
+
+            $package->save();
+
+            //For Observer
+            $subject = new PackageSubject($package);
+            $observer = new CustomerObserver($package->customer);
+            $subject->addObserver($observer);
+            $subject->notifyObserver();
         }
     }
+}
+
 
     /**
  * Calculate shipping cost for payment (consumed by Payment Module)
@@ -258,19 +272,19 @@ class PackageService
 public function calculateShippingCostForPayment(string $packageId): float
 {
     $package = $this->repository->find($packageId);
-    
+
     if (!$package) {
         throw new \Exception('Package not found');
     }
-    
+
     if ($package->shipping_cost) {
         return $package->shipping_cost;
     }
-    
+
     // Recalculate if not set
     $cost = $package->calculateShippingCost();
     $this->repository->update($packageId, ['shipping_cost' => $cost]);
-    
+
     return $cost;
 }
 
@@ -281,26 +295,26 @@ public function markAsPaid(string $packageId, string $paymentId): bool
 {
     try {
         $package = $this->repository->find($packageId);
-        
+
         if (!$package) {
             throw new \Exception('Package not found');
         }
-        
+
         $this->repository->update($packageId, [
             'payment_status' => 'paid',
             'payment_id' => $paymentId
         ]);
-        
+
         // Auto-process package after payment if still pending
         if ($package->package_status === 'pending') {
             $this->processPackage($packageId, ['status' => 'processing']);
         }
-        
+
         Log::info('Package marked as paid', [
             'package_id' => $packageId,
             'payment_id' => $paymentId
         ]);
-        
+
         return true;
     } catch (\Exception $e) {
         Log::error('Failed to mark package as paid', [
@@ -318,12 +332,12 @@ public function markAsPaid(string $packageId, string $paymentId): bool
     public function requiresPayment(string $packageId): bool
     {
         $package = $this->repository->find($packageId);
-        
+
         if (!$package) {
             return false;
         }
-        
-        return $package->payment_status !== 'paid' && 
+
+        return $package->payment_status !== 'paid' &&
             !in_array($package->package_status, ['cancelled', 'delivered']);
     }
 
@@ -336,9 +350,9 @@ public function markAsPaid(string $packageId, string $paymentId): bool
             'user_id' => $userId,
             'payment_status' => 'unpaid'
         ];
-        
+
         $packages = $this->repository->search($criteria);
-        
+
         return $packages->filter(function($package) {
             return !in_array($package->package_status, ['cancelled', 'delivered']);
         })->values()->toArray();
@@ -350,11 +364,11 @@ public function markAsPaid(string $packageId, string $paymentId): bool
     public function validatePackageOwnership(string $packageId, string $userId): bool
     {
         $package = $this->repository->find($packageId);
-        
+
         if (!$package) {
             return false;
         }
-        
+
         return $package->user_id === $userId;
     }
 
@@ -473,7 +487,7 @@ public function markAsPaid(string $packageId, string $paymentId): bool
 
         $estimates = [
             'processing' => 2, // 2 hours after creation
-            'picked_up' => 6,  // 6 hours after creation  
+            'picked_up' => 6,  // 6 hours after creation
             'in_transit' => 12, // 12 hours after creation
             'out_for_delivery' => 24, // 24 hours after creation
         ];
@@ -481,5 +495,23 @@ public function markAsPaid(string $packageId, string $paymentId): bool
         $hoursToAdd = $estimates[$status] ?? 1;
         return $baseTime->copy()->addHours($hoursToAdd);
     }
+
+   public function getTotalPackages(): int
+{
+    $response = Http::get("{$this->baseUrl}/package/getCountPackage");
+
+    if ($response->failed()) {
+        return 0;
+    }
+
+    $data = $response->json();
+
+
+    if (isset($data['original']['count'])) {
+        return (int) $data['original']['count'];
+    }
+
+    return 0;
+}
 
 }

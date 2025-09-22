@@ -14,7 +14,31 @@
                 <label for="message">Announcement Message:</label>
                 <textarea name="message" class="form-control" rows="4" required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary mt-2">Send Announcement</button>
+
+            <div class="form-group mt-3">
+                <label for="customers">Select Customers (optional):</label>
+                <select name="customer_ids[]" id="customers" class="form-control" multiple>
+                    @foreach ($customers as $customer)
+                        <option value="{{ $customer->customer_id }}">
+                            {{-- Prefer full name, else fallback gracefully --}}
+                            @php
+                                $fullName = trim(($customer->first_name ?? '') . ' ' . ($customer->last_name ?? ''));
+                            @endphp
+
+                            {{ $fullName ?: $customer->name ?: 'Customer ' . $customer->customer_id }}
+                            @if (!empty($customer->email))
+                                ({{ $customer->email }})
+                            @endif
+                            – ID: {{ $customer->customer_id }}
+                        </option>
+                    @endforeach
+                </select>
+
+
+
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Send Announcement</button>
         </form>
     </div>
 @endsection
