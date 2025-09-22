@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\Admin;
 
 class AdminAuthController extends Controller
 {
@@ -81,6 +82,12 @@ do {
         'password' => Hash::make($request->password),
 
     ]);
+
+    $admin = Admin::create([
+            'admin_id' => $newId,
+            'employee_id' => $newId,
+            'department' => 'Administration',
+        ]);
 
     if (!$user) {
         dd('User creation returned null');
