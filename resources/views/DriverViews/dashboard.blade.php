@@ -47,22 +47,22 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div class="bg-white p-6 rounded-lg shadow-md text-center">
                 <h2 class="text-3xl font-bold">{{ $totalAssigned }}</h2>
-                <p class="text-sm text-gray-500 mt-1">Total Assigned Packages</p>
+                <p class="text-sm text-gray-500 mt-1">Total Assigned Packages to you</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md text-center">
                 {{-- --- THIS IS THE FIX for KPI cards --- --}}
                 <h2 class="text-3xl font-bold text-blue-600">
                     {{ $scheduled + $inTransit }}
                 </h2>
-                <p class="text-sm text-gray-500 mt-1">Active Deliveries</p>
+                <p class="text-sm text-gray-500 mt-1">Active Deliveries to you</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md text-center">
                 <h2 class="text-3xl font-bold text-green-600">{{ $delivered }}</h2>
-                <p class="text-sm text-gray-500 mt-1">Completed</p>
+                <p class="text-sm text-gray-500 mt-1">Completed Deliveries by you</p>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md text-center">
                 <h2 class="text-3xl font-bold text-red-600">{{ $failedPackages }}</h2>
-                <p class="text-sm text-gray-500 mt-1">Failed</p>
+                <p class="text-sm text-gray-500 mt-1">Total Failed Deliveries</p>
             </div>
         </div>
 

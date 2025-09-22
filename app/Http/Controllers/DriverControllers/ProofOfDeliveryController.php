@@ -89,18 +89,15 @@ class ProofOfDeliveryController extends Controller
      */
     private function handleSecureFileUpload($file): string
     {
-        // SECURITY CHECK 1: File exists and is valid
         if (!$file || !$file->isValid()) {
             throw new \Exception('Invalid file upload');
         }
 
-        // SECURITY CHECK 2: File size limit (2MB)
-        $maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        $maxSize = 2 * 1024 * 1024; 
         if ($file->getSize() > $maxSize) {
             throw new \Exception('File size exceeds 2MB limit');
         }
 
-        // SECURITY CHECK 3: Allowed file types (whitelist approach)
         $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
         $allowedExtensions = ['jpg', 'jpeg', 'png'];
         
@@ -118,13 +115,11 @@ class ProofOfDeliveryController extends Controller
             throw new \Exception('Only JPEG and PNG images are allowed');
         }
 
-        // SECURITY CHECK 4: Validate image content (detect fake images)
         $imageInfo = @getimagesize($file->getPathname());
         if ($imageInfo === false) {
             throw new \Exception('File is not a valid image');
         }
 
-        // SECURITY CHECK 5: Check for embedded malicious content
         $fileContent = file_get_contents($file->getPathname());
         $maliciousPatterns = [
             '<?php', '<?=', '<script', 'javascript:', 'eval(', 'exec(', 'system('
@@ -142,19 +137,15 @@ class ProofOfDeliveryController extends Controller
             }
         }
 
-        // SECURITY: Generate secure filename
         $secureFileName = $this->generateSecureFileName($fileExtension);
         
-        // SECURITY: Store in secure directory
         $storagePath = 'proof-photos/' . date('Y/m/d');
         $fullPath = $file->storeAs($storagePath, $secureFileName, 'local');
 
-        // SECURITY CHECK 6: Verify file was stored correctly
         if (!Storage::exists($fullPath)) {
             throw new \Exception('Failed to store uploaded file');
         }
 
-        // SECURITY: Log successful upload
         Log::info('Secure file upload completed', [
             'driver_id' => Auth::id(),
             'original_name' => $file->getClientOriginalName(),
@@ -167,9 +158,7 @@ class ProofOfDeliveryController extends Controller
         return $fullPath;
     }
 
-    /**
-     * SECURITY METHOD: Generate secure filename
-     */
+    
     private function generateSecureFileName(string $extension): string
     {
         // Use driver ID + timestamp + random string for unique filename
