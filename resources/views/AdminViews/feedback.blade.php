@@ -48,7 +48,7 @@
                 @forelse ($feedbacks as $feedback)
                     <tr>
                         <td>{{ $feedback['feedback_id'] }}</td>
-                        <td>{{ $feedback['delivery_id'] }}</td>
+                        <td>{{ $feedback['package_id'] }}</td>
                         <td>{{ $feedback['customer_id'] }}</td>
                         <td>{{ $feedback['category'] }}</td>
                         <td>{{ $feedback['rating'] }}</td>

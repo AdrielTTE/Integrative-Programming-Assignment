@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\AdminControllers;
@@ -179,6 +178,37 @@ class PaymentController extends Controller
         return response()->stream($callback, 200, $headers);
     }
     
+    public function apiProcessPayment(Request $request)
+{
+    $validated = $request->validate([
+        'package_id' => 'required|string|exists:package,package_id',
+        'payment_method' => 'required|string',
+        'amount' => 'required|numeric|min:0'
+    ]);
+    
+    $result = $this->paymentFacade->processPayment($validated['package_id'], $validated);
+    
+    return response()->json($result);
+}
+
+    public function apiGetPaymentStatus(string $paymentId)
+    {
+        $payment = Payment::with(['package', 'refund'])->findOrFail($paymentId);
+        
+        return response()->json([
+            'success' => true,
+            'payment' => [
+                'payment_id' => $payment->payment_id,
+                'package_id' => $payment->package_id,
+                'status' => $payment->status,
+                'amount' => $payment->amount,
+                'payment_method' => $payment->payment_method,
+                'payment_date' => $payment->payment_date,
+                'has_refund' => $payment->refund ? true : false
+            ]
+        ]);
+    }
+
     /**
      * Mark payment as verified (manual verification)
      */

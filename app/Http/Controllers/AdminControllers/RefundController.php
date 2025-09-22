@@ -86,7 +86,7 @@ class RefundController extends Controller
                 'admin_id' => Auth::id()
             ]);
             
-            return redirect()->route('admin.refunds')
+            return redirect()->route('admin.refunds.index')
                            ->with('success', 'Refund approved successfully. Amount will be credited to customer.');
         }
         
@@ -121,7 +121,7 @@ class RefundController extends Controller
             'reason' => $validated['reason']
         ]);
         
-        return redirect()->route('admin.refunds')
+        return redirect()->route('admin.refunds.index')
                        ->with('success', 'Refund request rejected.');
     }
     

@@ -70,6 +70,11 @@
                 <i class="fas fa-search w-5 mr-3"></i>
                 <span class="font-medium">My Packages</span>
             </a>
+            <a href="{{ route('customer.billing.history') }}" 
+                class="nav-link {{ request()->routeIs('customer.billing.*') || request()->routeIs('customer.refund.*') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
+                <i class="fas fa-credit-card w-5 mr-3"></i>
+                <span class="font-medium">Billing History</span>
+            </a>
             <a href="{{ route('customer.proof.history') }}"
                 class="nav-link {{ request()->routeIs('customer.proof.history') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
                 <i class="fas fa-signature w-5 mr-3"></i>
@@ -85,6 +90,7 @@
                 <i class="fas fa-star w-5 mr-3"></i>
                 <span class="font-medium">Feedback & Rating</span>
             </a>
+            
         </div>
 
 

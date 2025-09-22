@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\WebServiceController;
 use App\Http\Controllers\AdminControllers\PaymentController;
 use App\Http\Controllers\AdminControllers\RefundController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\DriverController as ApiDriverController;
+
 
 
     Route::prefix('delivery')->group(function () {
@@ -142,6 +144,233 @@ Route::prefix('package')->group(function () {
     Route::get('/getPackagesByStatus/{status}/{page}/{pageSize}/{customerId}',[PackageController::class, 'getPackagesByStatus']);
     Route::put('/{package_id}/is-rated', [PackageController::class, 'updateIsRated']);
 
+});
+
+// ===============================================
+// PAYMENT MODULE API ENDPOINTS
+// ===============================================
+
+Route::prefix('v1/payment')->group(function () {
+    
+    // Payment Module consuming Package Module functions
+    Route::post('/package/calculate-cost', function(Request $request) {
+        $packageService = app(PackageService::class);
+        
+        try {
+            $validated = $request->validate([
+                'package_id' => 'required|string|exists:package,package_id'
+            ]);
+            
+            $cost = $packageService->calculateShippingCostForPayment($validated['package_id']);
+            $totalCost = $cost * 1.06 + 2.00; // with 6% tax and RM2 service fee
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $validated['package_id'],
+                'shipping_cost' => $cost,
+                'tax' => $cost * 0.06,
+                'service_fee' => 2.00,
+                'total_cost' => $totalCost
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::post('/package/mark-paid', function(Request $request) {
+        $packageService = app(PackageService::class);
+        
+        try {
+            $validated = $request->validate([
+                'package_id' => 'required|string|exists:package,package_id',
+                'payment_id' => 'required|string'
+            ]);
+            
+            $success = $packageService->markAsPaid(
+                $validated['package_id'], 
+                $validated['payment_id']
+            );
+            
+            return response()->json([
+                'success' => $success,
+                'message' => $success ? 'Package marked as paid' : 'Failed to mark package as paid',
+                'package_id' => $validated['package_id'],
+                'payment_id' => $validated['payment_id']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::get('/package/{packageId}/requires-payment', function($packageId) {
+        $packageService = app(PackageService::class);
+        
+        try {
+            $requiresPayment = $packageService->requiresPayment($packageId);
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $packageId,
+                'requires_payment' => $requiresPayment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::get('/user/{userId}/unpaid-packages', function($userId) {
+        $packageService = app(PackageService::class);
+        
+        try {
+            $unpaidPackages = $packageService->getUnpaidPackages($userId);
+            
+            return response()->json([
+                'success' => true,
+                'user_id' => $userId,
+                'unpaid_packages' => $unpaidPackages,
+                'count' => count($unpaidPackages)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::post('/package/validate-ownership', function(Request $request) {
+        $packageService = app(PackageService::class);
+        
+        try {
+            $validated = $request->validate([
+                'package_id' => 'required|string|exists:package,package_id',
+                'user_id' => 'required|string|exists:user,user_id'
+            ]);
+            
+            $isOwner = $packageService->validatePackageOwnership(
+                $validated['package_id'], 
+                $validated['user_id']
+            );
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $validated['package_id'],
+                'user_id' => $validated['user_id'],
+                'is_owner' => $isOwner
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+});
+
+// ===============================================
+// PACKAGE MODULE API ENDPOINTS  
+// ===============================================
+
+Route::prefix('v1/package')->group(function () {
+    
+    // Package Module consuming Payment Module functions
+    Route::get('/{packageId}/payment-status', function($packageId) {
+        $paymentFacade = app(\App\Facades\PaymentFacade::class);
+        
+        try {
+            $paymentStatus = $paymentFacade->getPackagePaymentStatus($packageId);
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $packageId,
+                'payment_status' => $paymentStatus
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::post('/{packageId}/require-payment', function($packageId) {
+        $paymentFacade = app(\App\Facades\PaymentFacade::class);
+        
+        try {
+            $package = Package::findOrFail($packageId);
+            
+            if ($package->payment_status !== 'paid') {
+                $paymentUrl = $paymentFacade->generatePaymentUrl($packageId);
+                
+                return response()->json([
+                    'success' => true,
+                    'payment_required' => true,
+                    'payment_url' => $paymentUrl,
+                    'package_id' => $packageId,
+                    'amount' => $package->shipping_cost ?? 0
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'payment_required' => false,
+                'message' => 'Package already paid',
+                'package_id' => $packageId
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::get('/{packageId}/refund-available', function($packageId) {
+        $paymentFacade = app(\App\Facades\PaymentFacade::class);
+        
+        try {
+            $refundAvailable = $paymentFacade->isRefundAvailable($packageId);
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $packageId,
+                'refund_available' => $refundAvailable
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
+    
+    Route::get('/{packageId}/payment-url', function($packageId) {
+        $paymentFacade = app(\App\Facades\PaymentFacade::class);
+        
+        try {
+            $paymentUrl = $paymentFacade->generatePaymentUrl($packageId);
+            
+            return response()->json([
+                'success' => true,
+                'package_id' => $packageId,
+                'payment_url' => $paymentUrl
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    });
 });
 
 // -------------------
@@ -289,4 +518,15 @@ Route::prefix('notifications')->group(function () {
 
 
 
+});
+
+Route::prefix('driver/{driverId}')->group(function () {
+// API route to get the total number of packages assigned to a driver
+Route::get('/packages/count', [ApiDriverController::class, 'getTotalPackageCount']);
+
+// API route to get the count of deliveries for a specific status
+Route::get('/deliveries/count/{status}', [ApiDriverController::class, 'getDeliveryCountByStatus']);
+
+// API route to get recent packages
+Route::get('/packages/recent/{limit?}', [ApiDriverController::class, 'getRecentPackages']);
 });

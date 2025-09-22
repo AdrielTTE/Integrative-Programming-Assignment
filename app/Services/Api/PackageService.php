@@ -19,22 +19,22 @@ class PackageService
     public function create(array $data)
     {
         $validator = Validator::make($data, [
-            'package_id'         => 'required|string|unique:package,package_id',
-            'user_id'            => 'required|string|exists:user,user_id',
-            'tracking_number'    => 'required|string|unique:package,tracking_number',
-            'package_weight'     => 'nullable|numeric|min:0',
+            'package_id' => 'required|string|unique:package,package_id',
+            'user_id' => 'required|string|exists:user,user_id',
+            'tracking_number' => 'required|string|unique:package,tracking_number',
+            'package_weight' => 'nullable|numeric|min:0',
             'package_dimensions' => 'nullable|string|max:100',
-            'package_contents'   => 'nullable|string',
-            'sender_address'     => 'required|string|max:255',
-            'recipient_address'  => 'required|string|max:255',
-            'package_status'     => 'required|string|max:20',
-            'priority'           => 'nullable|string|max:20',
-            'shipping_cost'      => 'nullable|numeric|min:0',
+            'package_contents' => 'nullable|string',
+            'sender_address' => 'required|string|max:255',
+            'recipient_address' => 'required|string|max:255',
+            'package_status' => 'required|string|max:20',
+            'priority' => 'nullable|string|max:20',
+            'shipping_cost' => 'nullable|numeric|min:0',
             'estimated_delivery' => 'nullable|date',
-            'actual_delivery'    => 'nullable|date',
-            'notes'              => 'nullable|string',
-            'is_rated'           => 'boolean',
-            'created_at'         => 'nullable|date',
+            'actual_delivery' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'is_rated' => 'boolean',
+            'created_at' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
@@ -44,6 +44,19 @@ class PackageService
         return Package::create($validator->validated())
             ->load(['user', 'delivery', 'assignment']);
     }
+
+    public function getRecentPackagesForDriver(string $driverId, int $limit = 5): Collection
+    {
+        return DB::table('package')
+            ->join('delivery', 'package.package_id', '=', 'delivery.package_id')
+            ->where('delivery.driver_id', $driverId)
+            ->whereNotIn('package.package_status', ['DELIVERED', 'FAILED', 'CANCELLED'])
+            ->select('package.package_id', 'package.recipient_address', 'package.package_status', 'delivery.estimated_delivery_time')
+            ->orderBy('delivery.pickup_time', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
 
     public function getById(string $id)
     {
@@ -66,16 +79,16 @@ class PackageService
     'tracking_number'    => "sometimes|string|unique:package,tracking_number,{$id},package_id",
     'package_weight'     => 'nullable|numeric|min:0',
     'package_dimensions' => 'nullable|string|max:100',
-    'package_contents'   => 'nullable|string', 
-    'sender_address'     => 'nullable|string|max:255',
-    'recipient_address'  => 'nullable|string|max:255', 
+    'package_contents'   => 'nullable|string',   // ✅ now truly optional
+    'sender_address'     => 'nullable|string|max:255', // ✅ no longer required
+    'recipient_address'  => 'nullable|string|max:255', // ✅ no longer required
     'package_status'     => 'sometimes|string|max:20',
     'priority'           => 'nullable|string|max:20',
     'shipping_cost'      => 'nullable|numeric|min:0',
     'estimated_delivery' => 'nullable|date',
     'actual_delivery'    => 'nullable|date',
     'notes'              => 'nullable|string',
-    'is_rated'           => 'boolean',
+    'is_rated'           => 'boolean',          // ✅ this will now pass
     'created_at'         => 'nullable|date',
 ]);
 
@@ -92,14 +105,14 @@ class PackageService
     }
 
     public function updateIsRated(string $packageId, bool $isRated)
-{
-    $package = Package::findOrFail($packageId);
+    {
+        $package = Package::findOrFail($packageId);
 
-    $package->is_rated = $isRated;
-    $package->save();
+        $package->is_rated = $isRated;
+        $package->save();
 
-    return $package->fresh();
-}
+        return $package->fresh();
+    }
 
     public function delete(string $id): void
     {

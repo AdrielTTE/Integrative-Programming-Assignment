@@ -92,8 +92,6 @@
                     <td class="px-6 py-4 space-x-2">
                         <a href="{{ route('admin.payment.show', $payment->payment_id) }}" 
                            class="text-blue-600 hover:text-blue-800 text-sm">View</a>
-                        <a href="{{ route('admin.payment.generateInvoice', $payment->payment_id) }}" 
-                           class="text-green-600 hover:text-green-800 text-sm">Invoice</a>
                         @if($payment->status == 'pending')
                             <form method="POST" action="{{ route('admin.payment.verifyPayment', $payment->payment_id) }}" class="inline">
                                 @csrf
@@ -109,40 +107,6 @@
         <div class="px-6 py-4 bg-gray-50">
             {{ $payments->withQueryString()->links() }}
         </div>
-    </div>
-
-    <!-- Report Generation -->
-    <div class="mt-6 bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold mb-4">Generate Financial Report</h3>
-        <form method="POST" action="{{ route('admin.payment.generateReport') }}" class="flex gap-4 items-end">
-            @csrf
-            <div>
-                <label class="block text-sm font-medium mb-2">Report Type</label>
-                <select name="report_type" class="border rounded px-3 py-2">
-                    <option value="revenue_summary">Revenue Summary</option>
-                    <option value="payment_methods">Payment Methods Breakdown</option>
-                    <option value="refund_analysis">Refund Analysis</option>
-                    <option value="customer_spending">Customer Spending Report</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">Start Date</label>
-                <input type="date" name="start_date" class="border rounded px-3 py-2" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">End Date</label>
-                <input type="date" name="end_date" class="border rounded px-3 py-2" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">Format</label>
-                <select name="format" class="border rounded px-3 py-2">
-                    <option value="view">View Online</option>
-                    <option value="pdf">Download PDF</option>
-                    <option value="excel">Download Excel</option>
-                </select>
-            </div>
-            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">Generate Report</button>
-        </form>
     </div>
 </div>
 @endsection
