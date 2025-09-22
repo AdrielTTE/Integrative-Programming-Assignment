@@ -11,7 +11,7 @@ class DashboardService
 
     public function __construct()
     {
-       
+
         $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
     }
 
@@ -33,7 +33,15 @@ class DashboardService
     return 0;
 }
 
+public function getPaymentStatistics(){
+     $response = Http::get("{$this->baseUrl}/payment/getPaymentStatistics");
 
+    if ($response->failed()) {
+        return 0;
+    }
+
+    return $response->json();
+}
 
     public function getDriverCountByStatus(string $status): int
     {

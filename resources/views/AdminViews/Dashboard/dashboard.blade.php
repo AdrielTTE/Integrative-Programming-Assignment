@@ -6,7 +6,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const dataForGraph = @json($dataForGraph);
 
             const labels = Object.keys(dataForGraph);
@@ -88,6 +88,14 @@
                 <h2>{{ $totalAvailableDrivers }}</h2>
                 <p>Available Drivers</p>
             </div>
+            <div class="card">
+                <h2>RM{{ $paymentStatistics['total_revenue'] }}</h2>
+                <p>Total Revenue</p>
+            </div>
+            <div class="card">
+                <h2>RM{{ $paymentStatistics['completed_today'] }}</h2>
+                <p>Today's Revenue</p>
+            </div>
         </div>
 
         <!-- Recent Activity -->
@@ -128,19 +136,23 @@
                 @foreach ($driverList as $driver)
                     @if ($driver['driver_status'] === 'AVAILABLE')
                         <div class="driver available">
-                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} —
+                            {{ $driver['driver_status'] }}
                         </div>
                     @elseif ($driver['driver_status'] === 'BUSY')
                         <div class="driver available">
-                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} —
+                            {{ $driver['driver_status'] }}
                         </div>
                     @elseif ($driver['driver_status'] === 'UNAVAILABLE')
                         <div class="driver available">
-                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} —
+                            {{ $driver['driver_status'] }}
                         </div>
                     @else
                         <div class="driver available">
-                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} — {{ $driver['driver_status'] }}
+                            {{ trim($driver['first_name'] . ' ' . ($driver['last_name'] ?? '')) }} —
+                            {{ $driver['driver_status'] }}
                         </div>
                     @endif
                 @endforeach

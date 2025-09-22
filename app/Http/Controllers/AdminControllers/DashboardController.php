@@ -30,7 +30,7 @@ public function __construct()
     $page = $request->input('page', 1);
     $pageSize = $request->input('pageSize', 10);
     $driverStatus = $request->input('driverStatus', 'all');
-
+        $paymentStatistics = $this->dashboardService->getPaymentStatistics();
         $totalPackages = $this->dashboardService->getTotalPackages();
         $totalAvailableDrivers = $this->dashboardService->getDriverCountByStatus("AVAILABLE");
         $totalDeliveries = $this->dashboardService->getTotalDeliveries();
@@ -62,6 +62,6 @@ public function __construct()
         }
 
 
-        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'dataForGraph', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries'));
+        return view('AdminViews.Dashboard.dashboard', compact('totalPackages',    'totalAvailableDrivers', 'totalDeliveries', 'totalCompletedDeliveries', 'totalInTransitDeliveries', 'totalFailedDeliveries', 'recentPackages', 'driverList', 'dataForGraph', 'displayData', 'totalPickedUpDeliveries', 'totalScheduledDeliveries','paymentStatistics'));
     }
 }
