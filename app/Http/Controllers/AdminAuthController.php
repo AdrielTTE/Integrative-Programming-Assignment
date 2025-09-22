@@ -41,16 +41,11 @@ public function showRegisterForm()
     public function store(Request $request): RedirectResponse
     {
 
-
-
-
         $request->validate([
             'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
-
 
 
          // Get the last admin based on numeric part of user_id
