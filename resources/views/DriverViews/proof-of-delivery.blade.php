@@ -81,12 +81,7 @@
                             placeholder="Any special delivery instructions or notes"></textarea>
                     </div>
 
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
-                        <p class="text-sm text-blue-800">
-                            <strong>Important:</strong> By submitting this form, you confirm that the package
-                            has been successfully delivered to the recipient or authorized person.
-                        </p>
-                    </div>
+                
 
                     <div class="flex space-x-4">
                         <button type="submit"

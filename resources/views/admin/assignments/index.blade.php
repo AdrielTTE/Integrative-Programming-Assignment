@@ -25,7 +25,7 @@
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Package ID</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Customer ID</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Recipient Address</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Created</th>
+                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Created at</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Priority Level</th>
                             <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase">Assign Driver</th>
                         </tr>
