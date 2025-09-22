@@ -79,16 +79,6 @@
                 <i class="fas fa-bell w-5 mr-3"></i>
                 <span class="font-medium">My Delivery History</span>
             </a>
-            <a href="{{ route('admin.search') }}"
-                class="nav-link {{ request()->routeIs('admin.search') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
-                <i class="fas fa-bell w-5 mr-3"></i>
-                <span class="font-medium">My Performance</span>
-            </a>
-            <a href="{{ route('admin.dashboard') }}"
-                class="nav-link {{ request()->routeIs('packages.history') ? 'active bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700' : 'text-gray-700 hover:text-indigo-700' }} flex items-center px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300">
-                <i class="fas fa-history w-5 mr-3"></i>
-                <span class="font-medium">Search Package</span>
-            </a>
     
         </div>
 
