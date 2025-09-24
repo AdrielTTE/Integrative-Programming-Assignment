@@ -8,10 +8,16 @@ use App\Models\Delivery;
 use App\Models\DeliveryDriver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 
 class AdminAssignmentController extends Controller
 {
+    protected $baseUrl;
+    public function __construct()
+    {
+        $this->baseUrl = config('services.api.base_url', 'http://localhost:8001/api');
+    }
     /**
      * Display a list of all packages that are 'PENDING' and need assignment.
      */
@@ -27,7 +33,26 @@ class AdminAssignmentController extends Controller
         // Fetches all drivers who are currently 'AVAILABLE' to populate the dropdowns.
         $drivers = DeliveryDriver::where('driver_status', 'AVAILABLE')->get();
 
-        return view('admin.assignments.index', compact('packages', 'drivers'));
+        $totalPackages = $this->getTotalPackages();
+
+        return view('admin.assignments.index', compact('packages', 'drivers', 'totalPackages'));
+    }
+
+    private function getTotalPackages(){
+        $response = Http::get("{$this->baseUrl}/package/getCountPackage");
+
+    if ($response->failed()) {
+        return 0;
+    }
+
+    $data = $response->json();
+
+
+    if (isset($data['original']['count'])) {
+        return (int) $data['original']['count'];
+    }
+
+    return 0;
     }
 
     /**
