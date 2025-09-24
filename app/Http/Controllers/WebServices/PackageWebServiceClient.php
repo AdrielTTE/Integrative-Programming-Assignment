@@ -11,7 +11,7 @@ class PackageWebServiceClient
 
     public function __construct()
     {
-        $this->baseUrl = config('services.package_module.base_url', 'http://localhost:8000/api/ws');
+        $this->baseUrl = config('services.package_module.base_url', 'http://localhost:8001/api/ws');
     }
 
     /**
