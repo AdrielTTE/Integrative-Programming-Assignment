@@ -106,7 +106,7 @@
                             </a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $refund->user->name ?? 'N/A' }}</div>
+                            <div class="text-sm font-medium text-gray-900">{{ $refund->user->username ?? 'N/A' }}</div>
                             <div class="text-sm text-gray-500">{{ $refund->user_id }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap font-semibold">RM{{ number_format($refund->amount, 2) }}</td>

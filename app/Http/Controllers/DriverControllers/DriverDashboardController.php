@@ -4,8 +4,8 @@ namespace App\Http\Controllers\DriverControllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\DriverServices\DriverDashboardService;
-use Illuminate\Http\Request; // <-- IMPORT THE REQUEST CLASS
-use Illuminate\Support\Facades\Auth; // <-- IMPORT THE AUTH FACADE
+use Illuminate\Http\Request; 
+use Illuminate\Support\Facades\Auth; 
 
 class DriverDashboardController extends Controller
 {
@@ -16,15 +16,12 @@ class DriverDashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    /**
-     * Show the driver's dashboard with their stats and details.
-     */
+
     public function dashboard()
     {
         $stats = $this->dashboardService->getDeliveryStats();
         $recentPackages = $this->dashboardService->getRecentPackages(5);
         $failedPackages = $this->dashboardService->getPackageCountByStatus('FAILED');
-        // --- NEW: Fetch the driver's own details ---
         $driver = $this->dashboardService->getDriverDetails();
 
         return view('DriverViews.dashboard', [
@@ -38,18 +35,13 @@ class DriverDashboardController extends Controller
         ], compact('failedPackages'));
     }
 
-    // --- NEW METHOD TO ADD ---
-    /**
-     * Handle the request to toggle the driver's status.
-     */
+
     public function updateStatus(Request $request)
     {
         $currentStatus = $request->input('current_status');
 
-        // Determine what the new status should be.
         $newStatus = ($currentStatus === 'AVAILABLE') ? 'BUSY' : 'AVAILABLE';
 
-        // Use the service to update the status in the database.
         $this->dashboardService->updateDriverStatus($newStatus);
 
         return redirect()->route('driver.dashboard')->with('success', 'Your status has been updated to ' . $newStatus);

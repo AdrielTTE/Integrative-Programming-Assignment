@@ -169,13 +169,10 @@ class ProofOfDeliveryController extends Controller
         return "{$driverId}_{$timestamp}_{$randomString}.{$extension}";
     }
 
-    /**
-     * SECURITY METHOD: Get proof photo for viewing (with access control)
-     */
+    
     public function getProofPhoto(string $packageId)
     {
         try {
-            // Verify driver has access to this package
             $driverId = Auth::id();
             $hasAccess = DB::table('delivery')
                 ->where('package_id', $packageId)

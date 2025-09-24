@@ -21,7 +21,6 @@ class DriverPackagesController extends Controller
     {
         try {
             $package = $this->packageService->getPackageDetails($packageId);
-            // This now points to a new, dedicated details view.
             return view('DriverViews.package-details', compact('package'));
         } catch (\Exception $e) {
             return redirect()->route('driver.packages.index')->with('error', $e->getMessage());
@@ -34,14 +33,10 @@ class DriverPackagesController extends Controller
         $this->packageService = $packageService;
     }
 
-    /**
-     * Display the list of packages assigned to the driver.
-     */
     public function index()
     {
         $packages = $this->packageService->getAssignedPackages();
 
-        // This view path matches your folder structure.
         return view('DriverViews.assignedPackages', compact('packages'));
     }
 
@@ -57,9 +52,6 @@ class DriverPackagesController extends Controller
         }
     }
 
-    /**
-     * Handle the form submission to update the status via the API.
-     */
     public function updateStatus(Request $request, string $packageId)
     {
 
