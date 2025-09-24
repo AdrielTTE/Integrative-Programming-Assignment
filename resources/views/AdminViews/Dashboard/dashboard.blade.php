@@ -115,7 +115,7 @@
                         <td>{{ $package['package_id'] }}</td>
                         <td>{{ $package['package_status'] }}</td>
                         <td>
-                            {{ ($package['customer']['first_name'] ?? '') . ' ' . ($package['customer']['last_name'] ?? '') }}
+                            {{ ($package['user']['username'] ?? '') . ' ' . ($package['customer']['last_name'] ?? '') }}
                         </td>
 
 
