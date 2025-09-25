@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Observers\PackageSubject;
+use App\Observers\CustomerObserver;
+
 
 class ProofOfDeliveryController extends Controller
 {
@@ -64,21 +67,25 @@ class ProofOfDeliveryController extends Controller
             Log::info("Data to be processed: ", array_merge($data, ['proof_photo_path' => $photoPath ? 'FILE_UPLOADED' : 'NO_FILE']));
 
             // Use the service to handle the database transaction
-            $this->packageService->updateStatusWithProof($packageId, $data);
-            
+            $updatedStatus = $this->packageService->updateStatusWithProof($packageId, $data);
+
+            //For Observer
+             $observer = new CustomerObserver($updatedStatus->customer);
+$observer->forceUpdate(new PackageSubject($updatedStatus));
+
             Log::info("Service method completed successfully");
-            
+
             return redirect()->route('driver.status.index')
                 ->with('success', "Delivery completed successfully!");
-                
+
         } catch (\Exception $e) {
             Log::error("ERROR in store method: " . $e->getMessage());
-            
+
             // Clean up uploaded file if there was an error
             if (isset($photoPath) && $photoPath && Storage::exists($photoPath)) {
                 Storage::delete($photoPath);
             }
-            
+
             return redirect()->route('driver.status.index')
                 ->with('error', "Error: " . $e->getMessage());
         }
@@ -93,14 +100,14 @@ class ProofOfDeliveryController extends Controller
             throw new \Exception('Invalid file upload');
         }
 
-        $maxSize = 2 * 1024 * 1024; 
+        $maxSize = 2 * 1024 * 1024;
         if ($file->getSize() > $maxSize) {
             throw new \Exception('File size exceeds 2MB limit');
         }
 
         $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
         $allowedExtensions = ['jpg', 'jpeg', 'png'];
-        
+
         $fileMime = $file->getMimeType();
         $fileExtension = strtolower($file->getClientOriginalExtension());
 
@@ -138,7 +145,7 @@ class ProofOfDeliveryController extends Controller
         }
 
         $secureFileName = $this->generateSecureFileName($fileExtension);
-        
+
         $storagePath = 'proof-photos/' . date('Y/m/d');
         $fullPath = $file->storeAs($storagePath, $secureFileName, 'local');
 
@@ -158,18 +165,18 @@ class ProofOfDeliveryController extends Controller
         return $fullPath;
     }
 
-    
+
     private function generateSecureFileName(string $extension): string
     {
         // Use driver ID + timestamp + random string for unique filename
         $driverId = Auth::id();
         $timestamp = time();
         $randomString = Str::random(10);
-        
+
         return "{$driverId}_{$timestamp}_{$randomString}.{$extension}";
     }
 
-    
+
     public function getProofPhoto(string $packageId)
     {
         try {
