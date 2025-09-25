@@ -27,12 +27,12 @@ class AnnouncementController extends Controller
 {
     $request->validate([
         'message' => 'required|string|max:1000',
-        'customer_ids' => 'nullable|array',              // allow multiple customers
-        'customer_ids.*' => 'exists:customer,customer_id', // ensure each ID exists
+        'customer_ids' => 'nullable|array',
+        'customer_ids.*' => 'exists:customer,customer_id',
     ]);
 
     $message = $request->input('message');
-    $customerIds = $request->input('customer_ids', []); // default empty array
+    $customerIds = $request->input('customer_ids', []); 
 
     $this->announcementService->broadcast($message, $customerIds);
 
