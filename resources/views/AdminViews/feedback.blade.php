@@ -9,6 +9,7 @@
 
         <!-- Rating Filter -->
         <form method="GET" action="{{ route('admin.feedback') }}" class="mb-4 filter-group">
+            @csrf
             <label for="rating">Filter by Rating:</label>
             <select name="rating" id="rating" onchange="this.form.submit()">
                 <option value="all" {{ request('rating') === null || request('rating') === 'all' ? 'selected' : '' }}>All
