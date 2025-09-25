@@ -68,7 +68,7 @@ Route::get('/', function () {
 /* ================================================================================= */
 Route::prefix('customer')->name('customer.')->group(function () {
 
-    // --- Guest routes for customer login & registration ---
+    // Middleware Protection
     Route::middleware('guest')->group(function () {
         Route::get('login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [CustomerAuthController::class, 'login']);
@@ -153,7 +153,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 /* ================================================================================= */
 Route::prefix('admin')->name('admin.')->group(function () {
 
-    // --- Guest routes for admin login ---
+    //Middleware Protection
     Route::middleware('guest')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminAuthController::class, 'login']);
@@ -246,7 +246,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 /* ================================================================================= */
 Route::prefix('driver')->name('driver.')->group(function () {
 
-    // --- Guest routes for driver login ---
+    //Middleware Protection
     Route::middleware('guest')->group(function () {
         Route::get('login', [DriverAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [DriverAuthController::class, 'login']);

@@ -14,9 +14,7 @@ class PackageWebServiceClient
         $this->baseUrl = config('services.package_module.base_url', 'http://localhost:8001/api/ws');
     }
 
-    /**
-     * Consume Package Module Service: Get Package Details
-     */
+    //API Implementation ( Consume) 2
     public function getPackageDetails(string $packageId, int $queryFlag = 3): array
     {
         try {

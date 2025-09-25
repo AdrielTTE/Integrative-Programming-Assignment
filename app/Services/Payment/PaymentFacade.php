@@ -7,15 +7,12 @@ use App\Models\Refund;
 use DB;
 use Log;
 
-/**
- * FACADE DESIGN PATTERN
- * Simplifies complex payment operations
- */
+//Facade Design Pattern(Payment) example $paymentStatus = $paymentFacade->getPackagePaymentStatus($packageId);
 class PaymentFacade
 {
-    private $cardGateway;
-    private $paypalGateway;
-    private $walletGateway;
+    private $cardGateway;// Subsystem 1
+    private $paypalGateway;// Subsystem 2
+    private $walletGateway;// Subsystem 3
 
     public function __construct()
     {
@@ -27,7 +24,7 @@ class PaymentFacade
     public function processPayment($method, $amount, $details)
     {
         try {
-            // Select gateway based on method
+            // Facade Design Pattern(Payment)
             switch($method) {
                 case 'card':
                     $gateway = $this->cardGateway;

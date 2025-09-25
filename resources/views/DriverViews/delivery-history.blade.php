@@ -4,13 +4,6 @@
     <div class="container mx-auto px-4 py-6">
         <h1 class="text-2xl font-bold text-gray-800 mb-4">My Delivery History</h1>
 
-        <!--
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">
-            My Delivery History
-            <span class="text-sm text-gray-500">(Total: {{ $packages->total() }})</span>
-        </h1>
-        -->
-
         <p class="text-gray-600 mb-6">A log of all your completed and failed deliveries.</p>
 
         <div class="bg-white shadow-md rounded-lg overflow-hidden">

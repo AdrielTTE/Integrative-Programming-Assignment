@@ -43,18 +43,18 @@ class PaymentFacade
     DB::beginTransaction();
 
     try {
-        // Step 1: Get package details via web service
-        $packageClient = new PackageWebServiceClient();
+
+        $packageClient = new PackageWebServiceClient(); //API Implementation ( Consume) 1
         $packageDetails = $packageClient->getPackageDetails($packageId, 3);
 
         if ($packageDetails['status'] !== 'SUCCESS') {
             throw new \Exception('Failed to retrieve package details');
         }
 
-        // Step 2: Calculate total cost
+  
         $amount = $packageDetails['shipping_cost'] ?? 0;
 
-        // Step 3: Process payment
+    
         $paymentResult = $this->paymentProcessor->process([
             'amount' => $amount,
             'method' => $paymentData['payment_method'],

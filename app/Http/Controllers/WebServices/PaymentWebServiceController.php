@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 
 class PaymentWebServiceController extends Controller{
-public function getPaymentStatistics(): array
+public function getPaymentStatistics(): array //API Implementation ( Provide )2
 {
     $mostUsedMethod = Payment::select('payment_method')
         ->selectRaw('count(*) as count')

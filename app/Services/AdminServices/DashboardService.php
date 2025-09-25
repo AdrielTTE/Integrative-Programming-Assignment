@@ -33,7 +33,7 @@ class DashboardService
     return 0;
 }
 
-public function getPaymentStatistics(){
+public function getPaymentStatistics(){ //API Implementation ( Provide ) 1
      $response = Http::get("{$this->baseUrl}/payment/getPaymentStatistics");
 
     if ($response->failed()) {

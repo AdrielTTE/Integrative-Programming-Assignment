@@ -43,7 +43,6 @@
             </div>
         @endif
 
-        <!-- KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div class="bg-white p-6 rounded-lg shadow-md text-center">
                 <h2 class="text-3xl font-bold">{{ $totalAssigned }}</h2>

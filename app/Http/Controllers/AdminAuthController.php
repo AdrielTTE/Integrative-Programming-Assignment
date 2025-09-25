@@ -44,7 +44,7 @@ public function showRegisterForm()
         $request->validate([
             'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],//Password Confirmation
         ]);
 
 
@@ -101,7 +101,7 @@ do {
 
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request): RedirectResponse //.Role-Based Access Control (RBAC)
 {
     $credentials = $request->only('email', 'password');
 

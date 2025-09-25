@@ -27,7 +27,6 @@
                 </div>
             </div>
 
-            <!-- THIS IS THE CRUCIAL FORM ELEMENT -->
             <form action="{{ route('driver.proof.store', $package->package_id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
@@ -99,7 +98,6 @@
     </div>
 
     <script>
-        // Handle proof type switching
         document.querySelectorAll('input[name="proof_type"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const signatureSection = document.getElementById('signature_section');

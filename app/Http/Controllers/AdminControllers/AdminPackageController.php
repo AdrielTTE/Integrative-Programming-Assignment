@@ -41,7 +41,6 @@ class AdminPackageController extends Controller
     public function index(Request $request)
     {
         try {
-            // Log admin viewing packages list
             $this->audit(
                 'view_list',
                 'packages',
@@ -51,7 +50,6 @@ class AdminPackageController extends Controller
                 ['filters' => $request->all()]
             );
 
-            // Input validation
             $validated = $request->validate([
                 'search' => 'nullable|string|max:100',
                 'status' => 'nullable|string',
@@ -62,10 +60,8 @@ class AdminPackageController extends Controller
                 'per_page' => 'nullable|integer|min:10|max:100'
             ]);
 
-            // Build query
             $query = Package::with(['user', 'delivery.driver', 'assignment']);
 
-            // Apply filters
             if (!empty($validated['search'])) {
                 $search = '%' . $validated['search'] . '%';
                 $query->where(function ($q) use ($search) {
