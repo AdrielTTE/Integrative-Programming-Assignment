@@ -71,8 +71,8 @@ class DriverPackageService
             Log::warning("Customer missing on package {$packageId}");
             return false;
         }
-        
-        // Always notify since we know status was updated via raw DB
+
+        // For observer
         $subject = new PackageSubject($package);
         $observer = new CustomerObserver($package->customer);
         $subject->addObserver($observer);
@@ -238,84 +238,85 @@ class DriverPackageService
      * Complete the delivery and save the proof.
      * ENHANCED: With data encryption for sensitive proof information
      */
-    public function updateStatusWithProof(string $packageId, array $data): void
-    {
-        $driverId = Auth::id();
+    public function updateStatusWithProof(string $packageId, array $data): Package
+{
+    $driverId = Auth::id();
 
-        DB::beginTransaction();
+    DB::beginTransaction();
 
-        try {
-            // 1. Get the delivery record
-            $delivery = DB::table('delivery')
-                ->where('package_id', $packageId)
-                ->where('driver_id', $driverId)
-                ->first();
+    try {
+        // 1. Get the delivery record
+        $delivery = DB::table('delivery')
+            ->where('package_id', $packageId)
+            ->where('driver_id', $driverId)
+            ->first();
 
-            if (!$delivery) {
-                throw new \Exception('Delivery record not found');
-            }
-
-            // 2. Update package status to DELIVERED
-            DB::table('package')
-                ->where('package_id', $packageId)
-                ->update([
-                    'package_status' => 'DELIVERED',
-                    'updated_at' => now()
-                ]);
-
-            // 3. Update delivery status and actual delivery time
-            DB::table('delivery')
-                ->where('delivery_id', $delivery->delivery_id)
-                ->update([
-                    'delivery_status' => 'DELIVERED',
-                    'actual_delivery_time' => now()
-                ]);
-
-            // 4. SECURITY: Encrypt sensitive proof data before storing
-            $encryptedRecipientName = null;
-            $encryptedNotes = null;
-            
-            if (!empty($data['recipient_signature_name'])) {
-                $encryptedRecipientName = $this->encryptSensitiveData($data['recipient_signature_name']);
-            }
-            
-            if (!empty($data['notes'])) {
-                $encryptedNotes = $this->encryptSensitiveData($data['notes']);
-            }
-
-            // 5. Create proof of delivery record with encrypted data
-            DB::table('proofofdelivery')->insert([
-                'proof_id' => 'PD' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT),
-                'delivery_id' => $delivery->delivery_id,
-                'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
-                'recipient_signature_name' => $encryptedRecipientName, // ENCRYPTED
-                'timestamp_created' => now(),
-                'verification_status' => 'PENDING',
-                'notes' => $encryptedNotes, // ENCRYPTED
-            ]);
-
-            // 6. Update driver status to AVAILABLE
-            DB::table('deliverydriver')
-                ->where('driver_id', $driverId)
-                ->update(['driver_status' => 'AVAILABLE']);
-
-            // 7. SECURITY: Log proof submission (with hashed IDs)
-            Log::info("Proof of delivery submitted", [
-                'package_id' => $this->hashSensitiveData($packageId),
-                'driver_id' => $this->hashSensitiveData($driverId),
-                'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
-                'ip' => request()->ip(),
-                'timestamp' => now()
-            ]);
-
-            DB::commit();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Failed to update package status with proof: " . $e->getMessage());
-            throw $e;
+        if (!$delivery) {
+            throw new \Exception('Delivery record not found');
         }
+
+        // 2. Update package status to DELIVERED
+        DB::table('package')
+            ->where('package_id', $packageId)
+            ->update([
+                'package_status' => 'DELIVERED',
+                'updated_at' => now()
+            ]);
+
+        // 3. Update delivery status and actual delivery time
+        DB::table('delivery')
+            ->where('delivery_id', $delivery->delivery_id)
+            ->update([
+                'delivery_status' => 'DELIVERED',
+                'actual_delivery_time' => now()
+            ]);
+
+        // 4. SECURITY: Encrypt sensitive proof data before storing
+        $encryptedRecipientName = !empty($data['recipient_signature_name'])
+            ? $this->encryptSensitiveData($data['recipient_signature_name'])
+            : null;
+
+        $encryptedNotes = !empty($data['notes'])
+            ? $this->encryptSensitiveData($data['notes'])
+            : null;
+
+        // 5. Create proof of delivery record with encrypted data
+        DB::table('proofofdelivery')->insert([
+            'proof_id' => 'PD' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT),
+            'delivery_id' => $delivery->delivery_id,
+            'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
+            'recipient_signature_name' => $encryptedRecipientName,
+            'timestamp_created' => now(),
+            'verification_status' => 'PENDING',
+            'notes' => $encryptedNotes,
+        ]);
+
+        // 6. Update driver status to AVAILABLE
+        DB::table('deliverydriver')
+            ->where('driver_id', $driverId)
+            ->update(['driver_status' => 'AVAILABLE']);
+
+        // 7. SECURITY: Log proof submission
+        Log::info("Proof of delivery submitted", [
+            'package_id' => $this->hashSensitiveData($packageId),
+            'driver_id' => $this->hashSensitiveData($driverId),
+            'proof_type' => $data['proof_type'] ?? 'SIGNATURE',
+            'ip' => request()->ip(),
+            'timestamp' => now()
+        ]);
+
+        DB::commit();
+
+        // 8. RETURN the updated Package model (with customer)
+        return Package::with('customer')->findOrFail($packageId);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Failed to update package status with proof: " . $e->getMessage());
+        throw $e;
     }
+}
+
 
     /**
      * SECURITY METHOD: Encrypt sensitive data
@@ -325,7 +326,7 @@ class DriverPackageService
         if ($data === null || trim($data) === '') {
             return null;
         }
-        
+
         try {
             return Crypt::encryptString($data);
         } catch (\Exception $e) {
@@ -342,7 +343,7 @@ class DriverPackageService
         if ($encryptedData === null || trim($encryptedData) === '') {
             return null;
         }
-        
+
         try {
             return Crypt::decryptString($encryptedData);
         } catch (\Exception $e) {
